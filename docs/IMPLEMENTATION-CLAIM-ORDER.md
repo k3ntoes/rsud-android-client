@@ -1,6 +1,6 @@
 # 📋 Implementation Claim Order — RSUD Ajibarang Android Client
 
-> **Status Project:** Greenfield (0 file Kotlin, hanya dokumentasi)
+> **Status Project:** ✅ EPIC-0 & EPIC-1 selesai — build sistem aktif, core DI & navigation terpasang
 > **Stack:** Jetpack Compose · Hilt · Room 3.0+ · Retrofit · Proto DataStore + Tink · WorkManager · Coil
 
 ---
@@ -40,59 +40,61 @@ flowchart LR
 
 ## 📊 Phase Overview
 
-| Phase | Epic | ID | Priority | Depend On | Estimasi |
-|-------|------|----|----------|-----------|----------|
-| **0: Foundation** | Modern Android Stack | `EPIC-0` | 🔴 KRITIS | — | 1-2 session |
-| **1: Core** | Core DI & Nav | `EPIC-1` | 🔴 KRITIS | EPIC-0 | 1 session |
-| **1: Core** | Network Layer | `EPIC-2` | 🔴 KRITIS | EPIC-0 | 1 session |
-| **1: Core** | Database & Token | `EPIC-3` | 🔴 KRITIS | EPIC-0 | 1-2 session |
-| **2: Auth** | Login & Token Mgmt | `EPIC-4` | 🔴 KRITIS | EPIC-1,2,3 | 1-2 session |
-| **3: Inspeksi** | Master Data | `EPIC-5` | 🟠 TINGGI | EPIC-1,2,3 | 1 session |
-| **3: Inspeksi** | Form & Skoring | `EPIC-6` | 🟠 TINGGI | EPIC-5 | 2 session |
-| **3: Inspeksi** | Draf & Kirim | `EPIC-7` | 🟠 TINGGI | EPIC-6 | 1-2 session |
-| **4: Sinkronisasi** | Upload Worker | `EPIC-8` | 🟠 TINGGI | EPIC-7,2,3 | 1-2 session |
-| **5: Poles** | Refinement | `EPIC-9` | 🟢 NORMAL | EPIC-8 | 1-2 session |
+| Phase | Epic | ID | Priority | Depend On | Status | Estimasi |
+|-------|------|----|----------|-----------|--------|----------|
+| **0: Foundation** | Modern Android Stack | `EPIC-0` | 🔴 KRITIS | — | ✅ **Selesai** | 1-2 session |
+| **1: Core** | Core DI & Nav | `EPIC-1` | 🔴 KRITIS | EPIC-0 | ✅ **Selesai** | 1 session |
+| **1: Core** | Network Layer | `EPIC-2` | 🔴 KRITIS | EPIC-0 | ⬜ Buka | 1 session |
+| **1: Core** | Database & Token | `EPIC-3` | 🔴 KRITIS | EPIC-0 | ⬜ Buka | 1-2 session |
+| **2: Auth** | Login & Token Mgmt | `EPIC-4` | 🔴 KRITIS | EPIC-1,2,3 | ⬜ Buka | 1-2 session |
+| **3: Inspeksi** | Master Data | `EPIC-5` | 🟠 TINGGI | EPIC-1,2,3 | ⬜ Buka | 1 session |
+| **3: Inspeksi** | Form & Skoring | `EPIC-6` | 🟠 TINGGI | EPIC-5 | ⬜ Buka | 2 session |
+| **3: Inspeksi** | Draf & Kirim | `EPIC-7` | 🟠 TINGGI | EPIC-6 | ⬜ Buka | 1-2 session |
+| **4: Sinkronisasi** | Upload Worker | `EPIC-8` | 🟠 TINGGI | EPIC-7,2,3 | ⬜ Buka | 1-2 session |
+| **5: Poles** | Refinement | `EPIC-9` | 🟢 NORMAL | EPIC-8 | ⬜ Buka | 1-2 session |
 
 ---
 
 ## ✅ Phase 0: Foundation — Build System & Dependencies
 
-### 🔗 Issue: `EPIC-0` ( `rsud-android-client-dpw` )
+### 🔗 Issue: `EPIC-0` ( `rsud-android-client-dpw` ) — ✅ Selesai
 
 **Objective:** Setup build system dengan modern Android stack (Jetpack Compose, Hilt, Room 3.0+, KSP).
 
-- [ ] **⬜ Belum di-claim** — Upgrade `gradle/libs.versions.toml` dengan dependencies:
-  - Jetpack Compose BOM, Compose UI, Material3, Compose Navigation
-  - Hilt (androidx.hilt:hilt-work, hilt-navigation-compose)
-  - Room 3.0+ (KSP)
-  - Proto DataStore + Tink (`datastore-tink`)
-  - Retrofit + OkHttp + kotlinx.serialization converter
-  - Coil (Compose integration)
-  - Kotlin Serialization plugin
-  - Kotlin Compose compiler plugin
-  - KSP plugin
-- [ ] **⬜ Belum di-claim** — Update `build.gradle.kts` root: plugins + classpath
-- [ ] **⬜ Belum di-claim** — Update `app/build.gradle.kts`: apply semua plugin, `buildFeatures { compose = true }`
-- [ ] **⬜ Belum di-claim** — Setup minSdk 24, targetSdk 36, compileSdk 36
-- [ ] **⬜ Belum di-claim** — Konfigurasi Kotlin Compiler Extension version
-- [ ] **⬜ Belum di-claim** — Setup `gradle.properties` (Jetpack Compose opt-in, kotlin code style)
-- [ ] **⬜ Belum di-claim** — Verifikasi project build sukses
+- [x] ✅ Upgrade `gradle/libs.versions.toml` dengan semua dependencies:
+  - Jetpack Compose BOM (`2026.06.01`), Compose UI, Material3, Compose Navigation
+  - Hilt (`2.60.1`: `hilt-work`, `hilt-navigation-compose`)
+  - Room 3.0 (`3.0.0` via KSP, pkg `androidx.room3.*`)
+  - Proto DataStore (`1.2.1`) + Tink (`datastore-tink:1.3.0-alpha09`)
+  - Retrofit (`2.11.0`) + OkHttp (`4.12.0`) + kotlinx.serialization converter
+  - Coil (`2.7.0`, Compose integration)
+  - Kotlin Serialization plugin (`1.9.0`)
+  - Kotlin Compose compiler plugin (`2.1.20`)
+  - KSP plugin (`2.1.20-1.0.32`)
+- [x] ✅ Update `build.gradle.kts` root: plugins + classpath
+- [x] ✅ Update `app/build.gradle.kts`: apply semua plugin, `buildFeatures { compose = true }`
+- [x] ✅ Setup minSdk 24, targetSdk 36, compileSdk 36
+- [x] ✅ Konfigurasi Kotlin Compiler Extension (via `kotlin-compose` plugin)
+- [x] ✅ Setup `gradle.properties` (parallel build, caching, disallowKotlinSourceSets)
+- [x] ✅ Verifikasi project build sukses (`./gradlew :app:assembleDebug`)
 
-> **Setelah selesai:** 🟢 Claim `EPIC-1`, `EPIC-2`, `EPIC-3` (parallel — tidak ada blocking)
+> **Setelah selesai:** 🟢 Claim `EPIC-2`, `EPIC-3` (parallel — tidak ada blocking)
 
 ---
 
 ## ✅ Phase 1: Core Infrastructure
 
-### 🔗 Issue: `EPIC-1` — Core: DI & Navigation ( `rsud-android-client-9m3` )
+### 🔗 Issue: `EPIC-1` — Core: DI & Navigation ( `rsud-android-client-9m3` ) — ✅ Selesai
 
 **Objective:** App class, Hilt modules, UiState models, NavHost, theme.
 
-- [ ] **⬜ Belum di-claim** — Buat `App.kt`: `@HiltAndroidApp`
-- [ ] **⬜ Belum di-claim** — Buat `model/UiState.kt`: `sealed class UiState<T> { Loading, Success, Error }`
-- [ ] **⬜ Belum di-claim** — Buat `navigation/NavGraph.kt`: NavHost routing (placeholder screens)
-- [ ] **⬜ Belum di-claim** — Buat `ui/theme/Theme.kt`: Compose theme (Material3 + typography + colors)
-- [ ] **⬜ Belum di-claim** — Buat `ui/components/` base composables (Button, TextField, Card, LoadingIndicator)
+- [x] ✅ Buat `App.kt`: `@HiltAndroidApp` + `Configuration.Provider` (HiltWorkerFactory)
+- [x] ✅ Buat `core/model/UiState.kt`: `sealed class UiState<T> { Loading, Success, Error }`
+- [x] ✅ Buat `core/navigation/NavGraph.kt`: NavHost routing (4 placeholder screens)
+- [x] ✅ Buat `core/ui/theme/Theme.kt`: Compose theme (Material3 + dynamic colors)
+- [x] ✅ Buat `core/ui/MainActivity.kt`: `@AndroidEntryPoint`, edge-to-edge, setContent
+- [x] ✅ Buat `core/ui/components/` base composables: AppButton, AppTextField, AppCard, LoadingIndicator
+- [x] ✅ Update AndroidManifest: App class, INTERNET permission, remove default WorkManager initializer, MainActivity
 
 > **Catatan:** DI Modules (`NetworkModule`, `DatabaseModule`, `DataStoreModule`) akan dibuat di EPIC-2 dan EPIC-3 bersama instance yang mereka provide.
 
@@ -269,7 +271,7 @@ bd update <issue-id> --claim          # Claim issue
 #    b. skill("context7-mcp") untuk dokumentasi library
 #    c. impact() untuk analisis dampak
 #    d. Implementasi kode
-#    e. bd update <issue-id> --status done  # Tandai selesai
+#    e. bd update <issue-id> --status closed  # Tandai selesai
 ```
 
 ### Prasyarat Claim
@@ -285,7 +287,7 @@ bd update <issue-id> --claim          # Claim issue
 bd update rsud-android-client-dpw --claim
 
 # Setelah selesai implementasi:
-bd update rsud-android-client-dpw --status done
+bd update rsud-android-client-dpw --status closed
 
 # Lanjut claim EPIC-1, EPIC-2, EPIC-3 (parallel):
 bd update rsud-android-client-9m3 --claim
