@@ -1,0 +1,17 @@
+{
+  "build.gradle.kts": {
+    "mtime": 1784735441.2322762,
+    "ast_hash": "616304c2b2f3bb5b8d64fd63fc099639",
+    "semantic_hash": "616304c2b2f3bb5b8d64fd63fc099639"
+  },
+  "src/androidTest/java/my/id/kentoes/rsudajibarangapp/ExampleInstrumentedTest.kt": {
+    "mtime": 1784735440.706266,
+    "ast_hash": "a63f571a4d677d0ede1e5796ca215037",
+    "semantic_hash": "a63f571a4d677d0ede1e5796ca215037"
+  },
+  "src/test/java/my/id/kentoes/rsudajibarangapp/ExampleUnitTest.kt": {
+    "mtime": 1784735440.6852653,
+    "ast_hash": "470ed35322b8f60170d033f75b11b78c",
+    "semantic_hash": "470ed35322b8f60170d033f75b11b78c"
+  }
+}

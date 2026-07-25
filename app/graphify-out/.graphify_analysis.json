@@ -1,0 +1,39 @@
+{
+  "communities": {
+    "0": [
+      "src_androidtest_java_my_id_kentoes_rsudajibarangapp_exampleinstrumentedtest",
+      "src_androidtest_java_my_id_kentoes_rsudajibarangapp_exampleinstrumentedtest_exampleinstrumentedtest",
+      "src_androidtest_java_my_id_kentoes_rsudajibarangapp_exampleinstrumentedtest_exampleinstrumentedtest_useappcontext"
+    ],
+    "1": [
+      "src_test_java_my_id_kentoes_rsudajibarangapp_exampleunittest",
+      "src_test_java_my_id_kentoes_rsudajibarangapp_exampleunittest_exampleunittest",
+      "src_test_java_my_id_kentoes_rsudajibarangapp_exampleunittest_exampleunittest_addition_iscorrect"
+    ],
+    "2": [
+      "build_gradle"
+    ]
+  },
+  "cohesion": {
+    "0": 0.6666666666666666,
+    "1": 0.6666666666666666,
+    "2": 1.0
+  },
+  "gods": [
+    {
+      "id": "src_androidtest_java_my_id_kentoes_rsudajibarangapp_exampleinstrumentedtest_exampleinstrumentedtest",
+      "label": "ExampleInstrumentedTest",
+      "degree": 2
+    },
+    {
+      "id": "src_test_java_my_id_kentoes_rsudajibarangapp_exampleunittest_exampleunittest",
+      "label": "ExampleUnitTest",
+      "degree": 2
+    }
+  ],
+  "surprises": [],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

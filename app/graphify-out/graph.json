@@ -1,0 +1,125 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "build.gradle.kts",
+      "file_type": "code",
+      "source_file": "build.gradle.kts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "build_gradle",
+      "community": 2,
+      "norm_label": "build.gradle.kts"
+    },
+    {
+      "label": "ExampleInstrumentedTest.kt",
+      "file_type": "code",
+      "source_file": "src/androidTest/java/my/id/kentoes/rsudajibarangapp/ExampleInstrumentedTest.kt",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_androidtest_java_my_id_kentoes_rsudajibarangapp_exampleinstrumentedtest",
+      "community": 0,
+      "norm_label": "exampleinstrumentedtest.kt"
+    },
+    {
+      "label": "ExampleInstrumentedTest",
+      "file_type": "code",
+      "source_file": "src/androidTest/java/my/id/kentoes/rsudajibarangapp/ExampleInstrumentedTest.kt",
+      "source_location": "L16",
+      "_origin": "ast",
+      "id": "src_androidtest_java_my_id_kentoes_rsudajibarangapp_exampleinstrumentedtest_exampleinstrumentedtest",
+      "community": 0,
+      "norm_label": "exampleinstrumentedtest"
+    },
+    {
+      "label": ".useAppContext()",
+      "file_type": "code",
+      "source_file": "src/androidTest/java/my/id/kentoes/rsudajibarangapp/ExampleInstrumentedTest.kt",
+      "source_location": "L18",
+      "_origin": "ast",
+      "id": "src_androidtest_java_my_id_kentoes_rsudajibarangapp_exampleinstrumentedtest_exampleinstrumentedtest_useappcontext",
+      "community": 0,
+      "norm_label": ".useappcontext()"
+    },
+    {
+      "label": "ExampleUnitTest.kt",
+      "file_type": "code",
+      "source_file": "src/test/java/my/id/kentoes/rsudajibarangapp/ExampleUnitTest.kt",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_test_java_my_id_kentoes_rsudajibarangapp_exampleunittest",
+      "community": 1,
+      "norm_label": "exampleunittest.kt"
+    },
+    {
+      "label": "ExampleUnitTest",
+      "file_type": "code",
+      "source_file": "src/test/java/my/id/kentoes/rsudajibarangapp/ExampleUnitTest.kt",
+      "source_location": "L12",
+      "_origin": "ast",
+      "id": "src_test_java_my_id_kentoes_rsudajibarangapp_exampleunittest_exampleunittest",
+      "community": 1,
+      "norm_label": "exampleunittest"
+    },
+    {
+      "label": ".addition_isCorrect()",
+      "file_type": "code",
+      "source_file": "src/test/java/my/id/kentoes/rsudajibarangapp/ExampleUnitTest.kt",
+      "source_location": "L13",
+      "_origin": "ast",
+      "id": "src_test_java_my_id_kentoes_rsudajibarangapp_exampleunittest_exampleunittest_addition_iscorrect",
+      "community": 1,
+      "norm_label": ".addition_iscorrect()"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/androidTest/java/my/id/kentoes/rsudajibarangapp/ExampleInstrumentedTest.kt",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_androidtest_java_my_id_kentoes_rsudajibarangapp_exampleinstrumentedtest",
+      "target": "src_androidtest_java_my_id_kentoes_rsudajibarangapp_exampleinstrumentedtest_exampleinstrumentedtest",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "src/androidTest/java/my/id/kentoes/rsudajibarangapp/ExampleInstrumentedTest.kt",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_androidtest_java_my_id_kentoes_rsudajibarangapp_exampleinstrumentedtest_exampleinstrumentedtest",
+      "target": "src_androidtest_java_my_id_kentoes_rsudajibarangapp_exampleinstrumentedtest_exampleinstrumentedtest_useappcontext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test/java/my/id/kentoes/rsudajibarangapp/ExampleUnitTest.kt",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_test_java_my_id_kentoes_rsudajibarangapp_exampleunittest",
+      "target": "src_test_java_my_id_kentoes_rsudajibarangapp_exampleunittest_exampleunittest",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "src/test/java/my/id/kentoes/rsudajibarangapp/ExampleUnitTest.kt",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_test_java_my_id_kentoes_rsudajibarangapp_exampleunittest_exampleunittest",
+      "target": "src_test_java_my_id_kentoes_rsudajibarangapp_exampleunittest_exampleunittest_addition_iscorrect",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "1f232a74fa33daaf894790162bd119a87e787915"
+}
