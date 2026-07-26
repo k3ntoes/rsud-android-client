@@ -14,6 +14,7 @@ import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafFoto
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafItem
+import my.id.kentoes.rsudajibarangapp.sync.SyncWorker
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -166,8 +167,6 @@ class InspectionFormViewModel @Inject constructor(
         val uiState = _uiState.value
         if (!uiState.submitEnabled) return
 
-        // Untuk MVP, simpan draf dengan status PENDING_SYNC
-        // EPIC-7 & EPIC-8 akan handle upload sebenarnya
         viewModelScope.launch {
             val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
                 .format(Date())
@@ -199,6 +198,9 @@ class InspectionFormViewModel @Inject constructor(
                     )
                 }
             }
+
+            // Trigger sync via WorkManager
+            SyncWorker.enqueue(getApplication())
 
             _uiState.value = _uiState.value.copy(draftSaved = true)
         }

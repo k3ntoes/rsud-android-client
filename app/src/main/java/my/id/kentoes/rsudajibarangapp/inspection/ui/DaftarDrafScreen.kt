@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import my.id.kentoes.rsudajibarangapp.core.ui.components.OfflineBanner
 import my.id.kentoes.rsudajibarangapp.inspection.DaftarDrafViewModel
 import my.id.kentoes.rsudajibarangapp.inspection.DraftSummary
 
@@ -61,6 +62,7 @@ fun DaftarDrafScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val isOnline by viewModel.isOnline.collectAsState(initial = true)
 
     LaunchedEffect(uiState.deletedMessage) {
         uiState.deletedMessage?.let {
@@ -116,52 +118,57 @@ fun DaftarDrafScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.drafts.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.Default.Description,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        "Belum ada draf tersimpan",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Offline banner
+            OfflineBanner(isOffline = !isOnline)
+
+            if (uiState.isLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
                 }
-            }
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-            ) {
-                items(uiState.drafts, key = { it.id }) { draft ->
-                    DraftCard(
-                        draft = draft,
-                        isDeleting = uiState.deletingId == draft.id,
-                        onResume = { onResumeDraft(draft.id) },
-                        onDelete = { viewModel.requestDelete(draft) }
-                    )
+            } else if (uiState.drafts.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.Description,
+                            contentDescription = null,
+                            modifier = Modifier.size(64.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            "Belum ada draf tersimpan",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                ) {
+                    items(uiState.drafts, key = { it.id }) { draft ->
+                        DraftCard(
+                            draft = draft,
+                            isDeleting = uiState.deletingId == draft.id,
+                            onResume = { onResumeDraft(draft.id) },
+                            onDelete = { viewModel.requestDelete(draft) }
+                        )
+                    }
                 }
             }
         }
