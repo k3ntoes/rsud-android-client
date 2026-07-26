@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "my.id.kentoes.rsudajibarangapp"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "my.id.kentoes.rsudajibarangapp"
@@ -18,9 +18,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Base URL — override di debug build type
+        buildConfigField("String", "BASE_URL", "\"https://api.rsud-ajibarang.example.com/\"")
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "BASE_URL", "\"https://dev-api.rsud-ajibarang.example.com/\"")
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(
@@ -37,6 +43,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -75,6 +82,7 @@ dependencies {
 
     // DataStore + Tink
     implementation(libs.datastore)
+    implementation(libs.datastore.preferences)
     implementation(libs.datastore.tink)
     implementation(libs.tink.android)
 

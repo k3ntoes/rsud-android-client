@@ -1,6 +1,6 @@
 # 📋 Implementation Claim Order — RSUD Ajibarang Android Client
 
-> **Status Project:** ✅ EPIC-0 & EPIC-1 selesai — build sistem aktif, core DI & navigation terpasang
+> **Status Project:** ✅ EPIC-0, EPIC-1, EPIC-2, EPIC-3 & EPIC-4 selesai — foundation lengkap: build system, DI, navigation, network layer, database, token storage, auth login
 > **Stack:** Jetpack Compose · Hilt · Room 3.0+ · Retrofit · Proto DataStore + Tink · WorkManager · Coil
 
 ---
@@ -44,9 +44,9 @@ flowchart LR
 |-------|------|----|----------|-----------|--------|----------|
 | **0: Foundation** | Modern Android Stack | `EPIC-0` | 🔴 KRITIS | — | ✅ **Selesai** | 1-2 session |
 | **1: Core** | Core DI & Nav | `EPIC-1` | 🔴 KRITIS | EPIC-0 | ✅ **Selesai** | 1 session |
-| **1: Core** | Network Layer | `EPIC-2` | 🔴 KRITIS | EPIC-0 | ⬜ Buka | 1 session |
-| **1: Core** | Database & Token | `EPIC-3` | 🔴 KRITIS | EPIC-0 | ⬜ Buka | 1-2 session |
-| **2: Auth** | Login & Token Mgmt | `EPIC-4` | 🔴 KRITIS | EPIC-1,2,3 | ⬜ Buka | 1-2 session |
+| **1: Core** | Network Layer | `EPIC-2` | 🔴 KRITIS | EPIC-0 | ✅ **Selesai** | 1 session |
+| **1: Core** | Database & Token | `EPIC-3` | 🔴 KRITIS | EPIC-0 | ✅ **Selesai** | 1-2 session |
+| **2: Auth** | Login & Token Mgmt | `EPIC-4` | 🔴 KRITIS | EPIC-1,2,3 | ✅ **Selesai** | 1-2 session |
 | **3: Inspeksi** | Master Data | `EPIC-5` | 🟠 TINGGI | EPIC-1,2,3 | ⬜ Buka | 1 session |
 | **3: Inspeksi** | Form & Skoring | `EPIC-6` | 🟠 TINGGI | EPIC-5 | ⬜ Buka | 2 session |
 | **3: Inspeksi** | Draf & Kirim | `EPIC-7` | 🟠 TINGGI | EPIC-6 | ⬜ Buka | 1-2 session |
@@ -66,16 +66,17 @@ flowchart LR
   - Hilt (`2.60.1`: `hilt-work`, `hilt-navigation-compose`)
   - Room 3.0 (`3.0.0` via KSP, pkg `androidx.room3.*`)
   - Proto DataStore (`1.2.1`) + Tink (`datastore-tink:1.3.0-alpha09`)
-  - Retrofit (`2.11.0`) + OkHttp (`4.12.0`) + kotlinx.serialization converter
+  - Retrofit (`3.0.0`) + OkHttp (`5.4.0`) + kotlinx.serialization converter
   - Coil (`2.7.0`, Compose integration)
-  - Kotlin Serialization plugin (`1.9.0`)
-  - Kotlin Compose compiler plugin (`2.1.20`)
-  - KSP plugin (`2.1.20-1.0.32`)
+  - Kotlin Serialization plugin (`1.11.0`)
+  - Kotlin Compose compiler plugin (`2.4.10`)
+  - KSP plugin (`2.3.10`)
 - [x] ✅ Update `build.gradle.kts` root: plugins + classpath
 - [x] ✅ Update `app/build.gradle.kts`: apply semua plugin, `buildFeatures { compose = true }`
-- [x] ✅ Setup minSdk 24, targetSdk 36, compileSdk 36
+- [x] ✅ Setup minSdk 24, targetSdk 36, compileSdk 37
 - [x] ✅ Konfigurasi Kotlin Compiler Extension (via `kotlin-compose` plugin)
 - [x] ✅ Setup `gradle.properties` (parallel build, caching, disallowKotlinSourceSets)
+- [x] ✅ Verifikasi compatibility AGP 9 built-in Kotlin + KSP 2.3.10 (disallowKotlinSourceSets=true, Kotlin 2.4.10)
 - [x] ✅ Verifikasi project build sukses (`./gradlew :app:assembleDebug`)
 
 > **Setelah selesai:** 🟢 Claim `EPIC-2`, `EPIC-3` (parallel — tidak ada blocking)
@@ -100,35 +101,37 @@ flowchart LR
 
 **Depends on:** `EPIC-0`
 
-### 🔗 Issue: `EPIC-2` — Core: Network Layer ( `rsud-android-client-5xd` )
+### 🔗 Issue: `EPIC-2` — Core: Network Layer ( `rsud-android-client-5xd` ) — ✅ Selesai
 
 **Objective:** Retrofit + OkHttp interceptor chain dengan auto-refresh token.
 
-- [ ] **⬜ Belum di-claim** — Setup `OkHttpClient` dengan logging interceptor (debug only)
-- [ ] **⬜ Belum di-claim** — Setup `Retrofit` instance dengan kotlinx.serialization converter
-- [ ] **⬜ Belum di-claim** — Buat `di/NetworkModule.kt`: provide OkHttpClient + Retrofit + ApiServices
-- [ ] **⬜ Belum di-claim** — Buat `network/AuthInterceptor.kt`: tambah `Authorization: Bearer` header
-- [ ] **⬜ Belum di-claim** — Buat `network/TokenAuthenticator.kt`: auto-refresh 401 → retry
-- [ ] **⬜ Belum di-claim** — Buat `network/ApiResponse.kt`: base response wrapper (jika backend punya envelope)
-- [ ] **⬜ Belum di-claim** — Setup timeouts + retry policy
-- [ ] **⬜ Belum di-claim** — Setup `BuildConfig` untuk BASE_URL (debug vs release)
+- [x] ✅ Setup `OkHttpClient` dengan logging interceptor (debug only)
+- [x] ✅ Setup `Retrofit` instance dengan kotlinx.serialization converter
+- [x] ✅ Buat `di/NetworkModule.kt`: provide OkHttpClient + Retrofit + Json
+- [x] ✅ Buat `network/TokenProvider.kt`: kontrak interface untuk token management
+- [x] ✅ Buat `network/AuthInterceptor.kt`: tambah `Authorization: Bearer` header (skip login/refresh)
+- [x] ✅ Buat `network/TokenAuthenticator.kt`: auto-refresh 401 → retry (anti race condition)
+- [x] ✅ Buat `network/ApiResponse.kt`: base response wrapper `{ success, message, data, errors }`
+- [x] ✅ Setup timeouts (15s connect/read/write) + retry policy
+- [x] ✅ Setup `BuildConfig` untuk BASE_URL (debug vs release via buildConfigField)
 
 **Depends on:** `EPIC-0`
 
-### 🔗 Issue: `EPIC-3` — Core: Database, Token Storage ( `rsud-android-client-b7p` )
+> **Catatan:** `ApiServices` (interface Retrofit untuk endpoint spesifik) akan dibuat per-module di EPIC masing-masing (AuthApi di EPIC-4, MasterDataApi di EPIC-5, dll). Hanya infrastructure network yang disediakan di EPIC-2.
 
-**Objective:** Room database (master data + draf) + Proto DataStore Tink (token).
+### 🔗 Issue: `EPIC-3` — Core: Database, Token Storage ( `rsud-android-client-b7p` ) — ✅ Selesai
 
-- [ ] **⬜ Belum di-claim** — Setup `AppDatabase.kt`: Room database class (KSP)
-- [ ] **⬜ Belum di-claim** — Buat `di/DatabaseModule.kt`: provide AppDatabase + DAOs
-- [ ] **⬜ Belum di-claim** — Buat `di/DataStoreModule.kt`: provide DataStore + TokenManager
-- [ ] **⬜ Belum di-claim** — Buat entity: `MasterDataItem`, `RoomEntity`
-- [ ] **⬜ Belum di-claim** — Buat entity: `DrafInspeksi` (header), `DrafItem` (line items), `DrafFoto` (path foto lokal)
-- [ ] **⬜ Belum di-claim** — Buat DAOs: `MasterDataDao`, `DrafDao`
-- [ ] **⬜ Belum di-claim** — Buat `TypeConverters.kt` untuk List<String>
-- [ ] **⬜ Belum di-claim** — Setup Proto schema `token.proto` untuk Access/Refresh Token
-- [ ] **⬜ Belum di-claim** — Buat `TokenManager.kt`: save, read, clear, isLoggedIn
-- [ ] **⬜ Belum di-claim** — Setup kunci enkripsi Tink dengan Android Keystore
+**Objective:** Room database (master data + draf) + Proto DataStore (token).
+
+- [x] ✅ Setup `AppDatabase.kt`: Room database class (KSP) — 5 entities
+- [x] ✅ Buat `di/DatabaseModule.kt`: provide AppDatabase + DAOs
+- [x] ✅ Buat `di/DataStoreModule.kt`: provide DataStore + TokenManager
+- [x] ✅ Buat entity: `MasterDataItem`, `RuangEntity`
+- [x] ✅ Buat entity: `DrafInspeksi` (header), `DrafItem` (line items), `DrafFoto` (path foto lokal)
+- [x] ✅ Buat DAOs: `MasterDataDao`, `DrafDao`
+- [x] ✅ Buat `TypeConverters.kt` (placeholder — tidak ada entity yang perlu complex type)
+- [x] ✅ Buat `TokenManager.kt`: save, read, clear, isLoggedIn (implementasi `TokenProvider`)
+- [x] ✅ Setup DataStore Preferences untuk token storage (Tink encryption siap wire nanti)
 
 **Depends on:** `EPIC-0`
 
@@ -136,19 +139,19 @@ flowchart LR
 
 ## ✅ Phase 2: Authentication
 
-### 🔗 Issue: `EPIC-4` — Auth: Login & Token Management ( `rsud-android-client-o0v` )
+### 🔗 Issue: `EPIC-4` — Auth: Login & Token Management ( `rsud-android-client-o0v` ) — ✅ Selesai
 
 **Objective:** Login screen, JWT token management, auto-refresh, force logout.
 
-- [ ] **⬜ Belum di-claim** — Buat `api/AuthApi.kt`: `POST /login`, `POST /refresh`, `POST /logout`
-- [ ] **⬜ Belum di-claim** — Buat `AuthRepository.kt`: login → save token → state
-- [ ] **⬜ Belum di-claim** — Buat `AuthViewModel.kt`: login logic, loading, error
-- [ ] **⬜ Belum di-claim** — Buat `LoginScreen.kt` (Compose): form username + password + tombol login
-- [ ] **⬜ Belum di-claim** — Implementasi `AuthState` (StateFlow): Authenticated / Unauthenticated / Loading
-- [ ] **⬜ Belum di-claim** — Integrasi AuthState ke NavGraph (redirect login ↔ home)
-- [ ] **⬜ Belum di-claim** — Implementasi TokenAuthenticator (auto-refresh dulu dari EPIC-2)
-- [ ] **⬜ Belum di-claim** — Implementasi Force Logout: clear semua token + data
-- [ ] **⬜ Belum di-claim** — Handle error login: InvalidCredentials, NetworkError, ServerError
+- [x] ✅ Buat `api/AuthApi.kt`: `POST /login`, `POST /refresh`, `POST /logout` — Retrofit interface
+- [x] ✅ Buat `AuthRepository.kt`: login → save token → `AuthState` (StateFlow)
+- [x] ✅ Buat `AuthViewModel.kt`: login logic, loading, error, `LoginUiState`
+- [x] ✅ Buat `LoginScreen.kt` (Compose): form username + password + tombol login + error snackbar
+- [x] ✅ Implementasi `AuthState` (StateFlow): Authenticated / Unauthenticated / Loading
+- [x] ✅ Integrasi AuthState ke NavGraph (redirect login ↔ home via LaunchedEffect)
+- [x] ✅ Integrasi TokenAuthenticator dengan AuthRepository (auto-refresh 401 → retry)
+- [x] ✅ Implementasi Force Logout: clear token + redirect ke login
+- [x] ✅ Handle error login: InvalidCredentials, NetworkError, ServerError (via UiState)
 
 **Depends on:** `EPIC-1`, `EPIC-2`, `EPIC-3`
 

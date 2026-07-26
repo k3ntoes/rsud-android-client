@@ -2,15 +2,20 @@ package my.id.kentoes.rsudajibarangapp.core.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import my.id.kentoes.rsudajibarangapp.auth.AuthState
+import my.id.kentoes.rsudajibarangapp.auth.AuthViewModel
+import my.id.kentoes.rsudajibarangapp.auth.ui.LoginScreen
 
 object Routes {
     const val LOGIN = "login"
@@ -22,10 +27,40 @@ object Routes {
 }
 
 @Composable
-fun NavGraph(navController: NavHostController = rememberNavController()) {
-    NavHost(navController = navController, startDestination = Routes.LOGIN) {
+fun NavGraph(
+    navController: NavHostController = rememberNavController(),
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
+    val authState by authViewModel.authState.collectAsState()
+
+    // Tampilkan loading screen saat init
+    if (authState is AuthState.Loading) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    val startDestination = when (authState) {
+        is AuthState.Authenticated -> Routes.INSPECTION_LIST
+        else -> Routes.LOGIN
+    }
+
+    NavHost(
+        navController = navController,
+        startDestination = startDestination
+    ) {
         composable(Routes.LOGIN) {
-            PlaceholderScreen("Login")
+            LoginScreen(
+                onLoginSuccess = {
+                    navController.navigate(Routes.INSPECTION_LIST) {
+                        popUpTo(Routes.LOGIN) { inclusive = true }
+                    }
+                }
+            )
         }
         composable(Routes.INSPECTION_LIST) {
             PlaceholderScreen("Daftar Inspeksi")
@@ -42,12 +77,6 @@ fun NavGraph(navController: NavHostController = rememberNavController()) {
 @Composable
 private fun PlaceholderScreen(title: String) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = title)
+        androidx.compose.material3.Text(text = title)
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun NavGraphPreview() {
-    NavGraph()
 }
