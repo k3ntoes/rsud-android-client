@@ -1,34 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" tests="24" skipped="0" failures="0" errors="0" timestamp="2026-07-26T17:31:18.867Z" hostname="kentoes-IdeaPad-3-14IAU7" time="1.827">
+<testsuite name="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" tests="24" skipped="0" failures="0" errors="0" timestamp="2026-07-26T17:40:14.622Z" hostname="kentoes-IdeaPad-3-14IAU7" time="0.478">
   <properties/>
-  <testcase name="updateCatatan with blank sets catatan to null" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="1.643"/>
-  <testcase name="item state transitions maintain correct isValid" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.005"/>
-  <testcase name="submitEnabled is false when any item unscored" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.005"/>
-  <testcase name="addPhoto appends photo path and makes skor-0 item valid" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.005"/>
+  <testcase name="updateCatatan with blank sets catatan to null" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.331"/>
+  <testcase name="item state transitions maintain correct isValid" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.003"/>
+  <testcase name="submitEnabled is false when any item unscored" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.002"/>
+  <testcase name="addPhoto appends photo path and makes skor-0 item valid" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.003"/>
   <testcase name="updateScore accepts -1 to reset to unscored" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.004"/>
-  <testcase name="updateScore with 0 makes item invalid without photo" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.005"/>
-  <testcase name="addPhoto supports multiple photos per item" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.005"/>
-  <testcase name="skor 0 with no photo prevents submit" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.004"/>
-  <testcase name="submitEnabled is true when all items valid" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.004"/>
-  <testcase name="submit does nothing when submitEnabled is false" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.027"/>
+  <testcase name="updateScore with 0 makes item invalid without photo" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.003"/>
+  <testcase name="addPhoto supports multiple photos per item" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.007"/>
+  <testcase name="skor 0 with no photo prevents submit" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.003"/>
+  <testcase name="submitEnabled is true when all items valid" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.003"/>
+  <testcase name="submit does nothing when submitEnabled is false" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.016"/>
   <testcase name="updateScore sets skor and recalculates counts" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.003"/>
-  <testcase name="skor 0 becomes valid after adding photo" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.003"/>
-  <testcase name="saveDraft inserts draft with DRAFT status" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.019"/>
+  <testcase name="skor 0 becomes valid after adding photo" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.002"/>
+  <testcase name="saveDraft inserts draft with DRAFT status" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.016"/>
   <testcase name="deleting last photo from skor-0 item makes it invalid again" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.003"/>
-  <testcase name="score 1 and 2 are valid even without photos" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.002"/>
-  <testcase name="saveDraft inserts items and photos for all itemStates" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.01"/>
-  <testcase name="init with draftId resumes from draft" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.042"/>
-  <testcase name="init groups items by kategori" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.005"/>
+  <testcase name="score 1 and 2 are valid even without photos" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.003"/>
+  <testcase name="saveDraft inserts items and photos for all itemStates" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.008"/>
+  <testcase name="init with draftId resumes from draft" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.038"/>
+  <testcase name="init groups items by kategori" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.003"/>
   <testcase name="init with empty items shows no items" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.003"/>
-  <testcase name="deletePhoto removes photo path from item" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.004"/>
-  <testcase name="clearDraftSaved resets draftSaved flag" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.009"/>
-  <testcase name="init loads items and sets correct initial state" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.002"/>
+  <testcase name="deletePhoto removes photo path from item" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.003"/>
+  <testcase name="clearDraftSaved resets draftSaved flag" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.006"/>
+  <testcase name="init loads items and sets correct initial state" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.003"/>
   <testcase name="updateCatatan sets catatan on item" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.002"/>
-  <testcase name="submit saves with PENDING_SYNC status when all items valid" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.006"/>
+  <testcase name="submit saves with PENDING_SYNC status when all items valid" classname="my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModelTest" time="0.008"/>
   <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (/home/kentoes/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.14.17/e3c251a39dc90badaf71c83427ba46840f219d8d/byte-buddy-agent-1.14.17.jar)
-WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
-WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
-WARNING: Dynamic loading of agents will be disallowed by default in a future release
-]]></system-err>
+  <system-err><![CDATA[]]></system-err>
 </testsuite>

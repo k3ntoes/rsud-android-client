@@ -1,6 +1,6 @@
 # 📋 Implementation Claim Order — RSUD Ajibarang Android Client
 
-> **Status Project:** ✅ **MVP SELESAI** — EPIC-0 s.d. EPIC-9 completed. All features implemented: build system, DI & navigation, network layer, database & token storage, auth login, master data sync, dynamic form & scoring, camera capture, draft management, WorkManager sync
+> **Status Project:** ✅ **MVP SELESAI** — EPIC-0 s.d. EPIC-10 completed. All features implemented: build system, DI & navigation, network layer, database & token storage, auth login, master data sync, dynamic form & scoring, camera capture, draft management, WorkManager sync, dashboard & statistics
 > **Stack:** Jetpack Compose · Hilt · Room 3.0+ · Retrofit · Proto DataStore · WorkManager · Coil
 > **ADR Compliance:** ADR-0001 (multi-module) ✅ **Full Compliance**. ADR-0002 (Tink encryption) ✅ **Full Compliance** — `datastore-tink` native (`AeadSerializer`) + Android Keystore via `AndroidKeysetManager`. Enkripsi transparan di layer DataStore.
 
@@ -33,6 +33,7 @@ flowchart LR
     EPIC3 --> EPIC8
     
     EPIC8 --> EPIC9[EPIC-9: Refinement]
+    EPIC9 --> EPIC10[EPIC-10: Dashboard & Statistics]
 ```
 
 > **Aturan:** Setiap EPIC hanya bisa di-*claim* setelah semua dependensinya selesai.
@@ -68,6 +69,7 @@ Ringkasan kepatuhan implementasi terhadap Architectural Decision Records.
 | **3: Inspeksi** | Draf & Kirim | `EPIC-7` | 🟠 TINGGI | EPIC-6 | ✅ **Selesai** | 1-2 session |
 | **4: Sinkronisasi** | Upload Worker | `EPIC-8` | 🟠 TINGGI | EPIC-7,2,3 | ✅ **Selesai** | 1-2 session |
 | **5: Poles** | Refinement | `EPIC-9` | 🟢 NORMAL | EPIC-8 | ✅ **Selesai** | 1-2 session |
+| **6: Dashboard** | Dashboard & Statistics | `EPIC-10` | 🟢 NORMAL | EPIC-9 | ✅ **Selesai** | 1 session |
 
 ---
 
@@ -283,6 +285,29 @@ Ringkasan kepatuhan implementasi terhadap Architectural Decision Records.
 **Depends on:** `EPIC-8`
 
 > **Catatan:** Unit test, instrumented test, dan idempotency test belum diimplementasi — bisa ditambahkan di iterasi berikutnya. Beberapa item (loading state, empty state, pull-to-refresh, confirmation dialog) sudah selesai di EPIC sebelumnya dan hanya dicatat ulang di sini untuk kelengkapan.
+
+---
+
+## ✅ Phase 6: Dashboard
+
+### 🔗 Issue: `EPIC-10` — Dashboard & Statistics ( — ✅ Selesai
+
+**Objective:** Dashboard screen sebagai landing page setelah login dengan statistik inspeksi dan navigasi hub.
+
+- [x] ✅ Buat `dashboard/DashboardViewModel.kt`: agregat statistik dari 3 flow (`getAllDrafts()`, `getAllRooms()`, `getAllItems()`) via `combine` — totalDrafts, draftCount, pendingSyncCount, syncedCount, totalRooms, totalItems, recentDrafts (take 5)
+- [x] ✅ Buat `dashboard/DashboardScreen.kt` (Compose): stats grid (6 card dengan warna status), action buttons (Inspeksi Baru, Lihat Draf), recent activity list, logout button di TopAppBar
+- [x] ✅ Update `AuthViewModel.kt`: tambah `logout()` method delegasi ke `authRepository.logout()`
+- [x] ✅ Update `MasterDataListScreen.kt`: tambah optional `onNavigateBack` parameter dengan back arrow di TopAppBar
+- [x] ✅ Update `NavGraph.kt`:
+  - Tambah route `DASHBOARD` sebagai start destination setelah login
+  - Dashboard → InspectionList → InspectionForm (back → InspectionList → back → Dashboard)
+  - Dashboard → DraftList (back → Dashboard)
+  - Dashboard → Logout → Login (clear backstack via `popUpTo(0)`)
+- [x] ✅ DashboardViewModelTest (7 tests): all stats loaded, count by status, empty drafts, recent limit (5), initial isLoading state, unknown status handling, reactive flow updates
+
+**Depends on:** `EPIC-9`
+
+> **Catatan:** Untuk MVP dashboard menampilkan statistik sederhana dari data lokal Room. Fitur seperti grafik, filter tanggal, atau statistik per ruangan bisa ditambahkan di iterasi berikutnya.
 
 ---
 

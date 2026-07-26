@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="my.id.kentoes.rsudajibarangapp.dashboard.DashboardViewModelTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-07-26T17:40:13.540Z" hostname="kentoes-IdeaPad-3-14IAU7" time="1.076">
+  <properties/>
+  <testcase name="init handles unknown draft status gracefully" classname="my.id.kentoes.rsudajibarangapp.dashboard.DashboardViewModelTest" time="1.045"/>
+  <testcase name="init state has isLoading true before advance" classname="my.id.kentoes.rsudajibarangapp.dashboard.DashboardViewModelTest" time="0.007"/>
+  <testcase name="recentDrafts only contains first 5 drafts" classname="my.id.kentoes.rsudajibarangapp.dashboard.DashboardViewModelTest" time="0.006"/>
+  <testcase name="init reacts to updated flow emissions" classname="my.id.kentoes.rsudajibarangapp.dashboard.DashboardViewModelTest" time="0.004"/>
+  <testcase name="init counts drafts by status correctly" classname="my.id.kentoes.rsudajibarangapp.dashboard.DashboardViewModelTest" time="0.003"/>
+  <testcase name="init with empty drafts returns zeros" classname="my.id.kentoes.rsudajibarangapp.dashboard.DashboardViewModelTest" time="0.003"/>
+  <testcase name="init loads all stats from dao flows" classname="my.id.kentoes.rsudajibarangapp.dashboard.DashboardViewModelTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (/home/kentoes/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.14.17/e3c251a39dc90badaf71c83427ba46840f219d8d/byte-buddy-agent-1.14.17.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>
