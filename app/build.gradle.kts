@@ -48,17 +48,24 @@ android {
 }
 
 dependencies {
-    // Core
+    // Project modules
+    implementation(project(":core:model"))
+    implementation(project(":core:network"))
+    implementation(project(":core:datastore"))
+    implementation(project(":feature:auth"))
+    implementation(project(":feature:inspection"))
+
+    // App-level: Core UI & theme
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.material) // needed for XML theme (MaterialComponents)
+    implementation(libs.material)
 
-    // Lifecycle
+    // Lifecycle (needed by NavGraph)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    // Compose BOM
+    // Compose BOM (needed by app's own composables)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
@@ -76,27 +83,8 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.work)
 
-    // Room 3.0 (KSP) — KTX melebur ke runtime
-    implementation(libs.room3.runtime)
-    ksp(libs.room3.compiler)
-
-    // DataStore + Tink
-    implementation(libs.datastore)
-    implementation(libs.datastore.preferences)
-    implementation(libs.datastore.tink)
-    implementation(libs.tink.android)
-
-    // Network
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.kotlinx.serialization)
-    implementation(libs.okhttp)
-    implementation(libs.okhttp.logging.interceptor)
-
-    // Coil
+    // Coil (needed by remaining UI components)
     implementation(libs.coil.compose)
-
-    // Serialization
-    implementation(libs.kotlinx.serialization.json)
 
     // WorkManager
     implementation(libs.work.runtime.ktx)

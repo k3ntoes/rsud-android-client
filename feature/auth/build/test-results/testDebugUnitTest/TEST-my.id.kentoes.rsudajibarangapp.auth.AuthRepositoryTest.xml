@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" tests="15" skipped="0" failures="0" errors="0" timestamp="2026-07-26T17:03:30.509Z" hostname="kentoes-IdeaPad-3-14IAU7" time="1.702">
+  <properties/>
+  <testcase name="refreshToken exception calls forceLogout" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="1.611"/>
+  <testcase name="logout still clears tokens even if API fails" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.013"/>
+  <testcase name="init sets Authenticated when token exists" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.005"/>
+  <testcase name="refreshToken success saves new access token" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.013"/>
+  <testcase name="init sets Unauthenticated when no token" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.002"/>
+  <testcase name="login sends correct LoginRequest" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.011"/>
+  <testcase name="refreshToken returns false when no refresh token" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.004"/>
+  <testcase name="getAccessToken delegates to TokenManager" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.004"/>
+  <testcase name="login success saves tokens and returns true" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.007"/>
+  <testcase name="login failure returns false and sets Error state" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.003"/>
+  <testcase name="logout calls logout API then clears tokens" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.006"/>
+  <testcase name="forceLogout clears tokens and sets Unauthenticated" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.004"/>
+  <testcase name="refreshToken failure calls forceLogout" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.005"/>
+  <testcase name="logout clears tokens even when no refresh token" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.005"/>
+  <testcase name="login network error returns false with error message" classname="my.id.kentoes.rsudajibarangapp.auth.AuthRepositoryTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[WARNING: A Java agent has been loaded dynamically (/home/kentoes/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.14.17/e3c251a39dc90badaf71c83427ba46840f219d8d/byte-buddy-agent-1.14.17.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+]]></system-err>
+</testsuite>

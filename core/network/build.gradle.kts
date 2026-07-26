@@ -26,12 +26,15 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
 
-    // Network
-    implementation(libs.retrofit)
-    implementation(libs.retrofit.converter.kotlinx.serialization)
-    implementation(libs.okhttp)
-    implementation(libs.okhttp.logging.interceptor)
+    // Network — api agar tersedia di module dependen
+    api(libs.retrofit)
+    api(libs.retrofit.converter.kotlinx.serialization)
+    api(libs.okhttp)
+    api(libs.okhttp.logging.interceptor)
 
     // Serialization
-    implementation(libs.kotlinx.serialization.json)
+    api(libs.kotlinx.serialization.json)
+
+    // Core
+    implementation(libs.androidx.core.ktx)
 }

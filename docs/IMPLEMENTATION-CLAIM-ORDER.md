@@ -2,7 +2,7 @@
 
 > **Status Project:** ✅ **MVP SELESAI** — EPIC-0 s.d. EPIC-9 completed. All features implemented: build system, DI & navigation, network layer, database & token storage, auth login, master data sync, dynamic form & scoring, camera capture, draft management, WorkManager sync
 > **Stack:** Jetpack Compose · Hilt · Room 3.0+ · Retrofit · Proto DataStore · WorkManager · Coil
-> **ADR Deviasi:** ADR-0001 (multi-module) tidak diikuti — single-module untuk MVP. ADR-0002 (Tink encryption) ✅ **Full Compliance** — `datastore-tink` native (`AeadSerializer`) + Android Keystore via `AndroidKeysetManager`. Enkripsi transparan di layer DataStore.
+> **ADR Compliance:** ADR-0001 (multi-module) ✅ **Full Compliance**. ADR-0002 (Tink encryption) ✅ **Full Compliance** — `datastore-tink` native (`AeadSerializer`) + Android Keystore via `AndroidKeysetManager`. Enkripsi transparan di layer DataStore.
 
 ---
 
@@ -45,7 +45,7 @@ Ringkasan kepatuhan implementasi terhadap Architectural Decision Records.
 
 | ADR | Judul | Status | Keterangan |
 |-----|-------|--------|------------|
-| `ADR-0001` | Multi-Module Architecture | ❌ **Deviasi** | Project tetap single-module (`app/`) untuk mempercepat MVP. ADR ini bisa diimplementasi nanti sebagai refactor multi-module. |
+| `ADR-0001` | Multi-Module Architecture | ✅ **Full Compliance** | 6 modules: `:app`, `:feature:auth`, `:feature:inspection`, `:core:network`, `:core:datastore`, `:core:model`. Circular deps resolved via `TokenProvider` + `TokenRefreshHandler` interfaces di `:core:model`. Hilt multi-module dengan `@InstallIn(SingletonComponent)`. |
 | `ADR-0002` | Proto DataStore + Tink Token Storage | ✅ **Full Compliance** | `DataStoreModule` menggunakan `datastore-tink` native (`AeadSerializer` + `DataStoreFactory`) untuk enkripsi transparan di layer DataStore. Tink AEAD (`AES256_GCM`) + Android Keystore via `AndroidKeysetManager`. `TokenManager` membaca/menulis `TokenData` biasa — enkripsi otomatis oleh `AeadSerializer`. |
 | `ADR-0003` | Offline-First Inspection Submission | ✅ **Diikuti** | Room local storage + WorkManager sync dua langkah (upload foto → submit JSON) sesuai ADR. |
 | `ADR-0004` | Jetpack Compose Modern Stack | ✅ **Diikuti** | Compose, Hilt, kotlinx.serialization, Coil, Compose Navigation — semua sesuai. |

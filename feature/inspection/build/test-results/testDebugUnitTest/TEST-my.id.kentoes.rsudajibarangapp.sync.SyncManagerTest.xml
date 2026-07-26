@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-07-26T17:31:21.155Z" hostname="kentoes-IdeaPad-3-14IAU7" time="0.172">
+  <properties/>
+  <testcase name="syncSingleDraft maps multiple items and photos correctly in submit request" classname="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" time="0.088"/>
+  <testcase name="syncAllPending returns empty list when no pending drafts" classname="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" time="0.003"/>
+  <testcase name="syncSingleDraft catches exception from submit" classname="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" time="0.004"/>
+  <testcase name="syncSingleDraft catches exception from upload" classname="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" time="0.005"/>
+  <testcase name="syncSingleDraft catches exception and returns failure" classname="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" time="0.003"/>
+  <testcase name="syncSingleDraft returns error with message when submit has no message" classname="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" time="0.007"/>
+  <testcase name="syncSingleDraft returns error when submit fails" classname="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" time="0.007"/>
+  <testcase name="syncSingleDraft handles draft with no items" classname="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" time="0.009"/>
+  <testcase name="syncAllPending syncs each pending draft" classname="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" time="0.011"/>
+  <testcase name="syncSingleDraft returns error when preparePayload returns null" classname="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" time="0.004"/>
+  <testcase name="syncSingleDraft handles upload failure gracefully" classname="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" time="0.007"/>
+  <testcase name="syncSingleDraft returns full success flow" classname="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" time="0.016"/>
+  <testcase name="syncSingleDraft item without photos skips upload" classname="my.id.kentoes.rsudajibarangapp.sync.SyncManagerTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="my.id.kentoes.rsudajibarangapp.sync.ImageCompressorTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-07-26T17:31:20.960Z" hostname="kentoes-IdeaPad-3-14IAU7" time="0.193">
+  <properties/>
+  <testcase name="compress handles empty file" classname="my.id.kentoes.rsudajibarangapp.sync.ImageCompressorTest" time="0.188"/>
+  <testcase name="compress returns original path when file does not exist" classname="my.id.kentoes.rsudajibarangapp.sync.ImageCompressorTest" time="0.001"/>
+  <testcase name="compress returns original path when file already under max size" classname="my.id.kentoes.rsudajibarangapp.sync.ImageCompressorTest" time="0.003"/>
+  <testcase name="compress does not create compressed directory for small file" classname="my.id.kentoes.rsudajibarangapp.sync.ImageCompressorTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

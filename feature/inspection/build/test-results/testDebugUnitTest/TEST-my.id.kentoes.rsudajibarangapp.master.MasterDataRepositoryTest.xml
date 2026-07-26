@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="my.id.kentoes.rsudajibarangapp.master.MasterDataRepositoryTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-07-26T17:31:20.697Z" hostname="kentoes-IdeaPad-3-14IAU7" time="0.128">
+  <properties/>
+  <testcase name="syncFromApi returns failure when both API calls throw" classname="my.id.kentoes.rsudajibarangapp.master.MasterDataRepositoryTest" time="0.064"/>
+  <testcase name="syncFromApi does not insert rooms when API success is false" classname="my.id.kentoes.rsudajibarangapp.master.MasterDataRepositoryTest" time="0.011"/>
+  <testcase name="syncFromApi catches rooms exception but items already saved" classname="my.id.kentoes.rsudajibarangapp.master.MasterDataRepositoryTest" time="0.007"/>
+  <testcase name="syncFromApi maps API response fields correctly to entities" classname="my.id.kentoes.rsudajibarangapp.master.MasterDataRepositoryTest" time="0.008"/>
+  <testcase name="syncFromApi does not insert when API returns success but null data" classname="my.id.kentoes.rsudajibarangapp.master.MasterDataRepositoryTest" time="0.01"/>
+  <testcase name="isCacheAvailable returns true when items exist" classname="my.id.kentoes.rsudajibarangapp.master.MasterDataRepositoryTest" time="0.001"/>
+  <testcase name="syncFromApi inserts mapped items and rooms on full success" classname="my.id.kentoes.rsudajibarangapp.master.MasterDataRepositoryTest" time="0.007"/>
+  <testcase name="isCacheAvailable returns false when items empty" classname="my.id.kentoes.rsudajibarangapp.master.MasterDataRepositoryTest" time="0.003"/>
+  <testcase name="syncFromApi does not insert items when API success is false" classname="my.id.kentoes.rsudajibarangapp.master.MasterDataRepositoryTest" time="0.006"/>
+  <testcase name="syncFromApi still inserts rooms when items API success is false but rooms succeed" classname="my.id.kentoes.rsudajibarangapp.master.MasterDataRepositoryTest" time="0.006"/>
+  <testcase name="syncFromApi catches network exception and returns failure" classname="my.id.kentoes.rsudajibarangapp.master.MasterDataRepositoryTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
