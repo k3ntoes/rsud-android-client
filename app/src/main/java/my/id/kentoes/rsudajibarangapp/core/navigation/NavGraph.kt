@@ -19,15 +19,22 @@ import my.id.kentoes.rsudajibarangapp.auth.AuthState
 import my.id.kentoes.rsudajibarangapp.auth.AuthViewModel
 import my.id.kentoes.rsudajibarangapp.auth.ui.LoginScreen
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionFormScreen
+import my.id.kentoes.rsudajibarangapp.inspection.ui.DaftarDrafScreen
 import my.id.kentoes.rsudajibarangapp.master.ui.MasterDataListScreen
 
 object Routes {
     const val LOGIN = "login"
     const val INSPECTION_LIST = "inspection_list"
-    const val INSPECTION_FORM = "inspection_form/{roomId}/{roomName}"
+    const val INSPECTION_FORM = "inspection_form/{roomId}/{roomName}?draftId={draftId}"
     const val DRAFT_LIST = "draft_list"
 
-    fun inspectionForm(roomId: String, roomName: String) = "inspection_form/$roomId/$roomName"
+    fun inspectionForm(roomId: String, roomName: String, draftId: Long? = null): String {
+        return if (draftId != null) {
+            "inspection_form/$roomId/$roomName?draftId=$draftId"
+        } else {
+            "inspection_form/$roomId/$roomName"
+        }
+    }
 }
 
 @Composable
@@ -77,19 +84,30 @@ fun NavGraph(
             route = Routes.INSPECTION_FORM,
             arguments = listOf(
                 navArgument("roomId") { type = NavType.StringType },
-                navArgument("roomName") { type = NavType.StringType }
+                navArgument("roomName") { type = NavType.StringType },
+                navArgument("draftId") {
+                    type = NavType.StringType
+                    defaultValue = null
+                }
             )
         ) {
             val roomId = it.arguments?.getString("roomId")?.toLongOrNull() ?: 0L
             val roomName = it.arguments?.getString("roomName") ?: ""
+            val draftId = it.arguments?.getString("draftId")?.toLongOrNull()
             InspectionFormScreen(
                 roomId = roomId,
                 roomName = roomName,
+                draftId = draftId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
         composable(Routes.DRAFT_LIST) {
-            PlaceholderScreen("Draf Tersimpan")
+            DaftarDrafScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onResumeDraft = { draftId ->
+                    navController.navigate(Routes.inspectionForm("0", "Resume Draft", draftId))
+                }
+            )
         }
     }
 }

@@ -37,7 +37,8 @@ data class InspectionFormUiState(
 class InspectionFormViewModel @Inject constructor(
     application: Application,
     private val masterDataDao: MasterDataDao,
-    private val drafDao: DrafDao
+    private val drafDao: DrafDao,
+    private val inspectionRepository: InspectionRepository
 ) : AndroidViewModel(application) {
 
     private val _uiState = MutableStateFlow(InspectionFormUiState())
@@ -46,23 +47,32 @@ class InspectionFormViewModel @Inject constructor(
     /** Map itemId → ItemState untuk update cepat */
     private val itemStates = mutableMapOf<Long, ItemState>()
 
-    /** Inisialisasi dengan roomId dan roomName */
-    fun init(roomId: Long, roomName: String) {
+    /** Inisialisasi dengan roomId dan roomName — dan opsional draftId untuk resume */
+    fun init(roomId: Long, roomName: String, draftId: Long? = null) {
         _uiState.value = _uiState.value.copy(roomId = roomId, roomName = roomName, isLoading = true)
 
         viewModelScope.launch {
-            // Load items dari Room (cache master data)
-            val items = masterDataDao.getAllItems().first()
-            val states = items.map { entity ->
-                ItemState(
-                    itemId = entity.id,
-                    nama = entity.nama,
-                    kategori = entity.kategori,
-                    skor = -1,
-                    fotoPaths = emptyList(),
-                    catatan = null
-                )
+            val allMasterItems = masterDataDao.getAllItems().first()
+
+            val states = if (draftId != null && draftId > 0) {
+                // Resume dari draft — load skor, foto, catatan yang sudah tersimpan
+                val (draftRoomId, draftStates) = inspectionRepository.draftToItemStates(draftId, allMasterItems)
+                _uiState.value = _uiState.value.copy(roomId = draftRoomId)
+                draftStates
+            } else {
+                // Form baru — semua item default (-1, kosong)
+                allMasterItems.map { entity ->
+                    ItemState(
+                        itemId = entity.id,
+                        nama = entity.nama,
+                        kategori = entity.kategori,
+                        skor = -1,
+                        fotoPaths = emptyList(),
+                        catatan = null
+                    )
+                }
             }
+
             states.forEach { itemStates[it.itemId] = it }
 
             _uiState.value = _uiState.value.copy(

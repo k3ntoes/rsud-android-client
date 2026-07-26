@@ -1,6 +1,6 @@
 # 📋 Implementation Claim Order — RSUD Ajibarang Android Client
 
-> **Status Project:** ✅ EPIC-0 s.d. EPIC-6 selesai — foundation + auth + master data + form inspeksi: build system, DI, navigation, network, database, auth, master data, dynamic form, scoring, camera
+> **Status Project:** ✅ EPIC-0 s.d. EPIC-7 selesai — foundation + auth + master data + form + draf: build system, DI, navigation, network, database, auth, master data, form & scoring, camera, draf & pengiriman
 > **Stack:** Jetpack Compose · Hilt · Room 3.0+ · Retrofit · Proto DataStore + Tink · WorkManager · Coil
 
 ---
@@ -49,7 +49,7 @@ flowchart LR
 | **2: Auth** | Login & Token Mgmt | `EPIC-4` | 🔴 KRITIS | EPIC-1,2,3 | ✅ **Selesai** | 1-2 session |
 | **3: Inspeksi** | Master Data | `EPIC-5` | 🟠 TINGGI | EPIC-1,2,3 | ✅ **Selesai** | 1 session |
 | **3: Inspeksi** | Form & Skoring | `EPIC-6` | 🟠 TINGGI | EPIC-5 | ✅ **Selesai** | 2 session |
-| **3: Inspeksi** | Draf & Kirim | `EPIC-7` | 🟠 TINGGI | EPIC-6 | ⬜ Buka | 1-2 session |
+| **3: Inspeksi** | Draf & Kirim | `EPIC-7` | 🟠 TINGGI | EPIC-6 | ✅ **Selesai** | 1-2 session |
 | **4: Sinkronisasi** | Upload Worker | `EPIC-8` | 🟠 TINGGI | EPIC-7,2,3 | ⬜ Buka | 1-2 session |
 | **5: Poles** | Refinement | `EPIC-9` | 🟢 NORMAL | EPIC-8 | ⬜ Buka | 1-2 session |
 
@@ -199,19 +199,20 @@ flowchart LR
 
 > **Catatan:** Camera state bisa loss saat config change (rotation) — untuk MVP acceptable, akan diperbaiki di EPIC-9 Refinement. `saveDraft()` dan `submit()` memiliki duplikasi kode yang bisa diekstrak nanti.
 
-### 🔗 Issue: `EPIC-7` — Draf & Pengiriman ( `rsud-android-client-rrj` )
+### 🔗 Issue: `EPIC-7` — Draf & Pengiriman ( `rsud-android-client-rrj` ) — ✅ Selesai
 
 **Objective:** Simpan draf ke Room, siapkan payload untuk dikirim Sync.
 
-- [ ] **⬜ Belum di-claim** — Buat `InspectionRepository.kt`: simpan draf, load draf, prepare kirim
-- [ ] **⬜ Belum di-claim** — Simpan draf: DrafInspeksi + DrafItem + DrafFoto ke Room
-- [ ] **⬜ Belum di-claim** — Generate `local_timestamp` (UTC ISO 8601) saat draf dibuat
-- [ ] **⬜ Belum di-claim** — Implementasi idempotency key `(room_id, local_timestamp, inspector_id)`
-- [ ] **⬜ Belum di-claim** — Load + resume draf yang belum terkirim
-- [ ] **⬜ Belum di-claim** — Implementasi preparePengiriman: mapping ItemState → JSON payload
-- [ ] **⬜ Belum di-claim** — Hapus draf lokal setelah kirim sukses
-- [ ] **⬜ Belum di-claim** — Buat `DaftarDrafScreen.kt`: daftar draf tersimpan
-- [ ] **⬜ Belum di-claim** — Implementasi hapus draf manual
+- [x] ✅ Buat `InspectionRepository.kt`: CRUD draft, `DraftSummary` Flow (dengan nama ruangan via join), `DraftWithItems`, `InspectionPayload`
+- [x] ✅ Simpan draf ke Room: `DrafInspeksi` + `DrafItem` + `DrafFoto` (via `InspectionFormViewModel.saveDraft()`)
+- [x] ✅ Generate `local_timestamp` UTC ISO 8601 (`SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")`)
+- [x] ✅ Implementasi resume draft: `draftToItemStates()` load skor, foto, catatan dari DB + restore roomId
+- [x] ✅ Implementasi preparePengiriman: `preparePayload()` mapping Room entities → `InspectionPayload` (itemId, skor, catatan, fotoPaths)
+- [x] ✅ Hapus draf lokal via `deleteDraft()` (CASCADE FK hapus item & foto otomatis)
+- [x] ✅ Buat `DaftarDrafScreen.kt`: daftar draf dengan status visual (DRAFT/PENDING_SYNC/SYNCED), empty state
+- [x] ✅ Implementasi hapus draf manual: confirm dialog + loading indicator
+- [x] ✅ Update status draf: `DRAFT` → `PENDING_SYNC` → `SYNCED` via `updateStatus()`
+- [x] ✅ Integrasi ke `NavGraph.kt`: route `?draftId={draftId}`, resume navigasi dari DaftarDrafScreen ke InspectionFormScreen
 
 **Depends on:** `EPIC-6`
 

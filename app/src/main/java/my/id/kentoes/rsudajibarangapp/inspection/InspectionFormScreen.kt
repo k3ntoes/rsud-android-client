@@ -56,6 +56,7 @@ import my.id.kentoes.rsudajibarangapp.inspection.components.ItemCard
 fun InspectionFormScreen(
     roomId: Long,
     roomName: String,
+    draftId: Long? = null,
     onNavigateBack: () -> Unit,
     viewModel: InspectionFormViewModel = hiltViewModel()
 ) {
@@ -63,9 +64,9 @@ fun InspectionFormScreen(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Inisialisasi ViewModel dengan roomId/roomName
-    LaunchedEffect(roomId) {
-        viewModel.init(roomId, roomName)
+    // Inisialisasi ViewModel dengan roomId/roomName — dan draftId untuk resume
+    LaunchedEffect(roomId, draftId) {
+        viewModel.init(roomId, roomName, draftId)
     }
 
     // Navigasi balik saat draft tersimpan
