@@ -6,7 +6,6 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import my.id.kentoes.rsudajibarangapp.core.network.TokenProvider
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -31,15 +30,6 @@ class TokenManager @Inject constructor(
         return dataStore.data.map { prefs ->
             prefs[REFRESH_TOKEN_KEY]
         }.first()
-    }
-
-    override suspend fun refreshTokens(): Boolean {
-        // Implementasi aktual akan dilakukan di AuthRepository
-        // yang akan memanggil AuthApi.refresh()
-        //
-        // Di sini hanya placeholder — EPIC-4 AuthRepository akan override
-        // logic ini atau AuthRepository akan memanggil tokenManager.saveTokens()
-        return false
     }
 
     override suspend fun clearTokens() {

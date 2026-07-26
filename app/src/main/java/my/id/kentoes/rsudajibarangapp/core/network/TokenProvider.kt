@@ -15,10 +15,6 @@ interface TokenProvider {
     /** Ambil Refresh Token (untuk proses refresh) */
     suspend fun getRefreshToken(): String?
 
-    /** Refresh token: dapatkan Access Token baru via Refresh Token.
-     *  Return true jika sukses, false jika gagal (Force Logout). */
-    suspend fun refreshTokens(): Boolean
-
     /** Hapus semua token (Force Logout / Logout manual) */
     suspend fun clearTokens()
 }
