@@ -51,10 +51,15 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             val success = authRepository.login(state.username, state.password)
+            // Baca error dari authState jika login gagal
+            val authError = if (!success) {
+                val currentAuthState = authRepository.authState.value
+                if (currentAuthState is AuthState.Error) currentAuthState.message else "Login gagal"
+            } else null
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 isSuccess = success,
-                error = if (!success) _uiState.value.error else null
+                error = authError
             )
         }
     }

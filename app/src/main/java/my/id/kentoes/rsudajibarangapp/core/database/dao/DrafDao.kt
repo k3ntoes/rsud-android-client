@@ -62,12 +62,6 @@ interface DrafDao {
     @Delete
     suspend fun deletePhoto(photo: DrafFoto)
 
-    @Query("DELETE FROM draf_item WHERE drafId = :drafId")
-    suspend fun deleteAllItemsForDraft(drafId: Long)
-
-    @Query("DELETE FROM draf_foto WHERE drafItemId IN (SELECT id FROM draf_item WHERE drafId = :drafId)")
-    suspend fun deleteAllPhotosForDraft(drafId: Long)
-
     /** Hapus draft — foto & item terhapus otomatis via CASCADE FK */
     @Transaction
     suspend fun deleteDraftCascade(draft: DrafInspeksi) {
