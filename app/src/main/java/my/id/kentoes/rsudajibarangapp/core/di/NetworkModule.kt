@@ -11,6 +11,7 @@ import my.id.kentoes.rsudajibarangapp.auth.api.AuthApi
 import my.id.kentoes.rsudajibarangapp.core.network.AuthInterceptor
 import my.id.kentoes.rsudajibarangapp.master.api.MasterDataApi
 import my.id.kentoes.rsudajibarangapp.core.network.TokenAuthenticator
+import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -83,5 +84,11 @@ object NetworkModule {
     @Singleton
     fun provideMasterDataApi(retrofit: Retrofit): MasterDataApi {
         return retrofit.create(MasterDataApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSyncApi(retrofit: Retrofit): SyncApi {
+        return retrofit.create(SyncApi::class.java)
     }
 }

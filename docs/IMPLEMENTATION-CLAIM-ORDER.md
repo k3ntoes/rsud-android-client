@@ -1,6 +1,6 @@
 # 📋 Implementation Claim Order — RSUD Ajibarang Android Client
 
-> **Status Project:** ✅ EPIC-0 s.d. EPIC-7 selesai — foundation + auth + master data + form + draf: build system, DI, navigation, network, database, auth, master data, form & scoring, camera, draf & pengiriman
+> **Status Project:** ✅ EPIC-0 s.d. EPIC-8 selesai — MVP lengkap: build system, DI, navigation, network, database, auth, master data, form & scoring, camera, draf & pengiriman, sinkronisasi WorkManager
 > **Stack:** Jetpack Compose · Hilt · Room 3.0+ · Retrofit · Proto DataStore + Tink · WorkManager · Coil
 
 ---
@@ -50,7 +50,7 @@ flowchart LR
 | **3: Inspeksi** | Master Data | `EPIC-5` | 🟠 TINGGI | EPIC-1,2,3 | ✅ **Selesai** | 1 session |
 | **3: Inspeksi** | Form & Skoring | `EPIC-6` | 🟠 TINGGI | EPIC-5 | ✅ **Selesai** | 2 session |
 | **3: Inspeksi** | Draf & Kirim | `EPIC-7` | 🟠 TINGGI | EPIC-6 | ✅ **Selesai** | 1-2 session |
-| **4: Sinkronisasi** | Upload Worker | `EPIC-8` | 🟠 TINGGI | EPIC-7,2,3 | ⬜ Buka | 1-2 session |
+| **4: Sinkronisasi** | Upload Worker | `EPIC-8` | 🟠 TINGGI | EPIC-7,2,3 | ✅ **Selesai** | 1-2 session |
 | **5: Poles** | Refinement | `EPIC-9` | 🟢 NORMAL | EPIC-8 | ⬜ Buka | 1-2 session |
 
 ---
@@ -220,24 +220,28 @@ flowchart LR
 
 ## ✅ Phase 4: Synchronization
 
-### 🔗 Issue: `EPIC-8` — Kompresi Gambar & Pengiriman ( `rsud-android-client-etl` )
+### 🔗 Issue: `EPIC-8` — Kompresi Gambar & Pengiriman ( `rsud-android-client-etl` ) — ✅ Selesai
 
 **Objective:** Kompresi gambar (max 300KB) + WorkManager two-step upload.
 
-- [ ] **⬜ Belum di-claim** — Implementasi `ImageCompressor.kt`: resize + turunkan kualitas hingga ~300KB
-- [ ] **⬜ Belum di-claim** — Buat `SyncWorker.kt` (`@HiltWorker`): entry point WorkManager
-- [ ] **⬜ Belum di-claim** — Konfigurasi WorkManager: hapus default initializer dari AndroidManifest
-- [ ] **⬜ Belum di-claim** — Setup `Configuration.Provider` di App.kt (`HiltWorkerFactory`)
-- [ ] **⬜ Belum di-claim** — Set WorkManager constraint: `Network.CONNECTED`
-- [ ] **⬜ Belum di-claim** — Step 1: upload foto terkompresi via Multipart → dapatkan nama file
-- [ ] **⬜ Belum di-claim** — Step 2: kirim JSON inspeksi + nama file ke endpoint
-- [ ] **⬜ Belum di-claim** — Implementasi `SyncManager.kt`: orchestrasi sync flow
-- [ ] **⬜ Belum di-claim** — Implementasi retry policy + exponential backoff
-- [ ] **⬜ Belum di-claim** — Hapus draf dari Room setelah 200 OK
-- [ ] **⬜ Belum di-claim** — Notifikasi hasil sync (success / failure via NotificationManager)
-- [ ] **⬜ Belum di-claim** — Handle partial failure (sebagian foto gagal upload)
+- [x] ✅ Implementasi `ImageCompressor.kt`: resize (max 1920px) + kompresi JPEG progresif hingga ~300KB, cache di cacheDir
+- [x] ✅ Buat `sync/api/SyncApi.kt`: `@Multipart POST upload/photo` + `POST inspection/submit` dengan `@Serializable` DTOs
+- [x] ✅ Buat `SyncWorker.kt` (`@HiltWorker`): entry point WorkManager dengan `enqueue()` static method
+- [x] ✅ Konfigurasi WorkManager: hapus default initializer dari AndroidManifest (sudah EPIC-1)
+- [x] ✅ Setup `Configuration.Provider` di App.kt (`HiltWorkerFactory`) (sudah EPIC-1)
+- [x] ✅ Set WorkManager constraint: `Network.CONNECTED`, `BackoffPolicy.EXPONENTIAL` (30s)
+- [x] ✅ Step 1: kompres foto → upload via Multipart → dapatkan `file_name` dari server
+- [x] ✅ Step 2: kirim JSON `SubmitInspectionRequest` + daftar nama file ke endpoint
+- [x] ✅ Buat `SyncManager.kt`: orchestrasi sync flow — `syncAllPending()` (load PENDING_SYNC dari DrafDao) + `syncSingleDraft()` (kompres → upload foto → submit → update status → hapus)
+- [x] ✅ Implementasi retry policy: `ExistingWorkPolicy.REPLACE`, `BackoffPolicy.EXPONENTIAL`, auto-retry di `doWork()`
+- [x] ✅ Hapus draf dari Room setelah 200 OK (`deleteDraft()` via CASCADE FK)
+- [x] ✅ Notifikasi hasil sync: notification channel + success/failure notification via `NotificationManager`
+- [x] ✅ Handle partial failure: foto gagal upload tetap lanjut (item dikirim tanpa foto tersebut)
+- [x] ✅ Register `SyncApi` di `NetworkModule.kt`
 
 **Depends on:** `EPIC-7` (data draf), `EPIC-2` (network), `EPIC-3` (token + database)
+
+> **Catatan:** `SyncWorker.enqueue()` belum terintegrasi ke ViewModel — perlu dipanggil dari `InspectionFormViewModel.submit()` atau `DaftarDrafScreen` untuk trigger sync manual. Ini bisa dilakukan di EPIC-9.
 
 ---
 
