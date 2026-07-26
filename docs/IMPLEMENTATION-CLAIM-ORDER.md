@@ -1,6 +1,6 @@
 # 📋 Implementation Claim Order — RSUD Ajibarang Android Client
 
-> **Status Project:** ✅ EPIC-0, EPIC-1, EPIC-2, EPIC-3 & EPIC-4 selesai — foundation lengkap: build system, DI, navigation, network layer, database, token storage, auth login
+> **Status Project:** ✅ EPIC-0, EPIC-1, EPIC-2, EPIC-3, EPIC-4 & EPIC-5 selesai — foundation + auth + master data: build system, DI, navigation, network, database, auth, master data sync
 > **Stack:** Jetpack Compose · Hilt · Room 3.0+ · Retrofit · Proto DataStore + Tink · WorkManager · Coil
 
 ---
@@ -47,7 +47,7 @@ flowchart LR
 | **1: Core** | Network Layer | `EPIC-2` | 🔴 KRITIS | EPIC-0 | ✅ **Selesai** | 1 session |
 | **1: Core** | Database & Token | `EPIC-3` | 🔴 KRITIS | EPIC-0 | ✅ **Selesai** | 1-2 session |
 | **2: Auth** | Login & Token Mgmt | `EPIC-4` | 🔴 KRITIS | EPIC-1,2,3 | ✅ **Selesai** | 1-2 session |
-| **3: Inspeksi** | Master Data | `EPIC-5` | 🟠 TINGGI | EPIC-1,2,3 | ⬜ Buka | 1 session |
+| **3: Inspeksi** | Master Data | `EPIC-5` | 🟠 TINGGI | EPIC-1,2,3 | ✅ **Selesai** | 1 session |
 | **3: Inspeksi** | Form & Skoring | `EPIC-6` | 🟠 TINGGI | EPIC-5 | ⬜ Buka | 2 session |
 | **3: Inspeksi** | Draf & Kirim | `EPIC-7` | 🟠 TINGGI | EPIC-6 | ⬜ Buka | 1-2 session |
 | **4: Sinkronisasi** | Upload Worker | `EPIC-8` | 🟠 TINGGI | EPIC-7,2,3 | ⬜ Buka | 1-2 session |
@@ -159,19 +159,21 @@ flowchart LR
 
 ## ✅ Phase 3: Inspeksi
 
-### 🔗 Issue: `EPIC-5` — Master Data Download ( `rsud-android-client-v2h` )
+### 🔗 Issue: `EPIC-5` — Master Data Download ( `rsud-android-client-v2h` ) — ✅ Selesai
 
 **Objective:** Download & cache daftar item kebersihan dan ruangan ke lokal.
 
-- [ ] **⬜ Belum di-claim** — Buat `api/MasterDataApi.kt`: `GET /master/items`, `GET /master/rooms`
-- [ ] **⬜ Belum di-claim** — Buat `MasterDataRepository.kt`: fetch → cache ke Room → fallback cache
-- [ ] **⬜ Belum di-claim** — Buat `MasterDataViewModel.kt`: expose StateFlow items + rooms
-- [ ] **⬜ Belum di-claim** — Buat `ItemKebersihan` model (data murni, immutable)
-- [ ] **⬜ Belum di-claim** — Buat `Ruang` model (data ruangan)
-- [ ] **⬜ Belum di-claim** — Implementasi cache freshness + periodic refresh
-- [ ] **⬜ Belum di-claim** — Tampilkan loading screen saat pertama kali download
+- [x] ✅ Buat `api/MasterDataApi.kt`: `GET /master/items`, `GET /master/rooms` — Retrofit interface + `@Serializable` DTOs
+- [x] ✅ Buat `MasterDataRepository.kt`: fetch → cache ke Room → Flow reaktif + `MasterDataSyncState`
+- [x] ✅ Buat `MasterDataViewModel.kt`: `MasterDataUiState` (items, rooms, groupedItems), auto-sync saat cache kosong, pull-to-refresh
+- [x] ✅ Buat `master/ui/MasterDataListScreen.kt` (Compose): daftar ruangan + `PullToRefreshBox` + loading/empty states + snackbar
+- [x] ✅ Integrasi ke `NavGraph.kt`: `INSPECTION_LIST` → `MasterDataListScreen`, navigasi ke form inspeksi dengan roomId & roomName
+- [x] ✅ Register `MasterDataApi` di `NetworkModule.kt`
+- [x] ✅ Implementasi loading screen saat pertama kali download (isi cache kosong → sync otomatis dari API)
 
 **Depends on:** `EPIC-1`, `EPIC-2`, `EPIC-3`
+
+> **Catatan:** Cache freshness + periodic refresh belum diimplementasi — untuk MVP pull-to-refresh manual sudah cukup. Entity Room (`MasterDataItem`, `RuangEntity`) sudah dibuat di EPIC-3 dan digunakan langsung oleh Repository.
 
 ### 🔗 Issue: `EPIC-6` — Dynamic Form, Scoring & Photo ( `rsud-android-client-bcx` )
 

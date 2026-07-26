@@ -9,6 +9,7 @@ import kotlinx.serialization.json.Json
 import my.id.kentoes.rsudajibarangapp.BuildConfig
 import my.id.kentoes.rsudajibarangapp.auth.api.AuthApi
 import my.id.kentoes.rsudajibarangapp.core.network.AuthInterceptor
+import my.id.kentoes.rsudajibarangapp.master.api.MasterDataApi
 import my.id.kentoes.rsudajibarangapp.core.network.TokenAuthenticator
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -76,5 +77,11 @@ object NetworkModule {
     @Singleton
     fun provideAuthApi(retrofit: Retrofit): AuthApi {
         return retrofit.create(AuthApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMasterDataApi(retrofit: Retrofit): MasterDataApi {
+        return retrofit.create(MasterDataApi::class.java)
     }
 }

@@ -10,20 +10,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import my.id.kentoes.rsudajibarangapp.auth.AuthState
 import my.id.kentoes.rsudajibarangapp.auth.AuthViewModel
 import my.id.kentoes.rsudajibarangapp.auth.ui.LoginScreen
+import my.id.kentoes.rsudajibarangapp.master.ui.MasterDataListScreen
 
 object Routes {
     const val LOGIN = "login"
     const val INSPECTION_LIST = "inspection_list"
-    const val INSPECTION_FORM = "inspection_form/{roomId}"
+    const val INSPECTION_FORM = "inspection_form/{roomId}/{roomName}"
     const val DRAFT_LIST = "draft_list"
 
-    fun inspectionForm(roomId: String) = "inspection_form/$roomId"
+    fun inspectionForm(roomId: String, roomName: String) = "inspection_form/$roomId/$roomName"
 }
 
 @Composable
@@ -63,10 +66,21 @@ fun NavGraph(
             )
         }
         composable(Routes.INSPECTION_LIST) {
-            PlaceholderScreen("Daftar Inspeksi")
+            MasterDataListScreen(
+                onRoomSelected = { roomId, roomName ->
+                    navController.navigate(Routes.inspectionForm(roomId.toString(), roomName))
+                }
+            )
         }
-        composable(Routes.INSPECTION_FORM) {
-            PlaceholderScreen("Form Inspeksi")
+        composable(
+            route = Routes.INSPECTION_FORM,
+            arguments = listOf(
+                navArgument("roomId") { type = NavType.StringType },
+                navArgument("roomName") { type = NavType.StringType }
+            )
+        ) {
+            val roomName = it.arguments?.getString("roomName") ?: ""
+            PlaceholderScreen("Form Inspeksi — $roomName")
         }
         composable(Routes.DRAFT_LIST) {
             PlaceholderScreen("Draf Tersimpan")
