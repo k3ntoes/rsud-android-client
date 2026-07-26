@@ -1,8 +1,11 @@
 # ADR-0001: Multi-module Architecture
 
-**Status**: Accepted
+**Status**: Superseded by ADR-0011
 
 Mengadopsi multi-module Gradle architecture (`app`, `:feature:auth`, `:core:network`, `:core:datastore`) untuk memisahkan concern sejak awal dan memungkinkan isolasi build serta pengembangan paralel.
+
+> **⚠️ SUPERSEDED oleh ADR-0011** — Project kembali ke single module (`:app`).
+> Lihat [ADR-0011](./0011-single-module-architecture.md)
 
 ## Context
 

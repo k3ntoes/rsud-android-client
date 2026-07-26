@@ -1,1 +1,0 @@
--keep,allowobfuscation,allowshrinking class my.id.kentoes.rsudajibarangapp.inspection.InspectionFormViewModel

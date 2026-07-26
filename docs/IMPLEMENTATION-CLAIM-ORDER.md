@@ -46,7 +46,7 @@ Ringkasan kepatuhan implementasi terhadap Architectural Decision Records.
 
 | ADR | Judul | Status | Keterangan |
 |-----|-------|--------|------------|
-| `ADR-0001` | Multi-Module Architecture | ✅ **Full Compliance** | 6 modules: `:app`, `:feature:auth`, `:feature:inspection`, `:core:network`, `:core:datastore`, `:core:model`. Circular deps resolved via `TokenProvider` + `TokenRefreshHandler` interfaces di `:core:model`. Hilt multi-module dengan `@InstallIn(SingletonComponent)`. |
+| `ADR-0001` | Multi-Module Architecture | ⚠️ **Superseded by ADR-0011** | ~~6 modules~~ → Single module (`:app`). Interface indirection removed. Hilt modules consolidated from 6 → 2. Lihat [Phase 2](./IMPLEMENTATION-CLAIM-ORDER-PHASE2.md) untuk detail migrasi. |
 | `ADR-0002` | Proto DataStore + Tink Token Storage | ✅ **Full Compliance** | `DataStoreModule` menggunakan `datastore-tink` native (`AeadSerializer` + `DataStoreFactory`) untuk enkripsi transparan di layer DataStore. Tink AEAD (`AES256_GCM`) + Android Keystore via `AndroidKeysetManager`. `TokenManager` membaca/menulis `TokenData` biasa — enkripsi otomatis oleh `AeadSerializer`. |
 | `ADR-0003` | Offline-First Inspection Submission | ✅ **Diikuti** | Room local storage + WorkManager sync dua langkah (upload foto → submit JSON) sesuai ADR. |
 | `ADR-0004` | Jetpack Compose Modern Stack | ✅ **Diikuti** | Compose, Hilt, kotlinx.serialization, Coil, Compose Navigation — semua sesuai. |

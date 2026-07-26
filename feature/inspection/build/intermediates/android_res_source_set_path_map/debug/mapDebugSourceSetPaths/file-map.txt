@@ -1,9 +1,0 @@
-my.id.kentoes.rsudajibarangapp.inspection-pngs-0 /home/kentoes/rsudajibapp/rsud-android-client/feature/inspection/build/generated/res/pngs/debug
-my.id.kentoes.rsudajibarangapp.inspection-updated_navigation_xml-1 /home/kentoes/rsudajibapp/rsud-android-client/feature/inspection/build/generated/updated_navigation_xml/debug
-my.id.kentoes.rsudajibarangapp.inspection-mergeDebugResources-2 /home/kentoes/rsudajibapp/rsud-android-client/feature/inspection/build/intermediates/incremental/debug/mergeDebugResources/merged.dir
-my.id.kentoes.rsudajibarangapp.inspection-mergeDebugResources-3 /home/kentoes/rsudajibapp/rsud-android-client/feature/inspection/build/intermediates/incremental/debug/mergeDebugResources/stripped.dir
-my.id.kentoes.rsudajibarangapp.inspection-debug-4 /home/kentoes/rsudajibapp/rsud-android-client/feature/inspection/build/intermediates/merged_res/debug/mergeDebugResources
-my.id.kentoes.rsudajibarangapp.inspection-debug-5 /home/kentoes/rsudajibapp/rsud-android-client/feature/inspection/build/intermediates/packaged_res/debug/packageDebugResources
-my.id.kentoes.rsudajibarangapp.inspection-debug-6 /home/kentoes/rsudajibapp/rsud-android-client/feature/inspection/src/debug/res
-my.id.kentoes.rsudajibarangapp.inspection-main-7 /home/kentoes/rsudajibapp/rsud-android-client/feature/inspection/src/main/res
-gradleHome-0 /home/kentoes/.gradle

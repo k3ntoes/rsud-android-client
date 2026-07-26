@@ -48,12 +48,24 @@ android {
 }
 
 dependencies {
-    // Project modules
-    implementation(project(":core:model"))
-    implementation(project(":core:network"))
-    implementation(project(":core:datastore"))
-    implementation(project(":feature:auth"))
-    implementation(project(":feature:inspection"))
+    // Network — Retrofit + OkHttp
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.kotlinx.serialization)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging.interceptor)
+
+    // Room 3.0 — KSP only
+    implementation(libs.room3.runtime)
+    ksp(libs.room3.compiler)
+
+    // DataStore + Tink
+    implementation(libs.datastore)
+    implementation(libs.datastore.preferences)
+    implementation(libs.datastore.tink)
+    implementation(libs.tink.android)
+
+    // Serialization
+    implementation(libs.kotlinx.serialization.json)
 
     // App-level: Core UI & theme
     implementation(libs.androidx.core.ktx)
@@ -61,11 +73,11 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.material)
 
-    // Lifecycle (needed by NavGraph)
+    // Lifecycle
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    // Compose BOM (needed by app's own composables)
+    // Compose BOM
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.ui.graphics)
@@ -83,7 +95,7 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     implementation(libs.hilt.work)
 
-    // Coil (needed by remaining UI components)
+    // Coil
     implementation(libs.coil.compose)
 
     // WorkManager
@@ -91,6 +103,8 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit)
+    testImplementation("io.mockk:mockk:1.13.13")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))
