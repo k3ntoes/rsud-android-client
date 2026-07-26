@@ -24,3 +24,8 @@ dependencyResolutionManagement {
 
 rootProject.name = "RSUD Ajibarang App"
 include(":app")
+include(":core:model")
+include(":core:network")
+include(":core:datastore")
+include(":feature:auth")
+include(":feature:inspection")

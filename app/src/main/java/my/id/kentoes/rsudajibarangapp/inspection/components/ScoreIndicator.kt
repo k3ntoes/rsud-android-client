@@ -26,7 +26,7 @@ private val Skor0Color = Color(0xFFD32F2F)   // Merah — Berisiko
 private val Skor1Color = Color(0xFFF9A825)   // Kuning — Minor
 private val Skor2Color = Color(0xFF388E3C)   // Hijau — Sesuai
 
-data class ScoreOption(
+private data class ScoreOption(
     val value: Int,
     val label: String,
     val color: Color

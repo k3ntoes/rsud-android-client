@@ -11,7 +11,6 @@ import javax.inject.Singleton
 
 /** Status sinkronisasi master data */
 sealed class MasterDataSyncState {
-    data object Idle : MasterDataSyncState()
     data object Syncing : MasterDataSyncState()
     data class SyncResult(val success: Boolean, val message: String? = null) : MasterDataSyncState()
 }

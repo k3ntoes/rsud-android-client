@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# MCP config — contains API keys, copy from .example file
+.mcp.json

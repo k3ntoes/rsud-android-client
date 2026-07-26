@@ -1,8 +1,9 @@
 package my.id.kentoes.rsudajibarangapp.inspection
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import android.content.Context
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,11 +37,11 @@ data class InspectionFormUiState(
 
 @HiltViewModel
 class InspectionFormViewModel @Inject constructor(
-    application: Application,
+    @ApplicationContext private val context: Context,
     private val masterDataDao: MasterDataDao,
     private val drafDao: DrafDao,
     private val inspectionRepository: InspectionRepository
-) : AndroidViewModel(application) {
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InspectionFormUiState())
     val uiState: StateFlow<InspectionFormUiState> = _uiState.asStateFlow()
@@ -120,67 +121,29 @@ class InspectionFormViewModel @Inject constructor(
         emitItems()
     }
 
-    /** Simpan draf ke Room (incomplete allowed) */
-    fun saveDraft() {
-        viewModelScope.launch {
-            val uiState = _uiState.value
-            val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
-                .format(Date())
-
-            // Insert header
-            val draftId = drafDao.insertDraft(
-                DrafInspeksi(
-                    roomId = uiState.roomId,
-                    localTimestamp = timestamp,
-                    status = "DRAFT"
-                )
-            )
-
-            // Insert items
-            val currentItems = itemStates.values.toList()
-            currentItems.forEach { itemState ->
-                val itemDbId = drafDao.insertItem(
-                    DrafItem(
-                        drafId = draftId,
-                        itemId = itemState.itemId,
-                        skor = itemState.skor,
-                        catatan = itemState.catatan
-                    )
-                )
-                // Insert foto
-                itemState.fotoPaths.forEach { path ->
-                    drafDao.insertPhoto(
-                        DrafFoto(
-                            drafItemId = itemDbId,
-                            pathLokal = path
-                        )
-                    )
-                }
-            }
-
-            _uiState.value = _uiState.value.copy(draftSaved = true)
-        }
-    }
+    fun saveDraft() = save("DRAFT")
 
     /** Kirim — semua item harus valid */
     fun submit() {
-        val uiState = _uiState.value
-        if (!uiState.submitEnabled) return
+        if (!_uiState.value.submitEnabled) return
+        save("PENDING_SYNC", enqueueSync = true)
+    }
 
+    /** Simpan draf ke Room — status DRAFT atau PENDING_SYNC */
+    private fun save(status: String, enqueueSync: Boolean = false) {
         viewModelScope.launch {
-            val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+            val now = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
                 .format(Date())
 
             val draftId = drafDao.insertDraft(
                 DrafInspeksi(
-                    roomId = uiState.roomId,
-                    localTimestamp = timestamp,
-                    status = "PENDING_SYNC"
+                    roomId = _uiState.value.roomId,
+                    localTimestamp = now,
+                    status = status
                 )
             )
 
-            val currentItems = itemStates.values.toList()
-            currentItems.forEach { itemState ->
+            itemStates.values.forEach { itemState ->
                 val itemDbId = drafDao.insertItem(
                     DrafItem(
                         drafId = draftId,
@@ -191,17 +154,12 @@ class InspectionFormViewModel @Inject constructor(
                 )
                 itemState.fotoPaths.forEach { path ->
                     drafDao.insertPhoto(
-                        DrafFoto(
-                            drafItemId = itemDbId,
-                            pathLokal = path
-                        )
+                        DrafFoto(drafItemId = itemDbId, pathLokal = path)
                     )
                 }
             }
 
-            // Trigger sync via WorkManager
-            SyncWorker.enqueue(getApplication())
-
+            if (enqueueSync) SyncWorker.enqueue(context)
             _uiState.value = _uiState.value.copy(draftSaved = true)
         }
     }

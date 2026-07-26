@@ -2,6 +2,7 @@ package my.id.kentoes.rsudajibarangapp.inspection
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,15 +42,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import my.id.kentoes.rsudajibarangapp.inspection.components.ItemCard
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,21 +97,22 @@ fun InspectionFormScreen(
     }
 
     // Variabel untuk menyimpan itemId yang sedang difoto
-    val currentPhotoItemId = remember { androidx.compose.runtime.mutableLongStateOf(-1L) }
+    val currentPhotoItemId = remember { mutableLongStateOf(-1L) }
 
-    // Camera capture launcher
-    val photoUriHolder = remember { mutableListOf<android.net.Uri>() }
+    // Camera capture launcher — single nullable Uri, bukan mutableListOf
+    var pendingPhotoUri by remember { mutableStateOf<Uri?>(null) }
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
-        if (success && photoUriHolder.isNotEmpty()) {
-            val uri = photoUriHolder.removeAt(0)
+        val uri = pendingPhotoUri
+        if (success && uri != null) {
+            pendingPhotoUri = null
             // Copy dari URI content ke local file
             try {
                 val inputStream = context.contentResolver.openInputStream(uri)
-                val photoDir = java.io.File(context.getExternalFilesDir(null), "photos")
+                val photoDir = File(context.getExternalFilesDir(null), "photos")
                 if (!photoDir.exists()) photoDir.mkdirs()
-                val photoFile = java.io.File(photoDir, "capture_${System.currentTimeMillis()}.jpg")
+                val photoFile = File(photoDir, "capture_${System.currentTimeMillis()}.jpg")
                 inputStream?.use { input ->
                     photoFile.outputStream().use { output ->
                         input.copyTo(output)
@@ -266,9 +276,8 @@ fun InspectionFormScreen(
                                         Manifest.permission.CAMERA
                                     ) == PackageManager.PERMISSION_GRANTED
                                 ) {
-                                    val uri = my.id.kentoes.rsudajibarangapp.inspection.CameraHelper.createPhotoUri(context)
-                                    photoUriHolder.clear()
-                                    photoUriHolder.add(uri)
+                                    val uri = createTempPhotoUri(context)
+                                    pendingPhotoUri = uri
                                     cameraLauncher.launch(uri)
                                 } else {
                                     cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
@@ -286,4 +295,13 @@ fun InspectionFormScreen(
             }
         }
     }
+}
+
+/** Buat URI file foto temporer untuk kamera capture — inline dari CameraHelper yang dihapus */
+private fun createTempPhotoUri(context: android.content.Context): Uri {
+    val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+    val dir = File(context.getExternalFilesDir(null), "photos")
+    if (!dir.exists()) dir.mkdirs()
+    val photoFile = File.createTempFile("IMG_${timestamp}_", ".jpg", dir)
+    return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile)
 }

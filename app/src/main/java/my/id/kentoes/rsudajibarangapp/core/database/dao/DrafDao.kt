@@ -42,15 +42,6 @@ interface DrafDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItem(item: DrafItem): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertItems(items: List<DrafItem>)
-
-    @Query("UPDATE draf_item SET skor = :skor, catatan = :catatan WHERE id = :id")
-    suspend fun updateItemSkor(id: Long, skor: Int, catatan: String?)
-
-    @Delete
-    suspend fun deleteItem(item: DrafItem)
-
     // ── Draf Foto ──
 
     @Query("SELECT * FROM draf_foto WHERE drafItemId = :drafItemId")

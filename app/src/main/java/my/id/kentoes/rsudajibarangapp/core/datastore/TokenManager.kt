@@ -1,54 +1,37 @@
 package my.id.kentoes.rsudajibarangapp.core.datastore
 
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import my.id.kentoes.rsudajibarangapp.core.network.TokenProvider
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Manajemen token JWT dengan penyimpanan terenkripsi via DataStore + Tink AEAD.
+ *
+ * Enkripsi/dekripsi terjadi TRANSPARAN di layer DataStore (AeadSerializer),
+ * jadi TokenManager tidak perlu manual encrypt/decrypt.
+ */
 @Singleton
 class TokenManager @Inject constructor(
-    private val dataStore: DataStore<Preferences>
-) : TokenProvider {
+    private val dataStore: DataStore<TokenData>
+) {
 
-    companion object {
-        private val ACCESS_TOKEN_KEY = stringPreferencesKey("access_token")
-        private val REFRESH_TOKEN_KEY = stringPreferencesKey("refresh_token")
+    suspend fun getAccessToken(): String? {
+        return dataStore.data.map { it.accessToken.ifBlank { null } }.first()
     }
 
-    override suspend fun getAccessToken(): String? {
-        return dataStore.data.map { prefs ->
-            prefs[ACCESS_TOKEN_KEY]
-        }.first()
+    suspend fun getRefreshToken(): String? {
+        return dataStore.data.map { it.refreshToken.ifBlank { null } }.first()
     }
 
-    override suspend fun getRefreshToken(): String? {
-        return dataStore.data.map { prefs ->
-            prefs[REFRESH_TOKEN_KEY]
-        }.first()
-    }
-
-    override suspend fun clearTokens() {
-        dataStore.edit { prefs ->
-            prefs.remove(ACCESS_TOKEN_KEY)
-            prefs.remove(REFRESH_TOKEN_KEY)
-        }
-    }
-
-    /** Simpan token setelah login/refresh berhasil */
     suspend fun saveTokens(accessToken: String, refreshToken: String) {
-        dataStore.edit { prefs ->
-            prefs[ACCESS_TOKEN_KEY] = accessToken
-            prefs[REFRESH_TOKEN_KEY] = refreshToken
-        }
+        dataStore.updateData { TokenData(accessToken = accessToken, refreshToken = refreshToken) }
     }
 
-    /** Cek apakah user sudah login (punya token) */
-    suspend fun isLoggedIn(): Boolean {
-        return getAccessToken() != null
+    suspend fun clearTokens() {
+        dataStore.updateData { TokenData() }
     }
+
+    suspend fun isLoggedIn(): Boolean = getAccessToken() != null
 }

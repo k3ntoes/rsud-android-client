@@ -2,18 +2,18 @@ package my.id.kentoes.rsudajibarangapp.core.di
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.preferencesDataStoreFile
-
+import androidx.datastore.core.DataStoreFactory
+import androidx.datastore.tink.AeadSerializer
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.Dispatchers
+import my.id.kentoes.rsudajibarangapp.core.datastore.TokenData
+import my.id.kentoes.rsudajibarangapp.core.datastore.TokenDataSerializer
+import my.id.kentoes.rsudajibarangapp.core.datastore.TokenEncryption
 import my.id.kentoes.rsudajibarangapp.core.datastore.TokenManager
-import my.id.kentoes.rsudajibarangapp.core.network.TokenProvider
+import java.io.File
 import javax.inject.Singleton
 
 @Module
@@ -22,21 +22,27 @@ object DataStoreModule {
 
     @Provides
     @Singleton
-    fun provideTokenDataStore(@ApplicationContext context: Context): DataStore<Preferences> {
-        return PreferenceDataStoreFactory.create(
-            produceFile = { context.preferencesDataStoreFile("token_prefs") }
+    fun provideTokenDataStore(
+        @ApplicationContext context: Context,
+        encryption: TokenEncryption
+    ): DataStore<TokenData> {
+        val aeadSerializer = AeadSerializer(
+            encryption.aead,
+            TokenDataSerializer,
+            ASSOCIATED_DATA.toByteArray()
         )
+        return DataStoreFactory.create(aeadSerializer) {
+            File(context.filesDir, "datastore/token_prefs")
+        }
     }
 
     @Provides
     @Singleton
-    fun provideTokenManager(dataStore: DataStore<Preferences>): TokenManager {
+    fun provideTokenManager(
+        dataStore: DataStore<TokenData>
+    ): TokenManager {
         return TokenManager(dataStore)
     }
 
-    @Provides
-    @Singleton
-    fun provideTokenProvider(tokenManager: TokenManager): TokenProvider {
-        return tokenManager
-    }
+    private const val ASSOCIATED_DATA = "token_prefs"
 }

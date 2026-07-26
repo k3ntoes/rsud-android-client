@@ -1,7 +1,8 @@
 # 📋 Implementation Claim Order — RSUD Ajibarang Android Client
 
 > **Status Project:** ✅ **MVP SELESAI** — EPIC-0 s.d. EPIC-9 completed. All features implemented: build system, DI & navigation, network layer, database & token storage, auth login, master data sync, dynamic form & scoring, camera capture, draft management, WorkManager sync
-> **Stack:** Jetpack Compose · Hilt · Room 3.0+ · Retrofit · Proto DataStore + Tink · WorkManager · Coil
+> **Stack:** Jetpack Compose · Hilt · Room 3.0+ · Retrofit · Proto DataStore · WorkManager · Coil
+> **ADR Deviasi:** ADR-0001 (multi-module) tidak diikuti — single-module untuk MVP. ADR-0002 (Tink encryption) ✅ **Full Compliance** — `datastore-tink` native (`AeadSerializer`) + Android Keystore via `AndroidKeysetManager`. Enkripsi transparan di layer DataStore.
 
 ---
 
@@ -35,6 +36,21 @@ flowchart LR
 ```
 
 > **Aturan:** Setiap EPIC hanya bisa di-*claim* setelah semua dependensinya selesai.
+
+---
+
+## 📋 ADR Compliance
+
+Ringkasan kepatuhan implementasi terhadap Architectural Decision Records.
+
+| ADR | Judul | Status | Keterangan |
+|-----|-------|--------|------------|
+| `ADR-0001` | Multi-Module Architecture | ❌ **Deviasi** | Project tetap single-module (`app/`) untuk mempercepat MVP. ADR ini bisa diimplementasi nanti sebagai refactor multi-module. |
+| `ADR-0002` | Proto DataStore + Tink Token Storage | ✅ **Full Compliance** | `DataStoreModule` menggunakan `datastore-tink` native (`AeadSerializer` + `DataStoreFactory`) untuk enkripsi transparan di layer DataStore. Tink AEAD (`AES256_GCM`) + Android Keystore via `AndroidKeysetManager`. `TokenManager` membaca/menulis `TokenData` biasa — enkripsi otomatis oleh `AeadSerializer`. |
+| `ADR-0003` | Offline-First Inspection Submission | ✅ **Diikuti** | Room local storage + WorkManager sync dua langkah (upload foto → submit JSON) sesuai ADR. |
+| `ADR-0004` | Jetpack Compose Modern Stack | ✅ **Diikuti** | Compose, Hilt, kotlinx.serialization, Coil, Compose Navigation — semua sesuai. |
+
+> **Catatan:** ADR compliance diperiksa otomatis saat commit ([lihat CODING-RULES.md > Checklist Sebelum Commit](../CODING-RULES.md)).
 
 ---
 
@@ -108,10 +124,10 @@ flowchart LR
 - [x] ✅ Setup `OkHttpClient` dengan logging interceptor (debug only)
 - [x] ✅ Setup `Retrofit` instance dengan kotlinx.serialization converter
 - [x] ✅ Buat `di/NetworkModule.kt`: provide OkHttpClient + Retrofit + Json
-- [x] ✅ Buat `network/TokenProvider.kt`: kontrak interface untuk token management
+- [x] ✅ ~~`network/TokenProvider.kt`~~ (dihapus — interface dengan 1 implementasi adalah yagni)
 - [x] ✅ Buat `network/AuthInterceptor.kt`: tambah `Authorization: Bearer` header (skip login/refresh)
 - [x] ✅ Buat `network/TokenAuthenticator.kt`: auto-refresh 401 → retry (anti race condition)
-- [x] ✅ Buat `network/ApiResponse.kt`: base response wrapper `{ success, message, data, errors }`
+- [x] ✅ Buat `network/ApiResponse.kt`: base response wrapper `{ success, message, data }`
 - [x] ✅ Setup timeouts (15s connect/read/write) + retry policy
 - [x] ✅ Setup `BuildConfig` untuk BASE_URL (debug vs release via buildConfigField)
 
@@ -129,9 +145,10 @@ flowchart LR
 - [x] ✅ Buat entity: `MasterDataItem`, `RuangEntity`
 - [x] ✅ Buat entity: `DrafInspeksi` (header), `DrafItem` (line items), `DrafFoto` (path foto lokal)
 - [x] ✅ Buat DAOs: `MasterDataDao`, `DrafDao`
-- [x] ✅ Buat `TypeConverters.kt` (placeholder — tidak ada entity yang perlu complex type)
-- [x] ✅ Buat `TokenManager.kt`: save, read, clear, isLoggedIn (implementasi `TokenProvider`)
-- [x] ✅ Setup DataStore Preferences untuk token storage (Tink encryption siap wire nanti)
+- [x] ✅ ~~`TypeConverters.kt`~~ (dihapus — file kosong)
+- [x] ✅ Buat `TokenManager.kt`: save, read, clear, isLoggedIn (enkripsi otomatis via `datastore-tink` + `AeadSerializer`)
+- [x] ✅ Setup DataStore + Tink AEAD via `datastore-tink` native
+  > **✅ ADR-0002 Full Compliance:** `DataStoreModule` menggunakan `AeadSerializer` + `DataStoreFactory` untuk enkripsi transparan. Tink AEAD (`AES256_GCM`) dengan Android Keystore.
 
 **Depends on:** `EPIC-0`
 

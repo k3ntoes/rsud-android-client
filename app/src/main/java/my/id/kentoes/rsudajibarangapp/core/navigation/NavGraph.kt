@@ -112,9 +112,3 @@ fun NavGraph(
     }
 }
 
-@Composable
-private fun PlaceholderScreen(title: String) {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        androidx.compose.material3.Text(text = title)
-    }
-}

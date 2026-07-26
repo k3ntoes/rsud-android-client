@@ -223,55 +223,79 @@ This project is indexed by GitNexus as **rsud-android-client** (530 symbols, 510
 <!-- context7:start -->
 # Context7 — Dokumentasi Library/Framework Eksternal
 
-> **Pembagian tugas:** Graphify → memahami **codebase internal** (kode Android). Context7 → dokumentasi **library/framework eksternal** (Jetpack Compose, Room, Hilt, Coil, Datastore, dll).
+> **Pembagian tugas:** Graphify → memahami **codebase internal** (kode Android). Context7 → dokumentasi **library/framework eksternal** (Jetpack Compose, Room, Hilt, Coil, DataStore, dll).
 
-Context7 MCP memberikan akses ke dokumentasi library/framework terkini tanpa perlu scraping web. **Selalu gunakan ini dulu sebelum `researcher_web` atau `read_url` untuk dokumentasi teknis.**
+Context7 memberikan akses ke dokumentasi library/framework terkini melalui **CLI** (`ctx7`). **Selalu gunakan ini dulu sebelum `researcher_web` atau `read_url` untuk dokumentasi teknis.**
 
-## Always: Load Skill First
+## Setup
 
-Context7 MCP tidak otomatis terlihat sebagai tool. Agent harus **load skill dulu**:
+Context7 sudah dikonfigurasi:
+- CLI: `npx ctx7 library` / `npx ctx7 docs` — **primary method**
+- API Key: otomatis via environment variable `CONTEXT7_API_KEY`
+- Helper script: `./scripts/context7.sh`
 
-```python
-skill("context7-mcp")
-```
-
-Setelah itu MCP tools `resolve-library-id` dan `query-docs` tersedia.
+> ⚠️ **Context7 MCP (`resolve-library-id` / `query-docs`) tidak digunakan.** Freebuff tidak mendukung auto-connect MCP server. Gunakan ctx7 CLI sebagai gantinya.
 
 ## Always Do
 
-- **WAJIB: Load skill `skill(\"context7-mcp\")`** sebelum menulis kode yang melibatkan library/framework.
-- **WAJIB: Gunakan `resolve-library-id`** untuk menemukan ID library yang tepat. Contoh untuk library Android:
-  - Contoh: Library Jetpack/Android → `resolve-library-id(libraryName: "jetpack-compose", query: "")` — **verifikasi ID sebenarnya dengan `resolve-library-id`**, karena ID Context7 bisa berbeda dari spekulasi di bawah ini. Contoh pattern ID: `/android/compose`, `/android/room`, `/coil-kt/coil`
-- **WAJIB: Gunakan `query-docs`** untuk dokumentasi spesifik — lebih hemat token 5-10x dari web fetch.
+- **WAJIB: Gunakan ctx7 CLI** sebelum menulis kode yang melibatkan library/framework Android:
+  ```bash
+  # Cari library ID
+  npx ctx7 library <nama-library> [query]
+  
+  # Query dokumentasi
+  npx ctx7 docs <libraryId> <query>
+  
+  # Helper script (alternatif)
+  ./scripts/context7.sh resolve <nama> [query]
+  ./scripts/context7.sh query <libraryId> <query>
+  ```
+- **WAJIB: Mulai dengan resolve library ID**, lalu query docs per konsep.
+  - Contoh:
+    ```
+    npx ctx7 library Coil "image loading compose Android"
+    → /coil-kt/coil (score 78.22)
+    
+    npx ctx7 docs /coil-kt/coil "AsyncImage API"
+    → AsyncImage(model, contentDescription, ...)
+    ```
 - **WAJIB: Pisahkan query per konsep** — jangan gabung routing + DI + DB dalam satu query.
 - **WAJIB: Verifikasi API signatures** — jangan andalkan training data yang mungkin usang.
 
 ## Never Do
 
-- **JANGAN gunakan `researcher_web` + `read_url` untuk dokumentasi library** — biaya token 2,000-5,000 vs hanya ~100-500 via Context7.
-- **JANGAN gunakan `skill(\"find-docs\")` sebagai pengganti** — Context7 lebih akurat karena langsung ke dokumentasi resmi.
-- **JANGAN gabung multiple konsep dalam satu `query-docs`** — hasilnya dangkal untuk setiap topik.
+- **JANGAN gunakan `researcher_web` + `read_url` untuk dokumentasi library** — biaya token 2,000-5,000 vs hanya ~200-500 via Context7 CLI.
+- **JANGAN gunakan `skill(\"find-docs\")` sebagai pengganti** — Context7 CLI lebih akurat karena langsung ke dokumentasi resmi.
+- **JANGAN coba setup MCP Context7 ulang** — ctx7 CLI adalah method yang sudah diverifikasi berfungsi.
 
 ## Perbandingan Biaya Token
 
 | Metode | Token | Akurasi |
 |--------|-------|---------|
-| ✅ **Context7** `query-docs` | ~100-500 | ✅ Tinggi |
+| ✅ **Context7 CLI** `ctx7 docs` | ~200-500 | ✅ Tinggi |
 | ❌ `researcher_web` + `read_url` | ~2,000-5,000+ | ❌ Rendah |
 | ⚠️ `skill(\"find-docs\")` | ~1,000-2,000 | ⚠️ Sedang |
 
 ## Workflow (Hemat Token)
 
-```python
-skill("context7-mcp")                       # load skill
-  → resolve-library-id(libraryName: "...")   # cari ID library
-  → query-docs(libraryId: "...", query: "") # fetch docs per konsep
+```bash
+npx ctx7 library <nama> [query]          # step 1: cari library ID
+  → /org/library (score, snippets)
+  
+npx ctx7 docs /org/library "konsep"     # step 2: fetch docs per konsep
+  → dokumentasi + contoh kode
+```
+
+Atau via helper script:
+```bash
+./scripts/context7.sh resolve Coil "image loading"
+./scripts/context7.sh query /coil-kt/coil "AsyncImage API"
 ```
 
 ## Exception
 
-- Jika Context7 MCP server down atau API key expired, fallback ke `researcher_docs` agent, lalu `read_url` ke situs dokumentasi resmi (developer.android.com).
-- Untuk pertanyaan tentang ekosistem (bukan dokumentasi teknis), misalnya "Apa perbedaan ORM populer di Android?", `researcher_web` lebih cocok.
+- Jika `CONTEXT7_API_KEY` tidak diset atau ctx7 CLI error, fallback ke `researcher_docs` agent, lalu `read_url` ke developer.android.com.
+- Untuk pertanyaan tentang ekosistem (bukan dokumentasi teknis), `researcher_web` lebih cocok.
 
 <!-- context7:end -->
 

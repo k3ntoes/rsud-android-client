@@ -1,7 +1,5 @@
 package my.id.kentoes.rsudajibarangapp.sync
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.first
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionRepository
@@ -49,11 +47,10 @@ class SyncManager @Inject constructor(
     /**
      * Sinkronisasi satu draf: kompres foto → upload foto → submit inspeksi.
      */
-    suspend fun syncSingleDraft(draftId: Long): SyncResult = withContext(Dispatchers.IO) {
-        try {
+    suspend fun syncSingleDraft(draftId: Long): SyncResult = try {
             // 1. Ambil payload draf
             val payload = inspectionRepository.preparePayload(draftId)
-                ?: return@withContext SyncResult(draftId, false, "Draf tidak ditemukan")
+                ?: return SyncResult(draftId, false, "Draf tidak ditemukan")
 
             // 2. Kumpulkan semua foto dari semua item → kompres → upload
             val fotoFileNames = mutableListOf<Pair<String, String>>() // (localPath → serverFileName)
@@ -111,5 +108,4 @@ class SyncManager @Inject constructor(
         } catch (e: Exception) {
             SyncResult(draftId, false, e.message ?: "Error sinkronisasi")
         }
-    }
 }

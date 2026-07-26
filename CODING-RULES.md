@@ -66,10 +66,18 @@ Aturan ini wajib diikuti oleh **semua AI agent** yang menulis, mengubah, atau me
   │   ├── AuthViewModel.kt
   │   ├── LoginScreen.kt
   │   └── CONTEXT.md
-  ├── inspections/
-  │   ├── InspectionViewModel.kt
+  ├── inspection/
+  │   ├── InspectionFormViewModel.kt
   │   ├── InspectionFormScreen.kt
-  │   └── CONTEXT.md
+  │   ├── ItemState.kt
+  │   ├── InspectionRepository.kt
+  │   ├── DaftarDrafViewModel.kt
+  │   ├── components/
+  │   │   ├── ItemCard.kt
+  │   │   ├── ScoreIndicator.kt
+  │   │   └── PhotoThumbnail.kt
+  │   └── ui/
+  │       └── DaftarDrafScreen.kt
   ├── sync/
   │   ├── SyncWorker.kt
   │   └── CONTEXT.md
@@ -116,35 +124,55 @@ Setelah memahami arsitektur via Graphify, gunakan GitNexus untuk analisis dampak
 | 🔍 Penjelasan node/simbol | 🔄 Rename refactoring |
 | ✅ **Langkah #1** — untuk memahami | ✅ **Langkah #2** — untuk mengubah |
 
-### 🔷 WAJIB: Gunakan Context7 untuk Dokumentasi Library (Bukan Web Fetch)
+### 🔷 WAJIB: Gunakan Context7 (CLI) untuk Dokumentasi Library (Bukan Web Fetch)
 
-**Context7 MCP** sudah terkonfigurasi dan harus menjadi pilihan PERTAMA untuk dokumentasi library/framework. Jangan pakai `researcher_web` atau `read_url` untuk ini.
+**Context7 CLI** (`ctx7`) sudah terkonfigurasi dan harus menjadi pilihan PERTAMA untuk dokumentasi library/framework. Jangan pakai `researcher_web` atau `read_url` untuk ini.
+
+> ⚠️ Context7 yang dimaksud di sini adalah **CLI `ctx7`**, BUKAN MCP. Freebuff tidak support MCP auto-connect.
 
 #### Kenapa Context7 Lebih Baik?
 
 | Metode | Biaya Token | Akurasi | Kecepatan |
 |--------|-------------|---------|-----------|
-| ✅ **Context7** `query-docs` | ~100-500 token | Tinggi (dokumentasi resmi) | Cepat (API langsung) |
+| ✅ **Context7 CLI** `ctx7 docs` | ~200-500 token | Tinggi (dokumentasi resmi) | Cepat (CLI langsung) |
 | ❌ `researcher_web` + `read_url` | ~2,000-5,000+ token | Rendah (scrape HTML, iklan, noise) | Lambat (buka web, baca HTML) |
 
 #### Always Do
 
 Sebelum menulis kode yang melibatkan library/framework Android, AI agent **WAJIB**:
 
-1. **Load skill dulu**: `skill("context7-mcp")`
-2. **Resolve library ID**: panggil `resolve-library-id` dengan nama library
-3. **Query docs**: panggil `query-docs` dengan `libraryId` + pertanyaan spesifik
-4. **Satu konsep per query** — jangan gabung multiple konsep dalam satu `query-docs`
+1. **Cari library ID**: jalankan `npx ctx7 library <nama-library> [query]` via basher/Terminal
+2. **Query docs**: jalankan `npx ctx7 docs <libraryId> <query>` via basher/Terminal
+3. **Satu konsep per query** — jangan gabung multiple konsep dalam satu query
+4. **Verifikasi API signatures** — jangan andalkan training data
+
+Contoh:
+```bash
+# Step 1: Cari library ID
+npx ctx7 library Coil "image loading compose Android"
+# → /coil-kt/coil
+
+# Step 2: Query docs per konsep
+npx ctx7 docs /coil-kt/coil "AsyncImage composable API"
+# → dokumentasi lengkap + contoh kode
+```
+
+Atau via helper script:
+```bash
+./scripts/context7.sh resolve <name> [query]
+./scripts/context7.sh query <libraryId> <query>
+```
 
 #### Never Do
 
 - **JANGAN** gunakan `researcher_web` + `read_url` untuk dokumentasi library — ini boros token 5-10x lipat.
-- **JANGAN** andalkan training data untuk API signatures — dokumentasi Android berubah cepat (Compose, Room 3.0+, Hilt 2.x), selalu pakai Context7.
-- **JANGAN** gabung multiple konsep dalam satu `query-docs` — hasilnya dangkal untuk setiap topik.
+- **JANGAN** andalkan training data untuk API signatures — dokumentasi Android berubah cepat (Compose, Room 3.0+, Hilt 2.x), selalu pakai Context7 CLI.
+- **JANGAN** gabung multiple konsep dalam satu query — hasilnya dangkal untuk setiap topik.
+- **JANGAN** coba setup MCP Context7 — CLI sudah bekerja dan lebih reliable.
 
 #### Exception
 
-- Jika Context7 MCP tidak tersedia (server down atau API key expired), fallback ke `researcher_docs` agent, lalu `read_url` langsung ke developer.android.com.
+- Jika Context7 CLI error (API key expired, network issue), fallback ke `researcher_docs` agent, lalu `read_url` langsung ke developer.android.com.
 - Untuk pertanyaan tentang ekosistem (bukan dokumentasi teknis), `researcher_web` lebih cocok.
 
 ### Baca Domain Docs Terkait

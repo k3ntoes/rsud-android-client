@@ -1,6 +1,7 @@
 package my.id.kentoes.rsudajibarangapp.core.network
 
 import kotlinx.coroutines.runBlocking
+import my.id.kentoes.rsudajibarangapp.core.datastore.TokenManager
 import okhttp3.Interceptor
 import okhttp3.Response
 import javax.inject.Inject
@@ -14,7 +15,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class AuthInterceptor @Inject constructor(
-    private val tokenProvider: TokenProvider
+    private val tokenManager: TokenManager
 ) : Interceptor {
 
     /** Endpoint yang TIDAK perlu header Authorization */
@@ -33,7 +34,7 @@ class AuthInterceptor @Inject constructor(
         }
 
         // Ambil token dan tambahkan ke header
-        val token = runBlocking { tokenProvider.getAccessToken() }
+        val token = runBlocking { tokenManager.getAccessToken() }
 
         return if (token != null) {
             val authenticatedRequest = originalRequest.newBuilder()
