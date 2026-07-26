@@ -18,6 +18,7 @@ import androidx.navigation.navArgument
 import my.id.kentoes.rsudajibarangapp.auth.AuthState
 import my.id.kentoes.rsudajibarangapp.auth.AuthViewModel
 import my.id.kentoes.rsudajibarangapp.auth.ui.LoginScreen
+import my.id.kentoes.rsudajibarangapp.inspection.InspectionFormScreen
 import my.id.kentoes.rsudajibarangapp.master.ui.MasterDataListScreen
 
 object Routes {
@@ -79,8 +80,13 @@ fun NavGraph(
                 navArgument("roomName") { type = NavType.StringType }
             )
         ) {
+            val roomId = it.arguments?.getString("roomId")?.toLongOrNull() ?: 0L
             val roomName = it.arguments?.getString("roomName") ?: ""
-            PlaceholderScreen("Form Inspeksi — $roomName")
+            InspectionFormScreen(
+                roomId = roomId,
+                roomName = roomName,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
         composable(Routes.DRAFT_LIST) {
             PlaceholderScreen("Draf Tersimpan")

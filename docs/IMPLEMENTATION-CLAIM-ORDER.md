@@ -1,6 +1,6 @@
 # 📋 Implementation Claim Order — RSUD Ajibarang Android Client
 
-> **Status Project:** ✅ EPIC-0, EPIC-1, EPIC-2, EPIC-3, EPIC-4 & EPIC-5 selesai — foundation + auth + master data: build system, DI, navigation, network, database, auth, master data sync
+> **Status Project:** ✅ EPIC-0 s.d. EPIC-6 selesai — foundation + auth + master data + form inspeksi: build system, DI, navigation, network, database, auth, master data, dynamic form, scoring, camera
 > **Stack:** Jetpack Compose · Hilt · Room 3.0+ · Retrofit · Proto DataStore + Tink · WorkManager · Coil
 
 ---
@@ -48,7 +48,7 @@ flowchart LR
 | **1: Core** | Database & Token | `EPIC-3` | 🔴 KRITIS | EPIC-0 | ✅ **Selesai** | 1-2 session |
 | **2: Auth** | Login & Token Mgmt | `EPIC-4` | 🔴 KRITIS | EPIC-1,2,3 | ✅ **Selesai** | 1-2 session |
 | **3: Inspeksi** | Master Data | `EPIC-5` | 🟠 TINGGI | EPIC-1,2,3 | ✅ **Selesai** | 1 session |
-| **3: Inspeksi** | Form & Skoring | `EPIC-6` | 🟠 TINGGI | EPIC-5 | ⬜ Buka | 2 session |
+| **3: Inspeksi** | Form & Skoring | `EPIC-6` | 🟠 TINGGI | EPIC-5 | ✅ **Selesai** | 2 session |
 | **3: Inspeksi** | Draf & Kirim | `EPIC-7` | 🟠 TINGGI | EPIC-6 | ⬜ Buka | 1-2 session |
 | **4: Sinkronisasi** | Upload Worker | `EPIC-8` | 🟠 TINGGI | EPIC-7,2,3 | ⬜ Buka | 1-2 session |
 | **5: Poles** | Refinement | `EPIC-9` | 🟢 NORMAL | EPIC-8 | ⬜ Buka | 1-2 session |
@@ -175,25 +175,29 @@ flowchart LR
 
 > **Catatan:** Cache freshness + periodic refresh belum diimplementasi — untuk MVP pull-to-refresh manual sudah cukup. Entity Room (`MasterDataItem`, `RuangEntity`) sudah dibuat di EPIC-3 dan digunakan langsung oleh Repository.
 
-### 🔗 Issue: `EPIC-6` — Dynamic Form, Scoring & Photo ( `rsud-android-client-bcx` )
+### 🔗 Issue: `EPIC-6` — Dynamic Form, Scoring & Photo ( `rsud-android-client-bcx` ) — ✅ Selesai
 
 **Objective:** Form inspeksi dinamis dengan scoring 0/1/2 dan bukti foto.
 
-- [ ] **⬜ Belum di-claim** — Buat `ItemState.kt`: skor, fotoPaths, catatan, computed `isValid`
-- [ ] **⬜ Belum di-claim** — Buat `InspectionFormViewModel.kt`: single source of truth UDF
-- [ ] **⬜ Belum di-claim** — Buat `InspectionFormScreen.kt` (Compose + LazyColumn)
-- [ ] **⬜ Belum di-claim** — Buat `ItemCard.kt` composable: nama item + radio 0/1/2 + foto area
-- [ ] **⬜ Belum di-claim** — Buat `ScoreIndicator.kt` composable: 3 radio button dengan label + warna
-- [ ] **⬜ Belum di-claim** — Implementasi camera capture via `MediaStore.ACTION_IMAGE_CAPTURE`
-- [ ] **⬜ Belum di-claim** — Implementasi permission request CAMERA runtime
-- [ ] **⬜ Belum di-claim** — Buat `PhotoThumbnail.kt` composable (Coil AsyncImage + tombol hapus)
-- [ ] **⬜ Belum di-claim** — Implementasi validasi: skor 0 → wajib minimal 1 foto
-- [ ] **⬜ Belum di-claim** — Implementasi re-validasi saat skor berubah (foto tetap)
-- [ ] **⬜ Belum di-claim** — Implementasi multi-foto per item (unlimited)
-- [ ] **⬜ Belum di-claim** — Tombol Simpan Draf (incomplete allowed)
-- [ ] **⬜ Belum di-claim** — Tombol Kirim (semua item harus valid)
+- [x] ✅ Buat `ItemState.kt`: skor (-1/0/1/2), fotoPaths (List), catatan, computed `isValid`
+- [x] ✅ Buat `InspectionFormViewModel.kt` (AndroidViewModel + Hilt): UDF itemStates map, skor/photo/catatan updates, saveDraft (DRAFT), submit (PENDING_SYNC)
+- [x] ✅ Buat `InspectionFormScreen.kt` (Compose + LazyColumn): grouped by kategori, camera permission, TakePicture, progress bar, actions
+- [x] ✅ Buat `ItemCard.kt` composable: nama item + deskripsi + ScoreIndicator + foto FlowRow + catatan
+- [x] ✅ Buat `ScoreIndicator.kt` composable: 3 FilterChip — Berisiko (merah), Minor (kuning), Sesuai (hijau) + toggle
+- [x] ✅ Buat `CameraHelper.kt`: FileProvider URI + photo file management
+- [x] ✅ Buat `PhotoThumbnail.kt` composable: Coil AsyncImage + tombol hapus overlay
+- [x] ✅ Implementasi validasi: skor 0 → wajib minimal 1 foto (`isValid`)
+- [x] ✅ Implementasi re-validasi saat skor berubah (foto tetap, `copy(skor = skor)`)
+- [x] ✅ Implementasi multi-foto per item (unlimited via FlowRow)
+- [x] ✅ Tombol Simpan Draf (incomplete allowed — skor -1 tetap bisa simpan)
+- [x] ✅ Tombol Kirim (semua item harus valid — `submitEnabled = valid == total`)
+- [x] ✅ Setup CAMERA permission di AndroidManifest.xml (`required=false`)
+- [x] ✅ Setup FileProvider + `res/xml/file_paths.xml`
+- [x] ✅ Integrasi ke `NavGraph.kt`: `INSPECTION_FORM` → `InspectionFormScreen`
 
 **Depends on:** `EPIC-5`
+
+> **Catatan:** Camera state bisa loss saat config change (rotation) — untuk MVP acceptable, akan diperbaiki di EPIC-9 Refinement. `saveDraft()` dan `submit()` memiliki duplikasi kode yang bisa diekstrak nanti.
 
 ### 🔗 Issue: `EPIC-7` — Draf & Pengiriman ( `rsud-android-client-rrj` )
 

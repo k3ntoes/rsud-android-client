@@ -1,0 +1,222 @@
+package my.id.kentoes.rsudajibarangapp.inspection
+
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
+import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
+import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafFoto
+import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
+import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafItem
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import javax.inject.Inject
+
+data class InspectionFormUiState(
+    val roomId: Long = 0,
+    val roomName: String = "",
+    val isLoading: Boolean = false,
+    val items: List<ItemState> = emptyList(),
+    val groupedItems: Map<String, List<ItemState>> = emptyMap(),
+    val totalItems: Int = 0,
+    val scoredItems: Int = 0,
+    val validItems: Int = 0,
+    val draftSaved: Boolean = false,
+    val submitEnabled: Boolean = false,
+    val error: String? = null
+)
+
+@HiltViewModel
+class InspectionFormViewModel @Inject constructor(
+    application: Application,
+    private val masterDataDao: MasterDataDao,
+    private val drafDao: DrafDao
+) : AndroidViewModel(application) {
+
+    private val _uiState = MutableStateFlow(InspectionFormUiState())
+    val uiState: StateFlow<InspectionFormUiState> = _uiState.asStateFlow()
+
+    /** Map itemId → ItemState untuk update cepat */
+    private val itemStates = mutableMapOf<Long, ItemState>()
+
+    /** Inisialisasi dengan roomId dan roomName */
+    fun init(roomId: Long, roomName: String) {
+        _uiState.value = _uiState.value.copy(roomId = roomId, roomName = roomName, isLoading = true)
+
+        viewModelScope.launch {
+            // Load items dari Room (cache master data)
+            val items = masterDataDao.getAllItems().first()
+            val states = items.map { entity ->
+                ItemState(
+                    itemId = entity.id,
+                    nama = entity.nama,
+                    kategori = entity.kategori,
+                    skor = -1,
+                    fotoPaths = emptyList(),
+                    catatan = null
+                )
+            }
+            states.forEach { itemStates[it.itemId] = it }
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                items = states,
+                groupedItems = states.groupBy { it.kategori }
+            )
+            updateCounts()
+        }
+    }
+
+    /** Update skor untuk item tertentu */
+    fun updateScore(itemId: Long, skor: Int) {
+        val current = itemStates[itemId] ?: return
+        itemStates[itemId] = current.copy(skor = skor)
+        // Jika skor berubah dari 0 ke nilai lain, foto tetap (re-validasi)
+        emitItems()
+    }
+
+    /** Ambil foto — path foto hasil kamera */
+    fun addPhoto(itemId: Long, photoPath: String) {
+        val current = itemStates[itemId] ?: return
+        itemStates[itemId] = current.copy(
+            fotoPaths = current.fotoPaths + photoPath
+        )
+        emitItems()
+    }
+
+    /** Hapus foto dari item */
+    fun deletePhoto(itemId: Long, photoPath: String) {
+        val current = itemStates[itemId] ?: return
+        itemStates[itemId] = current.copy(
+            fotoPaths = current.fotoPaths - photoPath
+        )
+        emitItems()
+    }
+
+    /** Update catatan item */
+    fun updateCatatan(itemId: Long, catatan: String) {
+        val current = itemStates[itemId] ?: return
+        itemStates[itemId] = current.copy(
+            catatan = catatan.ifBlank { null }
+        )
+        emitItems()
+    }
+
+    /** Simpan draf ke Room (incomplete allowed) */
+    fun saveDraft() {
+        viewModelScope.launch {
+            val uiState = _uiState.value
+            val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+                .format(Date())
+
+            // Insert header
+            val draftId = drafDao.insertDraft(
+                DrafInspeksi(
+                    roomId = uiState.roomId,
+                    localTimestamp = timestamp,
+                    status = "DRAFT"
+                )
+            )
+
+            // Insert items
+            val currentItems = itemStates.values.toList()
+            currentItems.forEach { itemState ->
+                val itemDbId = drafDao.insertItem(
+                    DrafItem(
+                        drafId = draftId,
+                        itemId = itemState.itemId,
+                        skor = itemState.skor,
+                        catatan = itemState.catatan
+                    )
+                )
+                // Insert foto
+                itemState.fotoPaths.forEach { path ->
+                    drafDao.insertPhoto(
+                        DrafFoto(
+                            drafItemId = itemDbId,
+                            pathLokal = path
+                        )
+                    )
+                }
+            }
+
+            _uiState.value = _uiState.value.copy(draftSaved = true)
+        }
+    }
+
+    /** Kirim — semua item harus valid */
+    fun submit() {
+        val uiState = _uiState.value
+        if (!uiState.submitEnabled) return
+
+        // Untuk MVP, simpan draf dengan status PENDING_SYNC
+        // EPIC-7 & EPIC-8 akan handle upload sebenarnya
+        viewModelScope.launch {
+            val timestamp = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+                .format(Date())
+
+            val draftId = drafDao.insertDraft(
+                DrafInspeksi(
+                    roomId = uiState.roomId,
+                    localTimestamp = timestamp,
+                    status = "PENDING_SYNC"
+                )
+            )
+
+            val currentItems = itemStates.values.toList()
+            currentItems.forEach { itemState ->
+                val itemDbId = drafDao.insertItem(
+                    DrafItem(
+                        drafId = draftId,
+                        itemId = itemState.itemId,
+                        skor = itemState.skor,
+                        catatan = itemState.catatan
+                    )
+                )
+                itemState.fotoPaths.forEach { path ->
+                    drafDao.insertPhoto(
+                        DrafFoto(
+                            drafItemId = itemDbId,
+                            pathLokal = path
+                        )
+                    )
+                }
+            }
+
+            _uiState.value = _uiState.value.copy(draftSaved = true)
+        }
+    }
+
+    fun clearDraftSaved() {
+        _uiState.value = _uiState.value.copy(draftSaved = false)
+    }
+
+    private fun emitItems() {
+        val states = itemStates.values.toList()
+        _uiState.value = _uiState.value.copy(
+            items = states,
+            groupedItems = states.groupBy { it.kategori }
+        )
+        updateCounts()
+    }
+
+    private fun updateCounts() {
+        val states = itemStates.values
+        val total = states.size
+        val scored = states.count { it.isScored }
+        val valid = states.count { it.isValid }
+        _uiState.value = _uiState.value.copy(
+            totalItems = total,
+            scoredItems = scored,
+            validItems = valid,
+            submitEnabled = total > 0 && valid == total
+        )
+    }
+}
