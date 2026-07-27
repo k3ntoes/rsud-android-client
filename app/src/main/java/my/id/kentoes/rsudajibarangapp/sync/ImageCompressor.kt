@@ -2,6 +2,7 @@ package my.id.kentoes.rsudajibarangapp.sync
 
 import android.content.Context
 import android.graphics.Bitmap
+import dagger.hilt.android.qualifiers.ApplicationContext
 import android.graphics.BitmapFactory
 import androidx.core.graphics.scale
 import java.io.File
@@ -15,7 +16,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class ImageCompressor @Inject constructor(
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) {
     companion object {
         private const val MAX_SIZE_BYTES = 300 * 1024 // 300KB
