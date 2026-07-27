@@ -58,4 +58,11 @@ interface DrafDao {
     suspend fun deleteDraftCascade(draft: DrafInspeksi) {
         deleteDraft(draft)
     }
+
+    /** Atomic: update status SYNCED + hapus draft (cegah ghost entry jika crash di tengah) */
+    @Transaction
+    suspend fun markSyncedAndDelete(draftId: Long) {
+        updateDraftStatus(draftId, "SYNCED")
+        getDraftById(draftId)?.let { deleteDraft(it) }
+    }
 }

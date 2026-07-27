@@ -49,6 +49,12 @@ class InspectionFormViewModel @Inject constructor(
     /** Map itemId → ItemState untuk update cepat */
     private val itemStates = mutableMapOf<Long, ItemState>()
 
+    /** ID draft asli saat resume — untuk hapus duplikat saat simpan ulang */
+    private var resumeDraftId: Long? = null
+
+    /** Cegah multiple klik pada Kirim/Simpan Draf */
+    private var isSaving = false
+
     /** Inisialisasi dengan roomId dan roomName — dan opsional draftId untuk resume */
     fun init(roomId: Long, roomName: String, draftId: Long? = null) {
         _uiState.value = _uiState.value.copy(roomId = roomId, roomName = roomName, isLoading = true)
@@ -58,6 +64,7 @@ class InspectionFormViewModel @Inject constructor(
 
             val states = if (draftId != null && draftId > 0) {
                 // Resume dari draft — load skor, foto, catatan yang sudah tersimpan
+                resumeDraftId = draftId
                 val (draftRoomId, draftStates) = inspectionRepository.draftToItemStates(draftId, allMasterItems)
                 _uiState.value = _uiState.value.copy(roomId = draftRoomId)
                 draftStates
@@ -131,36 +138,48 @@ class InspectionFormViewModel @Inject constructor(
 
     /** Simpan draf ke Room — status DRAFT atau PENDING_SYNC */
     private fun save(status: String, enqueueSync: Boolean = false) {
+        if (isSaving) return
+        isSaving = true
         viewModelScope.launch {
-            val now = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
-                .format(Date())
+            try {
+                val now = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+                    .format(Date())
 
-            val draftId = drafDao.insertDraft(
-                DrafInspeksi(
-                    roomId = _uiState.value.roomId,
-                    localTimestamp = now,
-                    status = status
-                )
-            )
-
-            itemStates.values.forEach { itemState ->
-                val itemDbId = drafDao.insertItem(
-                    DrafItem(
-                        drafId = draftId,
-                        itemId = itemState.itemId,
-                        skor = itemState.skor,
-                        catatan = itemState.catatan
-                    )
-                )
-                itemState.fotoPaths.forEach { path ->
-                    drafDao.insertPhoto(
-                        DrafFoto(drafItemId = itemDbId, pathLokal = path)
-                    )
+                // Jika resume dari draft lama, hapus draft lama dulu (CASCADE hapus item & foto)
+                resumeDraftId?.let { oldId ->
+                    drafDao.getDraftById(oldId)?.let { drafDao.deleteDraftCascade(it) }
+                    resumeDraftId = null
                 }
-            }
 
-            if (enqueueSync) SyncWorker.enqueue(context)
-            _uiState.value = _uiState.value.copy(draftSaved = true)
+                val newDraftId = drafDao.insertDraft(
+                    DrafInspeksi(
+                        roomId = _uiState.value.roomId,
+                        localTimestamp = now,
+                        status = status
+                    )
+                )
+
+                itemStates.values.forEach { itemState ->
+                    val itemDbId = drafDao.insertItem(
+                        DrafItem(
+                            drafId = newDraftId,
+                            itemId = itemState.itemId,
+                            skor = itemState.skor,
+                            catatan = itemState.catatan
+                        )
+                    )
+                    itemState.fotoPaths.forEach { path ->
+                        drafDao.insertPhoto(
+                            DrafFoto(drafItemId = itemDbId, pathLokal = path)
+                        )
+                    }
+                }
+
+                if (enqueueSync) SyncWorker.enqueue(context)
+                _uiState.value = _uiState.value.copy(draftSaved = true)
+            } finally {
+                isSaving = false
+            }
         }
     }
 

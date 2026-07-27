@@ -96,9 +96,8 @@ class SyncManager @Inject constructor(
 
             syncApi.submitInspection(submitRequest)
 
-            // 5. Sukses — update status & hapus draf lokal
-            inspectionRepository.updateStatus(draftId, "SYNCED")
-            inspectionRepository.deleteDraft(draftId)
+            // 5. Sukses — atomic: update status + hapus draf (cegah ghost SYNCED entry)
+            drafDao.markSyncedAndDelete(draftId)
             SyncResult(draftId, true, "Inspeksi berhasil dikirim")
         } catch (e: Exception) {
             SyncResult(draftId, false, e.message ?: "Error sinkronisasi")

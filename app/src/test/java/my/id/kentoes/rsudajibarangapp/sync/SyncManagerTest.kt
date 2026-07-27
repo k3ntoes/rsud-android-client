@@ -83,8 +83,7 @@ class SyncManagerTest {
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_a.jpg")
         coEvery { syncApi.submitInspection(any()) } returns Unit
-        coEvery { inspectionRepository.updateStatus(any(), any()) } returns Unit
-        coEvery { inspectionRepository.deleteDraft(any()) } returns Unit
+        coEvery { drafDao.markSyncedAndDelete(any()) } returns Unit
 
         val results = syncManager.syncAllPending()
 
@@ -103,8 +102,7 @@ class SyncManagerTest {
         coEvery { imageCompressor.compress("/photo/c.jpg") } returns "/compressed/c.jpg"
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_file.jpg")
         coEvery { syncApi.submitInspection(any()) } returns Unit
-        coEvery { inspectionRepository.updateStatus(1L, "SYNCED") } returns Unit
-        coEvery { inspectionRepository.deleteDraft(1L) } returns Unit
+        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
 
@@ -125,9 +123,8 @@ class SyncManagerTest {
             })
         }
 
-        // Verifikasi status update & delete
-        coVerify(exactly = 1) { inspectionRepository.updateStatus(1L, "SYNCED") }
-        coVerify(exactly = 1) { inspectionRepository.deleteDraft(1L) }
+        // Verifikasi atomic markSyncedAndDelete dipanggil
+        coVerify(exactly = 1) { drafDao.markSyncedAndDelete(1L) }
     }
 
     @Test
@@ -169,9 +166,8 @@ class SyncManagerTest {
         assertFalse(result.success)
         assertEquals("HTTP 422 Unprocessable Entity", result.message)
 
-        // Status update & delete TIDAK dipanggil
-        coVerify(exactly = 0) { inspectionRepository.updateStatus(1L, "SYNCED") }
-        coVerify(exactly = 0) { inspectionRepository.deleteDraft(1L) }
+        // markSyncedAndDelete TIDAK dipanggil
+        coVerify(exactly = 0) { drafDao.markSyncedAndDelete(any()) }
     }
 
     @Test
@@ -229,8 +225,7 @@ class SyncManagerTest {
         val emptyPayload = samplePayload.copy(items = emptyList())
         coEvery { inspectionRepository.preparePayload(1L) } returns emptyPayload
         coEvery { syncApi.submitInspection(any()) } returns Unit
-        coEvery { inspectionRepository.updateStatus(1L, "SYNCED") } returns Unit
-        coEvery { inspectionRepository.deleteDraft(1L) } returns Unit
+        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
 
@@ -252,8 +247,7 @@ class SyncManagerTest {
         )
         coEvery { inspectionRepository.preparePayload(1L) } returns payloadWithoutPhotos
         coEvery { syncApi.submitInspection(any()) } returns Unit
-        coEvery { inspectionRepository.updateStatus(1L, "SYNCED") } returns Unit
-        coEvery { inspectionRepository.deleteDraft(1L) } returns Unit
+        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
 
@@ -280,8 +274,7 @@ class SyncManagerTest {
         )
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_foto.jpg")
         coEvery { syncApi.submitInspection(any()) } returns Unit
-        coEvery { inspectionRepository.updateStatus(1L, "SYNCED") } returns Unit
-        coEvery { inspectionRepository.deleteDraft(1L) } returns Unit
+        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
 

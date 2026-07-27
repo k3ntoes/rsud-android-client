@@ -3,6 +3,7 @@ package my.id.kentoes.rsudajibarangapp.inspection
 import android.content.Context
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -15,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
+import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.sync.SyncWorker
 import org.junit.After
@@ -419,6 +421,217 @@ class InspectionFormViewModelTest {
     }
 
     // ── Mixed validation scenarios ──
+
+    // ── Resume draft & duplicate prevention (regression) ──
+
+    @Test
+    fun `saveDraft after init with draftId deletes old draft first`() = runTest(testDispatcher) {
+        val oldDraft = DrafInspeksi(id = 5, roomId = 10, localTimestamp = "2025-01-01T00:00:00Z", status = "DRAFT")
+        val draftStates = listOf(
+            ItemState(itemId = 1, nama = "Meja", kategori = "Furnitur", skor = 2),
+        )
+        coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        coEvery { inspectionRepository.draftToItemStates(5L, sampleItems) } returns (10L to draftStates)
+        coEvery { drafDao.getDraftById(5L) } returns oldDraft
+        coEvery { drafDao.deleteDraftCascade(oldDraft) } returns Unit
+        coEvery { drafDao.insertDraft(any()) } returns 100L
+        coEvery { drafDao.insertItem(any()) } returns 10L
+        coEvery { drafDao.insertPhoto(any()) } returns 1L
+
+        viewModel.init(roomId = 0, roomName = "", draftId = 5L)
+        advanceUntilIdle()
+
+        viewModel.saveDraft()
+        advanceUntilIdle()
+
+        // Old draft dihapus dulu, baru insert draft baru
+        coVerifyOrder {
+            drafDao.getDraftById(5L)
+            drafDao.deleteDraftCascade(oldDraft)
+            drafDao.insertDraft(match { it.status == "DRAFT" })
+        }
+        assertTrue(viewModel.uiState.value.draftSaved)
+    }
+
+    @Test
+    fun `submit after init with draftId deletes old draft first`() = runTest(testDispatcher) {
+        val oldDraft = DrafInspeksi(id = 5, roomId = 10, localTimestamp = "2025-01-01T00:00:00Z", status = "DRAFT")
+        val draftStates = listOf(
+            ItemState(itemId = 1, nama = "Meja", kategori = "Furnitur", skor = 2, fotoPaths = listOf("/photo.jpg")),
+            ItemState(itemId = 2, nama = "Kursi", kategori = "Furnitur", skor = 0, fotoPaths = listOf("/pic.jpg")),
+            ItemState(itemId = 3, nama = "Lantai", kategori = "Struktur", skor = 2),
+        )
+        coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        coEvery { inspectionRepository.draftToItemStates(5L, sampleItems) } returns (10L to draftStates)
+        coEvery { drafDao.getDraftById(5L) } returns oldDraft
+        coEvery { drafDao.deleteDraftCascade(oldDraft) } returns Unit
+        coEvery { drafDao.insertDraft(any()) } returns 100L
+        coEvery { drafDao.insertItem(any()) } returns 10L
+        coEvery { drafDao.insertPhoto(any()) } returns 1L
+
+        viewModel.init(roomId = 0, roomName = "", draftId = 5L)
+        advanceUntilIdle()
+
+        // All items already valid from draft (skor 0 + foto, skor 2)
+        assertTrue(viewModel.uiState.value.submitEnabled)
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        coVerifyOrder {
+            drafDao.getDraftById(5L)
+            drafDao.deleteDraftCascade(oldDraft)
+            drafDao.insertDraft(match { it.status == "PENDING_SYNC" })
+        }
+        assertTrue(viewModel.uiState.value.draftSaved)
+    }
+
+    @Test
+    fun `second save after resume does not try to delete again`() = runTest(testDispatcher) {
+        val oldDraft = DrafInspeksi(id = 5, roomId = 10, localTimestamp = "2025-01-01T00:00:00Z", status = "DRAFT")
+        val draftStates = listOf(
+            ItemState(itemId = 1, nama = "Meja", kategori = "Furnitur", skor = 2),
+        )
+        coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        coEvery { inspectionRepository.draftToItemStates(5L, sampleItems) } returns (10L to draftStates)
+        coEvery { drafDao.getDraftById(5L) } returns oldDraft
+        coEvery { drafDao.deleteDraftCascade(oldDraft) } returns Unit
+        coEvery { drafDao.insertDraft(any()) } returns 100L
+        coEvery { drafDao.insertItem(any()) } returns 10L
+        coEvery { drafDao.insertPhoto(any()) } returns 1L
+
+        viewModel.init(roomId = 0, roomName = "", draftId = 5L)
+        advanceUntilIdle()
+
+        // Save pertama — hapus draft lama + insert baru
+        viewModel.saveDraft()
+        advanceUntilIdle()
+        coVerify(exactly = 1) { drafDao.deleteDraftCascade(any()) }
+
+        // Clear flag
+        viewModel.clearDraftSaved()
+
+        // Save kedua — TIDAK hapus lagi (resumeDraftId sudah null)
+        viewModel.saveDraft()
+        advanceUntilIdle()
+        coVerify(exactly = 1) { drafDao.deleteDraftCascade(any()) } // masih 1x, tidak bertambah
+        coVerify(exactly = 2) { drafDao.insertDraft(any()) } // 2 insert: 1 dari save pertama, 1 dari save kedua
+    }
+
+    @Test
+    fun `save without resumeDraftId does not delete any draft`() = runTest(testDispatcher) {
+        coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        coEvery { drafDao.insertDraft(any()) } returns 100L
+        coEvery { drafDao.insertItem(any()) } returns 10L
+        coEvery { drafDao.insertPhoto(any()) } returns 1L
+        viewModel.init(roomId = 1, roomName = "Test")
+        advanceUntilIdle()
+
+        viewModel.saveDraft()
+        advanceUntilIdle()
+
+        // Tidak ada resume — getDraftById dan deleteDraftCascade tidak boleh dipanggil
+        coVerify(exactly = 0) { drafDao.getDraftById(any()) }
+        coVerify(exactly = 0) { drafDao.deleteDraftCascade(any()) }
+        coVerify(exactly = 1) { drafDao.insertDraft(any()) }
+    }
+
+    @Test
+    fun `saveDraft after resume deletes correct old draft id`() = runTest(testDispatcher) {
+        val oldDraft = DrafInspeksi(id = 99, roomId = 10, localTimestamp = "2025-06-01T00:00:00Z", status = "DRAFT")
+        val draftStates = listOf(
+            ItemState(itemId = 1, nama = "Meja", kategori = "Furnitur", skor = 1),
+            ItemState(itemId = 2, nama = "Kursi", kategori = "Furnitur", skor = 1),
+        )
+        coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        coEvery { inspectionRepository.draftToItemStates(99L, sampleItems) } returns (10L to draftStates)
+        coEvery { drafDao.getDraftById(99L) } returns oldDraft
+        coEvery { drafDao.deleteDraftCascade(oldDraft) } returns Unit
+        coEvery { drafDao.insertDraft(any()) } returns 200L
+        coEvery { drafDao.insertItem(any()) } returns 10L
+        coEvery { drafDao.insertPhoto(any()) } returns 1L
+
+        viewModel.init(roomId = 0, roomName = "", draftId = 99L)
+        advanceUntilIdle()
+
+        viewModel.saveDraft()
+        advanceUntilIdle()
+
+        // Verifikasi bahwa delete dipanggil dengan draft id=99 (bukan id lain)
+        coVerify { drafDao.getDraftById(99L) }
+        coVerify { drafDao.deleteDraftCascade(oldDraft) }
+    }
+
+    // ── isSaving guard (cegah double click) ──
+
+    @Test
+    fun `saveDraft called twice only inserts once`() = runTest(testDispatcher) {
+        coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        coEvery { drafDao.insertDraft(any()) } returnsMany listOf(100L, 200L, 300L)
+        coEvery { drafDao.insertItem(any()) } returns 10L
+        coEvery { drafDao.insertPhoto(any()) } returns 1L
+        viewModel.init(roomId = 1, roomName = "Test")
+        advanceUntilIdle()
+
+        // Panggil saveDraft 2x berturut-turut (simulasi double klik cepat)
+        viewModel.saveDraft()
+        viewModel.saveDraft()
+        advanceUntilIdle()
+
+        // isSaving mencegah save ke-2 — hanya 1 insert
+        coVerify(exactly = 1) { drafDao.insertDraft(any()) }
+        assertTrue(viewModel.uiState.value.draftSaved)
+    }
+
+    @Test
+    fun `submit called twice only inserts once`() = runTest(testDispatcher) {
+        coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        coEvery { drafDao.insertDraft(any()) } returnsMany listOf(100L, 200L, 300L)
+        coEvery { drafDao.insertItem(any()) } returns 10L
+        coEvery { drafDao.insertPhoto(any()) } returns 1L
+        viewModel.init(roomId = 1, roomName = "Test")
+        advanceUntilIdle()
+
+        // Score all items valid
+        viewModel.updateScore(1, 2)
+        viewModel.updateScore(2, 2)
+        viewModel.updateScore(3, 2)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.submitEnabled)
+
+        // Panggil submit 2x berturut-turut
+        viewModel.submit()
+        viewModel.submit()
+        advanceUntilIdle()
+
+        // isSaving mencegah submit ke-2 — hanya 1 insert
+        coVerify(exactly = 1) { drafDao.insertDraft(any()) }
+        assertTrue(viewModel.uiState.value.draftSaved)
+    }
+
+    @Test
+    fun `saveDraft after previous save completes can save again`() = runTest(testDispatcher) {
+        coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        coEvery { drafDao.insertDraft(any()) } returnsMany listOf(100L, 200L)
+        coEvery { drafDao.insertItem(any()) } returns 10L
+        coEvery { drafDao.insertPhoto(any()) } returns 1L
+        viewModel.init(roomId = 1, roomName = "Test")
+        advanceUntilIdle()
+
+        // Save pertama — sukses
+        viewModel.saveDraft()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.draftSaved)
+        coVerify(exactly = 1) { drafDao.insertDraft(any()) }
+
+        // Clear flag
+        viewModel.clearDraftSaved()
+
+        // Save kedua — isSaving sudah false setelah coroutine selesai
+        viewModel.saveDraft()
+        advanceUntilIdle()
+        coVerify(exactly = 2) { drafDao.insertDraft(any()) } // total 2 insert
+    }
 
     @Test
     fun `score 1 and 2 are valid even without photos`() = runTest(testDispatcher) {
