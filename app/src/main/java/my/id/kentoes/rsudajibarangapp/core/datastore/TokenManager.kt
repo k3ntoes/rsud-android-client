@@ -3,6 +3,7 @@ package my.id.kentoes.rsudajibarangapp.core.datastore
 import androidx.datastore.core.DataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,7 +27,40 @@ class TokenManager @Inject constructor(
     }
 
     suspend fun saveTokens(accessToken: String, refreshToken: String) {
-        dataStore.updateData { TokenData(accessToken = accessToken, refreshToken = refreshToken) }
+        // Preserve user data saat refresh token
+        dataStore.updateData { current ->
+            TokenData(
+                accessToken = accessToken,
+                refreshToken = refreshToken,
+                userId = current.userId,
+                username = current.username,
+                role = current.role,
+                isActive = current.isActive
+            )
+        }
+    }
+
+    suspend fun saveUser(user: UserOut) {
+        dataStore.updateData {
+            it.copy(
+                userId = user.id,
+                username = user.username,
+                role = user.role,
+                isActive = user.isActive
+            )
+        }
+    }
+
+    suspend fun getUser(): UserOut? {
+        val data = dataStore.data.first()
+        return if (data.userId != 0) {
+            UserOut(
+                id = data.userId,
+                username = data.username,
+                role = data.role,
+                isActive = data.isActive
+            )
+        } else null
     }
 
     suspend fun clearTokens() {

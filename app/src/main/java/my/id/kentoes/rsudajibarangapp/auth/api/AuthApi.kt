@@ -2,8 +2,8 @@ package my.id.kentoes.rsudajibarangapp.auth.api
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import my.id.kentoes.rsudajibarangapp.core.model.ApiResponse
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 
 @Serializable
@@ -13,13 +13,21 @@ data class LoginRequest(
 )
 
 @Serializable
-data class LoginResponse(
+data class UserOut(
+    val id: Int,
+    val username: String,
+    val role: String,
+    @SerialName("is_active")
+    val isActive: Boolean
+)
+
+@Serializable
+data class TokenResponse(
     @SerialName("access_token")
     val accessToken: String,
     @SerialName("refresh_token")
     val refreshToken: String,
-    @SerialName("expires_in")
-    val expiresIn: Long? = null
+    val user: UserOut
 )
 
 @Serializable
@@ -29,21 +37,27 @@ data class RefreshRequest(
 )
 
 @Serializable
-data class RefreshResponse(
-    @SerialName("access_token")
-    val accessToken: String,
-    @SerialName("expires_in")
-    val expiresIn: Long? = null
+data class ChangePasswordRequest(
+    @SerialName("old_password")
+    val oldPassword: String,
+    @SerialName("new_password")
+    val newPassword: String
 )
 
 interface AuthApi {
 
-    @POST("login")
-    suspend fun login(@Body request: LoginRequest): ApiResponse<LoginResponse>
+    @POST("auth/login")
+    suspend fun login(@Body request: LoginRequest): TokenResponse
 
-    @POST("refresh")
-    suspend fun refresh(@Body request: RefreshRequest): ApiResponse<RefreshResponse>
+    @POST("auth/refresh")
+    suspend fun refresh(@Body request: RefreshRequest): TokenResponse
 
-    @POST("logout")
-    suspend fun logout(@Body request: RefreshRequest): ApiResponse<Unit>
+    @POST("auth/logout")
+    suspend fun logout(@Body request: RefreshRequest): Unit
+
+    @GET("auth/me")
+    suspend fun me(): UserOut
+
+    @POST("auth/change-password")
+    suspend fun changePassword(@Body request: ChangePasswordRequest): Unit
 }

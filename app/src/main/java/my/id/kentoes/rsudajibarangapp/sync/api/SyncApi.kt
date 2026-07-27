@@ -2,9 +2,8 @@ package my.id.kentoes.rsudajibarangapp.sync.api
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import my.id.kentoes.rsudajibarangapp.core.model.ApiResponse
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
+import retrofit2.http.Body
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
@@ -12,40 +11,50 @@ import retrofit2.http.Part
 @Serializable
 data class UploadPhotoResponse(
     @SerialName("file_name")
-    val fileName: String
+    val fileName: String,
+    @SerialName("thumbnail_name")
+    val thumbnailName: String? = null
 )
 
 @Serializable
-data class SubmitInspectionRequest(
+data class InspectionSubmit(
     @SerialName("room_id")
     val roomId: Long,
     @SerialName("local_timestamp")
     val localTimestamp: String,
-    val items: List<SubmitItem>
+    @SerialName("business_date")
+    val businessDate: String,
+    val details: List<DetailSubmit>
 )
 
 @Serializable
-data class SubmitItem(
+data class DetailSubmit(
     @SerialName("item_id")
     val itemId: Long,
-    val skor: Int,
-    val catatan: String? = null,
-    @SerialName("foto_files")
-    val fotoFiles: List<String> // nama file dari hasil upload
+    val score: Int,
+    val photos: List<PhotoSubmit> = emptyList()
+)
+
+@Serializable
+data class PhotoSubmit(
+    @SerialName("file_name")
+    val fileName: String,
+    @SerialName("sort_order")
+    val sortOrder: Int = 0
 )
 
 interface SyncApi {
 
     /** Upload foto — return nama file di server */
     @Multipart
-    @POST("upload/photo")
+    @POST("upload")
     suspend fun uploadPhoto(
         @Part photo: MultipartBody.Part
-    ): ApiResponse<UploadPhotoResponse>
+    ): UploadPhotoResponse
 
     /** Submit inspeksi lengkap (JSON + daftar nama foto) */
-    @POST("inspection/submit")
+    @POST("inspections")
     suspend fun submitInspection(
-        @retrofit2.http.Body request: SubmitInspectionRequest
-    ): ApiResponse<Unit>
+        @Body request: InspectionSubmit
+    ): Unit
 }

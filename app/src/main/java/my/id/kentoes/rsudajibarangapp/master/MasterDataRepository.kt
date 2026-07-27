@@ -5,7 +5,9 @@ import kotlinx.coroutines.flow.first
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
+import my.id.kentoes.rsudajibarangapp.master.api.ItemOut
 import my.id.kentoes.rsudajibarangapp.master.api.MasterDataApi
+import my.id.kentoes.rsudajibarangapp.master.api.RoomOut
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,16 +37,15 @@ class MasterDataRepository @Inject constructor(
     /** Fetch items & rooms dari API, simpan ke Room */
     suspend fun syncFromApi(): MasterDataSyncState {
         return try {
-            // Fetch items
-            val itemsResponse = masterDataApi.getItems()
-            val itemsData = itemsResponse.data
-            if (itemsResponse.success && itemsData != null) {
-                val items = itemsData.map { api ->
+            // Fetch items — BE returns list langsung tanpa wrapper
+            val apiItems: List<ItemOut> = masterDataApi.getItems()
+            if (apiItems.isNotEmpty()) {
+                val items = apiItems.map { api ->
                     MasterDataItem(
                         id = api.id,
-                        nama = api.nama,
-                        kategori = api.kategori,
-                        deskripsi = api.deskripsi,
+                        nama = api.name,
+                        kategori = "",
+                        deskripsi = null,
                         isActive = api.isActive
                     )
                 }
@@ -52,14 +53,13 @@ class MasterDataRepository @Inject constructor(
             }
 
             // Fetch rooms
-            val roomsResponse = masterDataApi.getRooms()
-            val roomsData = roomsResponse.data
-            if (roomsResponse.success && roomsData != null) {
-                val rooms = roomsData.map { api ->
+            val apiRooms: List<RoomOut> = masterDataApi.getRooms()
+            if (apiRooms.isNotEmpty()) {
+                val rooms = apiRooms.map { api ->
                     RuangEntity(
                         id = api.id,
-                        nama = api.nama,
-                        lantai = api.lantai,
+                        nama = api.name,
+                        lantai = null,
                         isActive = api.isActive
                     )
                 }

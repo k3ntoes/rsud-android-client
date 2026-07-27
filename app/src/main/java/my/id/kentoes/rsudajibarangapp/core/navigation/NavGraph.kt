@@ -18,6 +18,7 @@ import androidx.navigation.navArgument
 import my.id.kentoes.rsudajibarangapp.auth.AuthState
 import my.id.kentoes.rsudajibarangapp.auth.AuthViewModel
 import my.id.kentoes.rsudajibarangapp.auth.ui.LoginScreen
+import my.id.kentoes.rsudajibarangapp.auth.ui.ProfileScreen
 import my.id.kentoes.rsudajibarangapp.dashboard.DashboardScreen
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionFormScreen
 import my.id.kentoes.rsudajibarangapp.inspection.ui.DaftarDrafScreen
@@ -26,6 +27,7 @@ import my.id.kentoes.rsudajibarangapp.master.ui.MasterDataListScreen
 object Routes {
     const val LOGIN = "login"
     const val DASHBOARD = "dashboard"
+    const val PROFILE = "profile"
     const val INSPECTION_LIST = "inspection_list"
     const val INSPECTION_FORM = "inspection_form/{roomId}/{roomName}?draftId={draftId}"
     const val DRAFT_LIST = "draft_list"
@@ -76,12 +78,17 @@ fun NavGraph(
             )
         }
         composable(Routes.DASHBOARD) {
+            val currentUser by authViewModel.currentUser.collectAsState()
             DashboardScreen(
+                currentUser = currentUser,
                 onNavigateToInspection = {
                     navController.navigate(Routes.INSPECTION_LIST)
                 },
                 onNavigateToDrafts = {
                     navController.navigate(Routes.DRAFT_LIST)
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Routes.PROFILE)
                 },
                 onLogout = {
                     authViewModel.logout()
@@ -89,6 +96,12 @@ fun NavGraph(
                         popUpTo(0) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable(Routes.PROFILE) {
+            ProfileScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -107,6 +120,7 @@ fun NavGraph(
                 navArgument("roomName") { type = NavType.StringType },
                 navArgument("draftId") {
                     type = NavType.StringType
+                    nullable = true
                     defaultValue = null
                 }
             )

@@ -3,6 +3,7 @@ package my.id.kentoes.rsudajibarangapp.sync
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.core.graphics.scale
 import java.io.File
 import java.io.FileOutputStream
 import javax.inject.Inject
@@ -51,11 +52,9 @@ class ImageCompressor @Inject constructor(
                 MAX_DIMENSION.toFloat() / bitmap.width,
                 MAX_DIMENSION.toFloat() / bitmap.height
             )
-            Bitmap.createScaledBitmap(
-                bitmap,
+            bitmap.scale(
                 (bitmap.width * ratio).toInt(),
-                (bitmap.height * ratio).toInt(),
-                true
+                (bitmap.height * ratio).toInt()
             )
         } else {
             bitmap

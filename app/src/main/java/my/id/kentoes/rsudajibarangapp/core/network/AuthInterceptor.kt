@@ -20,8 +20,8 @@ class AuthInterceptor @Inject constructor(
 
     /** Endpoint yang TIDAK perlu header Authorization */
     private val noAuthPaths: List<String> = listOf(
-        "/login",
-        "/refresh"
+        "/auth/login",
+        "/auth/refresh"
     )
 
     override fun intercept(chain: Interceptor.Chain): Response {

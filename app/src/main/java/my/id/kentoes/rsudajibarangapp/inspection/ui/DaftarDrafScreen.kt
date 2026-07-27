@@ -49,9 +49,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import my.id.kentoes.rsudajibarangapp.inspection.ui.components.OfflineBanner
 import my.id.kentoes.rsudajibarangapp.inspection.DaftarDrafViewModel
 import my.id.kentoes.rsudajibarangapp.inspection.DraftSummary
+import my.id.kentoes.rsudajibarangapp.inspection.ui.components.OfflineBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

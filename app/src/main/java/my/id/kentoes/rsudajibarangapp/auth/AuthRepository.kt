@@ -3,11 +3,12 @@ package my.id.kentoes.rsudajibarangapp.auth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import my.id.kentoes.rsudajibarangapp.auth.api.AuthApi
+import my.id.kentoes.rsudajibarangapp.auth.api.ChangePasswordRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.LoginRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.RefreshRequest
+import my.id.kentoes.rsudajibarangapp.auth.api.TokenResponse
+import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import my.id.kentoes.rsudajibarangapp.core.datastore.TokenManager
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,35 +29,48 @@ class AuthRepository @Inject constructor(
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
-    /** Inisialisasi — cek apakah ada token tersimpan */
+    private val _currentUser = MutableStateFlow<UserOut?>(null)
+    val currentUser: StateFlow<UserOut?> = _currentUser.asStateFlow()
+
+    /** Inisialisasi — cek token, muat user lokal, refresh dari server */
     suspend fun init() {
         val isLoggedIn = tokenManager.isLoggedIn()
-        _authState.value = if (isLoggedIn) {
-            AuthState.Authenticated()
+        if (isLoggedIn) {
+            _currentUser.value = tokenManager.getUser()
+            _authState.value = AuthState.Authenticated()
+            // Refresh profil dari server (abaikan error jika offline)
+            refreshCurrentUser()
         } else {
-            AuthState.Unauthenticated
+            _authState.value = AuthState.Unauthenticated
         }
     }
 
-    /** Login — simpan token jika sukses */
+    /** Refresh profil user dari endpoint /me */
+    suspend fun refreshCurrentUser() {
+        try {
+            val user = authApi.me()
+            tokenManager.saveUser(user)
+            _currentUser.value = user
+        } catch (_: Exception) {
+            // Gagal fetch profil — pakai data lokal yang sudah ada
+        }
+    }
+
+    /** Login — simpan token & user */
     suspend fun login(username: String, password: String): Boolean {
         _authState.value = AuthState.Loading
         return try {
-            val response = authApi.login(LoginRequest(username, password))
-            val data = response.data
-            if (response.success && data != null) {
-                tokenManager.saveTokens(
-                    accessToken = data.accessToken,
-                    refreshToken = data.refreshToken
-                )
-                _authState.value = AuthState.Authenticated()
-                true
-            } else {
-                _authState.value = AuthState.Error(response.message ?: "Login gagal")
-                false
-            }
+            val response: TokenResponse = authApi.login(LoginRequest(username, password))
+            tokenManager.saveTokens(
+                accessToken = response.accessToken,
+                refreshToken = response.refreshToken
+            )
+            tokenManager.saveUser(response.user)
+            _currentUser.value = response.user
+            _authState.value = AuthState.Authenticated()
+            true
         } catch (e: Exception) {
-            _authState.value = AuthState.Error(e.message ?: "Koneksi gagal")
+            _authState.value = AuthState.Error(e.message ?: "Login gagal")
             false
         }
     }
@@ -65,22 +79,21 @@ class AuthRepository @Inject constructor(
     suspend fun refreshToken(): Boolean {
         val refreshToken = tokenManager.getRefreshToken() ?: return false
         return try {
-            val response = authApi.refresh(RefreshRequest(refreshToken))
-            val data = response.data
-            if (response.success && data != null) {
-                tokenManager.saveTokens(
-                    accessToken = data.accessToken,
-                    refreshToken = refreshToken // refresh token tetap sama
-                )
-                true
-            } else {
-                forceLogout()
-                false
-            }
+            val response: TokenResponse = authApi.refresh(RefreshRequest(refreshToken))
+            tokenManager.saveTokens(
+                accessToken = response.accessToken,
+                refreshToken = refreshToken // refresh token tetap sama
+            )
+            true
         } catch (e: Exception) {
             forceLogout()
             false
         }
+    }
+
+    /** Ganti password */
+    suspend fun changePassword(oldPassword: String, newPassword: String) {
+        authApi.changePassword(ChangePasswordRequest(oldPassword, newPassword))
     }
 
     /** Logout — hapus token */
@@ -95,9 +108,10 @@ class AuthRepository @Inject constructor(
     /** Ambil Access Token yang tersimpan */
     suspend fun getAccessToken(): String? = tokenManager.getAccessToken()
 
-    /** Force Logout — hapus token + redirect ke login */
+    /** Force Logout — hapus token & user + redirect ke login */
     suspend fun forceLogout() {
         tokenManager.clearTokens()
+        _currentUser.value = null
         _authState.value = AuthState.Unauthenticated
     }
 }

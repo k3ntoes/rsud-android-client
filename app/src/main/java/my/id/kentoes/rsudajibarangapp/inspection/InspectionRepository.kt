@@ -2,18 +2,12 @@ package my.id.kentoes.rsudajibarangapp.inspection
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafFoto
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
-import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -44,6 +38,7 @@ data class DraftWithItems(
 data class InspectionPayload(
     val roomId: Long,
     val localTimestamp: String,
+    val businessDate: String,
     val items: List<PayloadItem>
 )
 
@@ -112,9 +107,11 @@ class InspectionRepository @Inject constructor(
                 fotoPaths = fotos.map { it.pathLokal }
             )
         }
+        val businessDate = draftWithItems.draft.localTimestamp.take(10)
         return InspectionPayload(
             roomId = draftWithItems.draft.roomId,
             localTimestamp = draftWithItems.draft.localTimestamp,
+            businessDate = businessDate,
             items = items
         )
     }

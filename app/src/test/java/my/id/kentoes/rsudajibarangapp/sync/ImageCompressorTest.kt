@@ -3,7 +3,8 @@ package my.id.kentoes.rsudajibarangapp.sync
 import android.content.Context
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test

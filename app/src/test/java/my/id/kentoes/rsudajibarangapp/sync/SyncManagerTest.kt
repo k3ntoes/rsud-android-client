@@ -2,24 +2,21 @@ package my.id.kentoes.rsudajibarangapp.sync
 
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
-import my.id.kentoes.rsudajibarangapp.core.model.ApiResponse
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionPayload
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionRepository
 import my.id.kentoes.rsudajibarangapp.inspection.PayloadItem
-import my.id.kentoes.rsudajibarangapp.sync.api.SubmitInspectionRequest
 import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
 import my.id.kentoes.rsudajibarangapp.sync.api.UploadPhotoResponse
-import okhttp3.MultipartBody
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.io.File
 
 class SyncManagerTest {
 
@@ -39,6 +36,7 @@ class SyncManagerTest {
     private val samplePayload = InspectionPayload(
         roomId = 10,
         localTimestamp = "2026-01-01T00:00:00Z",
+        businessDate = "2026-01-01",
         items = listOf(
             PayloadItem(
                 itemId = 1,
@@ -83,11 +81,8 @@ class SyncManagerTest {
         // syncSingleDraft will be called — mock its dependencies
         coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
-        coEvery { syncApi.uploadPhoto(any()) } returns ApiResponse(
-            success = true,
-            data = UploadPhotoResponse("server_a.jpg")
-        )
-        coEvery { syncApi.submitInspection(any()) } returns ApiResponse(success = true)
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_a.jpg")
+        coEvery { syncApi.submitInspection(any()) } returns Unit
         coEvery { inspectionRepository.updateStatus(any(), any()) } returns Unit
         coEvery { inspectionRepository.deleteDraft(any()) } returns Unit
 
@@ -106,11 +101,8 @@ class SyncManagerTest {
         coEvery { imageCompressor.compress("/photo/a.jpg") } returns "/compressed/a.jpg"
         coEvery { imageCompressor.compress("/photo/b.jpg") } returns "/compressed/b.jpg"
         coEvery { imageCompressor.compress("/photo/c.jpg") } returns "/compressed/c.jpg"
-        coEvery { syncApi.uploadPhoto(any()) } returns ApiResponse(
-            success = true,
-            data = UploadPhotoResponse("server_file.jpg")
-        )
-        coEvery { syncApi.submitInspection(any()) } returns ApiResponse(success = true)
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_file.jpg")
+        coEvery { syncApi.submitInspection(any()) } returns Unit
         coEvery { inspectionRepository.updateStatus(1L, "SYNCED") } returns Unit
         coEvery { inspectionRepository.deleteDraft(1L) } returns Unit
 
@@ -124,12 +116,12 @@ class SyncManagerTest {
         coVerify(exactly = 3) { imageCompressor.compress(any()) }
         coVerify(exactly = 3) { syncApi.uploadPhoto(any()) }
 
-        // Verifikasi submit request memiliki fotoFiles
+        // Verifikasi submit request memiliki photos
         coVerify {
             syncApi.submitInspection(match { request ->
-                request.items.size == 2 &&
-                    request.items[0].fotoFiles.size == 1 && // 1 foto diupload
-                    request.items[0].itemId == 1L
+                request.details.size == 2 &&
+                    request.details[0].photos.size == 1 && // 1 foto diupload
+                    request.details[0].itemId == 1L
             })
         }
 
@@ -155,44 +147,27 @@ class SyncManagerTest {
         coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
 
-        // Upload gagal — return success:false, data:null
-        coEvery { syncApi.uploadPhoto(any()) } returns ApiResponse(
-            success = false,
-            data = null
-        )
-        coEvery { syncApi.submitInspection(any()) } returns ApiResponse(success = true)
-        coEvery { inspectionRepository.updateStatus(1L, "SYNCED") } returns Unit
-        coEvery { inspectionRepository.deleteDraft(1L) } returns Unit
+        // Upload throws exception — skip foto & tetap lanjut submit
+        coEvery { syncApi.uploadPhoto(any()) } throws RuntimeException("Upload gagal")
 
         val result = syncManager.syncSingleDraft(1L)
 
-        assertTrue(result.success)
-
-        // Submit tetap dipanggil dengan fotoFiles kosong (karena upload gagal)
-        coVerify {
-            syncApi.submitInspection(match { request ->
-                request.items.all { item -> item.fotoFiles.isEmpty() }
-            })
-        }
+        assertFalse(result.success)
+        assertEquals("Upload gagal", result.message)
     }
 
     @Test
     fun `syncSingleDraft returns error when submit fails`() = runTest {
         coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
-        coEvery { syncApi.uploadPhoto(any()) } returns ApiResponse(
-            success = true,
-            data = UploadPhotoResponse("server.jpg")
-        )
-        coEvery { syncApi.submitInspection(any()) } returns ApiResponse(
-            success = false,
-            message = "Validation error"
-        )
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server.jpg")
+        // Submit throws exception (422, 500, etc.)
+        coEvery { syncApi.submitInspection(any()) } throws RuntimeException("HTTP 422 Unprocessable Entity")
 
         val result = syncManager.syncSingleDraft(1L)
 
         assertFalse(result.success)
-        assertEquals("Validation error", result.message)
+        assertEquals("HTTP 422 Unprocessable Entity", result.message)
 
         // Status update & delete TIDAK dipanggil
         coVerify(exactly = 0) { inspectionRepository.updateStatus(1L, "SYNCED") }
@@ -200,17 +175,11 @@ class SyncManagerTest {
     }
 
     @Test
-    fun `syncSingleDraft returns error with message when submit has no message`() = runTest {
+    fun `syncSingleDraft returns error when submit throws`() = runTest {
         coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
-        coEvery { syncApi.uploadPhoto(any()) } returns ApiResponse(
-            success = true,
-            data = UploadPhotoResponse("server.jpg")
-        )
-        coEvery { syncApi.submitInspection(any()) } returns ApiResponse(
-            success = false,
-            message = null
-        )
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server.jpg")
+        coEvery { syncApi.submitInspection(any()) } throws RuntimeException("Gagal mengirim inspeksi")
 
         val result = syncManager.syncSingleDraft(1L)
 
@@ -246,10 +215,7 @@ class SyncManagerTest {
     fun `syncSingleDraft catches exception from submit`() = runTest {
         coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
-        coEvery { syncApi.uploadPhoto(any()) } returns ApiResponse(
-            success = true,
-            data = UploadPhotoResponse("server.jpg")
-        )
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server.jpg")
         coEvery { syncApi.submitInspection(any()) } throws RuntimeException("Submit timeout")
 
         val result = syncManager.syncSingleDraft(1L)
@@ -262,7 +228,7 @@ class SyncManagerTest {
     fun `syncSingleDraft handles draft with no items`() = runTest {
         val emptyPayload = samplePayload.copy(items = emptyList())
         coEvery { inspectionRepository.preparePayload(1L) } returns emptyPayload
-        coEvery { syncApi.submitInspection(any()) } returns ApiResponse(success = true)
+        coEvery { syncApi.submitInspection(any()) } returns Unit
         coEvery { inspectionRepository.updateStatus(1L, "SYNCED") } returns Unit
         coEvery { inspectionRepository.deleteDraft(1L) } returns Unit
 
@@ -279,12 +245,13 @@ class SyncManagerTest {
         val payloadWithoutPhotos = InspectionPayload(
             roomId = 10,
             localTimestamp = "2026-01-01T00:00:00Z",
+            businessDate = "2026-01-01",
             items = listOf(
                 PayloadItem(itemId = 1, skor = 2, catatan = "OK", fotoPaths = emptyList())
             )
         )
         coEvery { inspectionRepository.preparePayload(1L) } returns payloadWithoutPhotos
-        coEvery { syncApi.submitInspection(any()) } returns ApiResponse(success = true)
+        coEvery { syncApi.submitInspection(any()) } returns Unit
         coEvery { inspectionRepository.updateStatus(1L, "SYNCED") } returns Unit
         coEvery { inspectionRepository.deleteDraft(1L) } returns Unit
 
@@ -300,6 +267,7 @@ class SyncManagerTest {
         val multiPayload = InspectionPayload(
             roomId = 5,
             localTimestamp = "2026-06-01T10:00:00Z",
+            businessDate = "2026-06-01",
             items = listOf(
                 PayloadItem(itemId = 1, skor = 2, catatan = "Baik", fotoPaths = listOf("/foto1.jpg", "/foto2.jpg")),
                 PayloadItem(itemId = 2, skor = 1, catatan = "Kurang", fotoPaths = listOf("/foto3.jpg")),
@@ -310,11 +278,8 @@ class SyncManagerTest {
         coEvery { imageCompressor.compress(any()) } returnsMany listOf(
             "/compressed/foto1.jpg", "/compressed/foto2.jpg", "/compressed/foto3.jpg"
         )
-        coEvery { syncApi.uploadPhoto(any()) } returns ApiResponse(
-            success = true,
-            data = UploadPhotoResponse("server_foto.jpg")
-        )
-        coEvery { syncApi.submitInspection(any()) } returns ApiResponse(success = true)
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_foto.jpg")
+        coEvery { syncApi.submitInspection(any()) } returns Unit
         coEvery { inspectionRepository.updateStatus(1L, "SYNCED") } returns Unit
         coEvery { inspectionRepository.deleteDraft(1L) } returns Unit
 
@@ -326,13 +291,13 @@ class SyncManagerTest {
             syncApi.submitInspection(match { request ->
                 request.roomId == 5L &&
                     request.localTimestamp == "2026-06-01T10:00:00Z" &&
-                    request.items.size == 3 &&
-                    request.items[0].itemId == 1L &&
-                    request.items[0].skor == 2 &&
-                    request.items[0].catatan == "Baik" &&
-                    request.items[0].fotoFiles.size == 2 &&
-                    request.items[2].itemId == 3L &&
-                    request.items[2].fotoFiles.isEmpty()
+                    request.businessDate == "2026-06-01" &&
+                    request.details.size == 3 &&
+                    request.details[0].itemId == 1L &&
+                    request.details[0].score == 2 &&
+                    request.details[0].photos.size == 2 &&
+                    request.details[2].itemId == 3L &&
+                    request.details[2].photos.isEmpty()
             })
         }
     }

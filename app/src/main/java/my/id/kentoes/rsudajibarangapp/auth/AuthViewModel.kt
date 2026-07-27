@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import javax.inject.Inject
 
 data class LoginUiState(
@@ -26,6 +27,7 @@ class AuthViewModel @Inject constructor(
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
     val authState = authRepository.authState
+    val currentUser: StateFlow<UserOut?> = authRepository.currentUser
 
     init {
         viewModelScope.launch {

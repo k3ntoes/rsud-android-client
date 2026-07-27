@@ -9,11 +9,12 @@ import kotlinx.coroutines.test.runTest
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
-import my.id.kentoes.rsudajibarangapp.core.model.ApiResponse
+import my.id.kentoes.rsudajibarangapp.master.api.ItemOut
 import my.id.kentoes.rsudajibarangapp.master.api.MasterDataApi
-import my.id.kentoes.rsudajibarangapp.master.api.MasterDataItemResponse
-import my.id.kentoes.rsudajibarangapp.master.api.RuangResponse
-import org.junit.Assert.*
+import my.id.kentoes.rsudajibarangapp.master.api.RoomOut
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -69,14 +70,14 @@ class MasterDataRepositoryTest {
     @Test
     fun `syncFromApi inserts mapped items and rooms on full success`() = runTest {
         val apiItems = listOf(
-            MasterDataItemResponse(1, "Meja", "Furnitur", "Meja kayu"),
-            MasterDataItemResponse(2, "Kursi", "Furnitur", "Kursi plastik"),
+            ItemOut(1, "Meja"),
+            ItemOut(2, "Kursi"),
         )
         val apiRooms = listOf(
-            RuangResponse(1, "Ruang 1", "Lantai 1"),
+            RoomOut(1, "Ruang 1"),
         )
-        coEvery { api.getItems() } returns ApiResponse(success = true, data = apiItems)
-        coEvery { api.getRooms() } returns ApiResponse(success = true, data = apiRooms)
+        coEvery { api.getItems() } returns apiItems
+        coEvery { api.getRooms() } returns apiRooms
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -91,16 +92,13 @@ class MasterDataRepositoryTest {
     @Test
     fun `syncFromApi maps API response fields correctly to entities`() = runTest {
         val apiItems = listOf(
-            MasterDataItemResponse(
-                id = 10, nama = "AC", kategori = "Elektronik",
-                deskripsi = "Pendingin ruangan", isActive = true
-            )
+            ItemOut(id = 10, name = "AC", isActive = true)
         )
         val apiRooms = listOf(
-            RuangResponse(id = 5, nama = "IGD", lantai = "Lt.1", isActive = true)
+            RoomOut(id = 5, name = "IGD", isActive = true)
         )
-        coEvery { api.getItems() } returns ApiResponse(success = true, data = apiItems)
-        coEvery { api.getRooms() } returns ApiResponse(success = true, data = apiRooms)
+        coEvery { api.getItems() } returns apiItems
+        coEvery { api.getRooms() } returns apiRooms
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -111,15 +109,15 @@ class MasterDataRepositoryTest {
                 items.size == 1 &&
                     items[0].id == 10L &&
                     items[0].nama == "AC" &&
-                    items[0].kategori == "Elektronik" &&
-                    items[0].deskripsi == "Pendingin ruangan" &&
+                    items[0].kategori == "" &&
+                    items[0].deskripsi == null &&
                     items[0].isActive
             })
             dao.insertRooms(match { rooms ->
                 rooms.size == 1 &&
                     rooms[0].id == 5L &&
                     rooms[0].nama == "IGD" &&
-                    rooms[0].lantai == "Lt.1" &&
+                    rooms[0].lantai == null &&
                     rooms[0].isActive
             })
         }
@@ -128,9 +126,9 @@ class MasterDataRepositoryTest {
     // ── Sync from API — partial / null / failure ──────────
 
     @Test
-    fun `syncFromApi does not insert items when API success is false`() = runTest {
-        coEvery { api.getItems() } returns ApiResponse(success = false, data = null)
-        coEvery { api.getRooms() } returns ApiResponse(success = true, data = emptyList())
+    fun `syncFromApi does not insert items when items list is empty`() = runTest {
+        coEvery { api.getItems() } returns emptyList()
+        coEvery { api.getRooms() } returns emptyList()
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -138,13 +136,13 @@ class MasterDataRepositoryTest {
 
         assertTrue((result as MasterDataSyncState.SyncResult).success)
         coVerify(exactly = 0) { dao.insertItems(any()) }
-        coVerify(exactly = 1) { dao.insertRooms(any()) }
+        coVerify(exactly = 0) { dao.insertRooms(any()) }
     }
 
     @Test
-    fun `syncFromApi does not insert rooms when API success is false`() = runTest {
-        coEvery { api.getItems() } returns ApiResponse(success = true, data = emptyList())
-        coEvery { api.getRooms() } returns ApiResponse(success = false, data = null)
+    fun `syncFromApi does not insert rooms when rooms list is empty`() = runTest {
+        coEvery { api.getItems() } returns listOf(ItemOut(1, "Meja"))
+        coEvery { api.getRooms() } returns emptyList()
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -155,9 +153,9 @@ class MasterDataRepositoryTest {
     }
 
     @Test
-    fun `syncFromApi does not insert when API returns success but null data`() = runTest {
-        coEvery { api.getItems() } returns ApiResponse(success = true, data = null)
-        coEvery { api.getRooms() } returns ApiResponse(success = true, data = null)
+    fun `syncFromApi does not insert when both lists are empty`() = runTest {
+        coEvery { api.getItems() } returns emptyList()
+        coEvery { api.getRooms() } returns emptyList()
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -169,11 +167,11 @@ class MasterDataRepositoryTest {
     }
 
     @Test
-    fun `syncFromApi still inserts rooms when items API success is false but rooms succeed`() = runTest {
-        coEvery { api.getItems() } returns ApiResponse(success = false, data = null)
-        coEvery { api.getRooms() } returns ApiResponse(success = true, data = sampleRooms.map {
-            RuangResponse(it.id, it.nama, it.lantai)
-        })
+    fun `syncFromApi inserts rooms even when items list is empty`() = runTest {
+        coEvery { api.getItems() } returns emptyList()
+        coEvery { api.getRooms() } returns sampleRooms.map {
+            RoomOut(it.id, it.nama)
+        }
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -199,8 +197,8 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncFromApi catches rooms exception but items already saved`() = runTest {
-        val apiItems = listOf(MasterDataItemResponse(1, "Meja", "Furnitur"))
-        coEvery { api.getItems() } returns ApiResponse(success = true, data = apiItems)
+        val apiItems = listOf(ItemOut(1, "Meja"))
+        coEvery { api.getItems() } returns apiItems
         coEvery { api.getRooms() } throws RuntimeException("Rooms server error")
         coEvery { dao.insertItems(any()) } returns Unit
 

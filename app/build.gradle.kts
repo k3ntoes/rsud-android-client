@@ -20,15 +20,16 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Base URL — override di debug build type
-        buildConfigField("String", "BASE_URL", "\"https://api.rsud-ajibarang.example.com/\"")
+        buildConfigField("String", "BASE_URL", "\"https://be-ajib.kentoes.my.id/api/\"")
     }
 
     buildTypes {
         debug {
-            buildConfigField("String", "BASE_URL", "\"https://dev-api.rsud-ajibarang.example.com/\"")
+            buildConfigField("String", "BASE_URL", "\"https://be-ajib.kentoes.my.id/api/\"")
         }
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -103,8 +104,8 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit)
-    testImplementation("io.mockk:mockk:1.13.13")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.compose.bom))

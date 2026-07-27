@@ -9,5 +9,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TokenData(
     val accessToken: String = "",
-    val refreshToken: String = ""
+    val refreshToken: String = "",
+    val userId: Int = 0,
+    val username: String = "",
+    val role: String = "",
+    val isActive: Boolean = true
 )

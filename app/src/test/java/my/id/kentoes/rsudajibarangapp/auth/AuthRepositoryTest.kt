@@ -7,13 +7,13 @@ import io.mockk.mockk
 import io.mockk.runs
 import kotlinx.coroutines.test.runTest
 import my.id.kentoes.rsudajibarangapp.auth.api.AuthApi
-import my.id.kentoes.rsudajibarangapp.auth.api.LoginRequest
-import my.id.kentoes.rsudajibarangapp.auth.api.LoginResponse
 import my.id.kentoes.rsudajibarangapp.auth.api.RefreshRequest
-import my.id.kentoes.rsudajibarangapp.auth.api.RefreshResponse
+import my.id.kentoes.rsudajibarangapp.auth.api.TokenResponse
+import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import my.id.kentoes.rsudajibarangapp.core.datastore.TokenManager
-import my.id.kentoes.rsudajibarangapp.core.model.ApiResponse
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -40,36 +40,42 @@ class AuthRepositoryTest {
     @Test
     fun `init sets Authenticated when token exists`() = runTest {
         coEvery { tokenManager.isLoggedIn() } returns true
+        coEvery { tokenManager.getUser() } returns sampleUser
+        coEvery { authApi.me() } returns sampleUser
         repository.init()
         assertTrue(repository.authState.value is AuthState.Authenticated)
+        assertEquals(sampleUser, repository.currentUser.value)
     }
 
     // ── login() ──
 
+    private val sampleUser = UserOut(id = 1, username = "user", role = "inspector", isActive = true)
+
     @Test
-    fun `login success saves tokens and returns true`() = runTest {
-        val response = LoginResponse(accessToken = "at1", refreshToken = "rt1")
-        coEvery { authApi.login(any()) } returns ApiResponse(success = true, data = response)
+    fun `login success saves tokens and user`() = runTest {
+        val response = TokenResponse(accessToken = "at1", refreshToken = "rt1", user = sampleUser)
+        coEvery { authApi.login(any()) } returns response
         coEvery { tokenManager.saveTokens(any(), any()) } just runs
+        coEvery { tokenManager.saveUser(any()) } just runs
 
         val result = repository.login("user", "pass")
 
         assertTrue(result)
         coVerify { tokenManager.saveTokens("at1", "rt1") }
+        coVerify { tokenManager.saveUser(sampleUser) }
+        assertEquals(sampleUser, repository.currentUser.value)
         assertTrue(repository.authState.value is AuthState.Authenticated)
     }
 
     @Test
     fun `login failure returns false and sets Error state`() = runTest {
-        coEvery { authApi.login(any()) } returns ApiResponse(
-            success = false, message = "Invalid credentials"
-        )
+        coEvery { authApi.login(any()) } throws RuntimeException("Login gagal")
 
         val result = repository.login("user", "wrong")
 
         assertFalse(result)
         assertEquals(
-            AuthState.Error("Invalid credentials"),
+            AuthState.Error("Login gagal"),
             repository.authState.value
         )
     }
@@ -89,7 +95,9 @@ class AuthRepositoryTest {
 
     @Test
     fun `login sends correct LoginRequest`() = runTest {
-        coEvery { authApi.login(any()) } returns ApiResponse(success = true)
+        coEvery { authApi.login(any()) } returns TokenResponse(
+            accessToken = "at", refreshToken = "rt", user = sampleUser
+        )
         coEvery { tokenManager.saveTokens(any(), any()) } just runs
 
         repository.login("testuser", "testpass")
@@ -118,8 +126,8 @@ class AuthRepositoryTest {
     @Test
     fun `refreshToken success saves new access token`() = runTest {
         coEvery { tokenManager.getRefreshToken() } returns "old-refresh"
-        coEvery { authApi.refresh(any()) } returns ApiResponse(
-            success = true, data = RefreshResponse(accessToken = "new-at")
+        coEvery { authApi.refresh(any()) } returns TokenResponse(
+            accessToken = "new-at", refreshToken = "new-rt", user = sampleUser
         )
         coEvery { tokenManager.saveTokens(any(), any()) } just runs
 
@@ -133,7 +141,7 @@ class AuthRepositoryTest {
     @Test
     fun `refreshToken failure calls forceLogout`() = runTest {
         coEvery { tokenManager.getRefreshToken() } returns "old-refresh"
-        coEvery { authApi.refresh(any()) } returns ApiResponse(success = false)
+        coEvery { authApi.refresh(any()) } throws RuntimeException("Refresh gagal")
         coEvery { tokenManager.clearTokens() } just runs
 
         val result = repository.refreshToken()
@@ -160,7 +168,7 @@ class AuthRepositoryTest {
     @Test
     fun `logout calls logout API then clears tokens`() = runTest {
         coEvery { tokenManager.getRefreshToken() } returns "rt"
-        coEvery { authApi.logout(any()) } returns ApiResponse<Unit>(success = true)
+        coEvery { authApi.logout(any()) } returns Unit
         coEvery { tokenManager.clearTokens() } just runs
 
         repository.logout()

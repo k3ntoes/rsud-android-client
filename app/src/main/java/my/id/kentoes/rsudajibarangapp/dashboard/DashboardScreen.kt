@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.MeetingRoom
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SyncProblem
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -46,13 +47,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
+import my.id.kentoes.rsudajibarangapp.master.api.IssueFrequencyOut
+import my.id.kentoes.rsudajibarangapp.master.api.RoomScoreOut
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
+    currentUser: UserOut?,
     onNavigateToInspection: () -> Unit,
     onNavigateToDrafts: () -> Unit,
+    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
@@ -65,13 +71,28 @@ fun DashboardScreen(
                     Column {
                         Text("Dashboard", fontWeight = FontWeight.Bold)
                         Text(
-                            "RSUD Ajibarang",
+                            text = if (currentUser != null) {
+                                "${currentUser.username} · ${currentUser.role}"
+                            } else {
+                                "RSUD Ajibarang"
+                            },
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 },
                 actions = {
+                    OutlinedButton(onClick = onNavigateToProfile) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Profil")
+                    }
                     OutlinedButton(onClick = onLogout) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Logout,
@@ -223,6 +244,38 @@ fun DashboardScreen(
                     }
                 }
 
+                // ── Analytics: Lowest Rooms ──
+                if (uiState.lowestRooms.isNotEmpty()) {
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Ruangan dengan Skor Terendah",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    items(uiState.lowestRooms, key = { it.roomId }) { room ->
+                        RoomScoreCard(room = room)
+                    }
+                }
+
+                // ── Analytics: Top Issues ──
+                if (uiState.topIssues.isNotEmpty()) {
+                    item {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            "Temuan Paling Sering",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+
+                    items(uiState.topIssues, key = { it.itemId }) { issue ->
+                        IssueCard(issue = issue)
+                    }
+                }
+
                 // ── Recent Drafts ──
                 if (uiState.recentDrafts.isNotEmpty()) {
                     item {
@@ -281,6 +334,81 @@ private fun StatCard(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun RoomScoreCard(room: RoomScoreOut) {
+    val color = when {
+        room.scorePct < 0.5 -> MaterialTheme.colorScheme.error
+        room.scorePct < 0.75 -> Color(0xFFF9A825)
+        else -> Color(0xFF388E3C)
+    }
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Ruangan #${room.roomId}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = "${room.inspectionCount}x inspeksi",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Text(
+                text = "${(room.scorePct * 100).toInt()}%",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = color
+            )
+        }
+    }
+}
+
+@Composable
+private fun IssueCard(issue: IssueFrequencyOut) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Description,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp),
+                tint = MaterialTheme.colorScheme.error
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = issue.itemNameSnapshot,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+            Text(
+                text = "${issue.scoreZeroCount}x",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.error
             )
         }
     }

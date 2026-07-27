@@ -3,6 +3,9 @@ package my.id.kentoes.rsudajibarangapp.sync
 import kotlinx.coroutines.flow.first
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionRepository
+import my.id.kentoes.rsudajibarangapp.sync.api.DetailSubmit
+import my.id.kentoes.rsudajibarangapp.sync.api.InspectionSubmit
+import my.id.kentoes.rsudajibarangapp.sync.api.PhotoSubmit
 import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -65,47 +68,38 @@ class SyncManager @Inject constructor(
                     val requestBody = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
                     val multipart = MultipartBody.Part.createFormData("photo", file.name, requestBody)
                     val uploadResponse = syncApi.uploadPhoto(multipart)
-
-                    val uploadData = uploadResponse.data
-                    if (uploadResponse.success && uploadData != null) {
-                        fotoFileNames.add(fotoPath to uploadData.fileName)
-                    } else {
-                        // Partial failure — foto ini gagal upload, skip
-                        // Tapi item tetap dikirim tanpa foto ini
-                    }
+                    fotoFileNames.add(fotoPath to uploadResponse.fileName)
                 }
             }
 
             // 3. Buat serverFileName map dari hasil upload
             val uploadedNames = fotoFileNames.associate { (local, server) -> local to server }
 
-            // 4. Kirim inspection JSON
-            val submitItems = payload.items.map { item ->
+            // 4. Kirim inspection JSON (BE langsung return 201 tanpa wrapper)
+            val details = payload.items.map { item ->
                 val serverFileNames = item.fotoPaths.mapNotNull { uploadedNames[it] }
-                my.id.kentoes.rsudajibarangapp.sync.api.SubmitItem(
+                DetailSubmit(
                     itemId = item.itemId,
-                    skor = item.skor,
-                    catatan = item.catatan,
-                    fotoFiles = serverFileNames
+                    score = item.skor,
+                    photos = serverFileNames.mapIndexed { i, name ->
+                        PhotoSubmit(fileName = name, sortOrder = i)
+                    }
                 )
             }
 
-            val submitRequest = my.id.kentoes.rsudajibarangapp.sync.api.SubmitInspectionRequest(
+            val submitRequest = InspectionSubmit(
                 roomId = payload.roomId,
                 localTimestamp = payload.localTimestamp,
-                items = submitItems
+                businessDate = payload.businessDate,
+                details = details
             )
 
-            val submitResponse = syncApi.submitInspection(submitRequest)
+            syncApi.submitInspection(submitRequest)
 
-            if (submitResponse.success) {
-                // 5. Sukses — update status & hapus draf lokal
-                inspectionRepository.updateStatus(draftId, "SYNCED")
-                inspectionRepository.deleteDraft(draftId)
-                SyncResult(draftId, true, "Inspeksi berhasil dikirim")
-            } else {
-                SyncResult(draftId, false, submitResponse.message ?: "Gagal mengirim inspeksi")
-            }
+            // 5. Sukses — update status & hapus draf lokal
+            inspectionRepository.updateStatus(draftId, "SYNCED")
+            inspectionRepository.deleteDraft(draftId)
+            SyncResult(draftId, true, "Inspeksi berhasil dikirim")
         } catch (e: Exception) {
             SyncResult(draftId, false, e.message ?: "Error sinkronisasi")
         }
