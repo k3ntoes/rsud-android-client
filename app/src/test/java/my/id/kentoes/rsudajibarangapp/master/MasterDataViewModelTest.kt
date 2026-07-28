@@ -108,7 +108,7 @@ class MasterDataViewModelTest {
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns false
-        coEvery { repository.syncFromApi() } returns MasterDataSyncState.SyncResult(true, "Synced")
+        coEvery { repository.syncFromApi() } returns "Synced"
 
         MasterDataViewModel(repository)
         advanceUntilIdle()
@@ -155,7 +155,7 @@ class MasterDataViewModelTest {
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns true
-        coEvery { repository.syncFromApi() } returns MasterDataSyncState.SyncResult(true, "Refreshed")
+        coEvery { repository.syncFromApi() } returns "Refreshed"
 
         val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
@@ -173,7 +173,7 @@ class MasterDataViewModelTest {
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns true
-        coEvery { repository.syncFromApi() } returns MasterDataSyncState.SyncResult(true, "Refresh done")
+        coEvery { repository.syncFromApi() } returns "Refresh done"
 
         val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
@@ -193,7 +193,7 @@ class MasterDataViewModelTest {
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns false
-        coEvery { repository.syncFromApi() } returns MasterDataSyncState.SyncResult(true, "Done")
+        coEvery { repository.syncFromApi() } returns "Done"
 
         val viewModel = MasterDataViewModel(repository)
         // Before advanceUntilIdle: isLoading is true, isSyncing false
@@ -214,7 +214,7 @@ class MasterDataViewModelTest {
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns false
-        coEvery { repository.syncFromApi() } returns MasterDataSyncState.SyncResult(false, "Server error 500")
+        coEvery { repository.syncFromApi() } throws RuntimeException("Server error 500")
 
         val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
@@ -232,7 +232,7 @@ class MasterDataViewModelTest {
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns false
-        coEvery { repository.syncFromApi() } returns MasterDataSyncState.SyncResult(true, "Done")
+        coEvery { repository.syncFromApi() } returns "Done"
 
         val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()

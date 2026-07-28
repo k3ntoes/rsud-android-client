@@ -15,9 +15,9 @@ import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
-import my.id.kentoes.rsudajibarangapp.master.api.IssueFrequencyOut
-import my.id.kentoes.rsudajibarangapp.master.api.MasterDataApi
-import my.id.kentoes.rsudajibarangapp.master.api.RoomScoreOut
+import my.id.kentoes.rsudajibarangapp.dashboard.api.AnalyticsApi
+import my.id.kentoes.rsudajibarangapp.dashboard.api.IssueFrequencyOut
+import my.id.kentoes.rsudajibarangapp.dashboard.api.RoomScoreOut
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -29,7 +29,7 @@ class DashboardViewModelTest {
 
     private lateinit var drafDao: DrafDao
     private lateinit var masterDataDao: MasterDataDao
-    private lateinit var masterDataApi: MasterDataApi
+    private lateinit var analyticsApi: AnalyticsApi
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
@@ -37,7 +37,7 @@ class DashboardViewModelTest {
         Dispatchers.setMain(testDispatcher)
         drafDao = mockk()
         masterDataDao = mockk()
-        masterDataApi = mockk(relaxed = true)
+        analyticsApi = mockk(relaxed = true)
     }
 
     @After
@@ -73,7 +73,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns roomsFlow
         every { masterDataDao.getAllItems() } returns itemsFlow
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, masterDataApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -103,7 +103,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, masterDataApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -119,7 +119,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, masterDataApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -144,7 +144,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, masterDataApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
         advanceUntilIdle()
 
         assertEquals(5, viewModel.uiState.value.recentDrafts.size)
@@ -158,7 +158,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, masterDataApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
 
         assertTrue(viewModel.uiState.value.isLoading)
         assertEquals(0, viewModel.uiState.value.totalDrafts)
@@ -176,7 +176,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, masterDataApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -196,7 +196,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, masterDataApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
         advanceUntilIdle()
 
         assertEquals(1, viewModel.uiState.value.totalDrafts)
@@ -228,10 +228,10 @@ class DashboardViewModelTest {
         every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
-        coEvery { masterDataApi.getLowestRooms(any(), any()) } returns sampleRooms
-        coEvery { masterDataApi.getTopIssues(any(), any()) } returns sampleIssues
+        coEvery { analyticsApi.getLowestRooms(any(), any()) } returns sampleRooms
+        coEvery { analyticsApi.getTopIssues(any(), any()) } returns sampleIssues
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, masterDataApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
         advanceUntilIdle()
 
         assertEquals(2, viewModel.uiState.value.lowestRooms.size)
@@ -245,10 +245,10 @@ class DashboardViewModelTest {
         every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
-        coEvery { masterDataApi.getLowestRooms(any(), any()) } throws RuntimeException("Network error")
-        coEvery { masterDataApi.getTopIssues(any(), any()) } throws RuntimeException("Network error")
+        coEvery { analyticsApi.getLowestRooms(any(), any()) } throws RuntimeException("Network error")
+        coEvery { analyticsApi.getTopIssues(any(), any()) } throws RuntimeException("Network error")
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, masterDataApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.lowestRooms.isEmpty())

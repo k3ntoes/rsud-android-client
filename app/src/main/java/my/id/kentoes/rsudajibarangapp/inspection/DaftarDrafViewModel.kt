@@ -1,8 +1,10 @@
 package my.id.kentoes.rsudajibarangapp.inspection
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -10,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import my.id.kentoes.rsudajibarangapp.core.network.NetworkConnectivityObserver
+import my.id.kentoes.rsudajibarangapp.sync.SyncWorker
 import javax.inject.Inject
 
 data class DaftarDrafUiState(
@@ -17,11 +20,13 @@ data class DaftarDrafUiState(
     val drafts: List<DraftSummary> = emptyList(),
     val deletingId: Long? = null,
     val deletedMessage: String? = null,
-    val draftToConfirmDelete: DraftSummary? = null
+    val draftToConfirmDelete: DraftSummary? = null,
+    val syncMessage: String? = null
 )
 
 @HiltViewModel
 class DaftarDrafViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val repository: InspectionRepository,
     private val networkObserver: NetworkConnectivityObserver
 ) : ViewModel() {
@@ -67,7 +72,20 @@ class DaftarDrafViewModel @Inject constructor(
         }
     }
 
+    /** Trigger sync manual — enqueue WorkManager untuk semua draf PENDING_SYNC */
+    fun triggerSync() {
+        val pendingCount = _uiState.value.drafts.count { it.status == "PENDING_SYNC" }
+        if (pendingCount == 0) {
+            _uiState.value = _uiState.value.copy(syncMessage = "Tidak ada draf yang perlu dikirim")
+            return
+        }
+        SyncWorker.enqueue(context)
+        _uiState.value = _uiState.value.copy(
+            syncMessage = "Sinkronisasi $pendingCount draf dijadwalkan"
+        )
+    }
+
     fun clearMessage() {
-        _uiState.value = _uiState.value.copy(deletedMessage = null)
+        _uiState.value = _uiState.value.copy(deletedMessage = null, syncMessage = null)
     }
 }

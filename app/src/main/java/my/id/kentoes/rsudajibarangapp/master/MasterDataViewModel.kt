@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
@@ -29,19 +30,20 @@ class MasterDataViewModel @Inject constructor(
     val uiState: StateFlow<MasterDataUiState> = _uiState.asStateFlow()
 
     init {
-        // Observasi perubahan dari Room
+        // Observasi perubahan dari Room — gabung items + rooms via combine
         viewModelScope.launch {
-            repository.items.collect { items ->
-                _uiState.value = _uiState.value.copy(
+            combine(
+                repository.items,
+                repository.rooms
+            ) { items, rooms ->
+                _uiState.value.copy(
                     items = items,
                     groupedItems = items.groupBy { it.kategori },
+                    rooms = rooms,
                     isLoading = false
                 )
-            }
-        }
-        viewModelScope.launch {
-            repository.rooms.collect { rooms ->
-                _uiState.value = _uiState.value.copy(rooms = rooms, isLoading = false)
+            }.collect { state ->
+                _uiState.value = state
             }
         }
 
@@ -63,14 +65,15 @@ class MasterDataViewModel @Inject constructor(
 
     private suspend fun syncFromApi() {
         _uiState.value = _uiState.value.copy(isSyncing = true, syncMessage = null)
-        val result = repository.syncFromApi()
-        _uiState.value = _uiState.value.copy(
-            isSyncing = false,
-            syncMessage = when (result) {
-                is MasterDataSyncState.SyncResult -> result.message
-                else -> null
-            }
-        )
+        try {
+            val message = repository.syncFromApi()
+            _uiState.value = _uiState.value.copy(isSyncing = false, syncMessage = message)
+        } catch (e: Exception) {
+            _uiState.value = _uiState.value.copy(
+                isSyncing = false,
+                syncMessage = e.message ?: "Gagal sinkronisasi"
+            )
+        }
     }
 
     fun clearSyncMessage() {

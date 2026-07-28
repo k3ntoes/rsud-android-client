@@ -11,12 +11,6 @@ import my.id.kentoes.rsudajibarangapp.master.api.RoomOut
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Status sinkronisasi master data */
-sealed class MasterDataSyncState {
-    data object Syncing : MasterDataSyncState()
-    data class SyncResult(val success: Boolean, val message: String? = null) : MasterDataSyncState()
-}
-
 @Singleton
 class MasterDataRepository @Inject constructor(
     private val masterDataApi: MasterDataApi,
@@ -34,41 +28,37 @@ class MasterDataRepository @Inject constructor(
         return itemsCount > 0
     }
 
-    /** Fetch items & rooms dari API, simpan ke Room */
-    suspend fun syncFromApi(): MasterDataSyncState {
-        return try {
-            // Fetch items — BE returns list langsung tanpa wrapper
-            val apiItems: List<ItemOut> = masterDataApi.getItems()
-            if (apiItems.isNotEmpty()) {
-                val items = apiItems.map { api ->
-                    MasterDataItem(
-                        id = api.id,
-                        nama = api.name,
-                        kategori = "",
-                        deskripsi = null,
-                        isActive = api.isActive
-                    )
-                }
-                masterDataDao.insertItems(items)
+    /** Fetch items & rooms dari API, simpan ke Room. Return success message or throw. */
+    suspend fun syncFromApi(): String {
+        // Fetch items — BE returns list langsung tanpa wrapper
+        val apiItems: List<ItemOut> = masterDataApi.getItems()
+        if (apiItems.isNotEmpty()) {
+            val items = apiItems.map { api ->
+                MasterDataItem(
+                    id = api.id,
+                    nama = api.name,
+                    kategori = "",
+                    deskripsi = null,
+                    isActive = api.isActive
+                )
             }
-
-            // Fetch rooms
-            val apiRooms: List<RoomOut> = masterDataApi.getRooms()
-            if (apiRooms.isNotEmpty()) {
-                val rooms = apiRooms.map { api ->
-                    RuangEntity(
-                        id = api.id,
-                        nama = api.name,
-                        lantai = null,
-                        isActive = api.isActive
-                    )
-                }
-                masterDataDao.insertRooms(rooms)
-            }
-
-            MasterDataSyncState.SyncResult(true, "Data berhasil diperbarui")
-        } catch (e: Exception) {
-            MasterDataSyncState.SyncResult(false, e.message ?: "Gagal sinkronisasi")
+            masterDataDao.insertItems(items)
         }
+
+        // Fetch rooms
+        val apiRooms: List<RoomOut> = masterDataApi.getRooms()
+        if (apiRooms.isNotEmpty()) {
+            val rooms = apiRooms.map { api ->
+                RuangEntity(
+                    id = api.id,
+                    nama = api.name,
+                    lantai = null,
+                    isActive = api.isActive
+                )
+            }
+            masterDataDao.insertRooms(rooms)
+        }
+
+        return "Data berhasil diperbarui"
     }
 }

@@ -44,12 +44,6 @@ class MasterDataRepositoryTest {
         repository = MasterDataRepository(api, dao)
     }
 
-    // ── Flow delegation ───────────────────────────────────
-    // items/rooms adalah `val` yang diinisialisasi di konstruktor,
-    // jadi flow delegation diverifikasi via @Before mock setup.
-    // Tidak perlu test terpisah — caching & sync tests sudah
-    // mengkonfirmasi bahwa flow dari dao digunakan dengan benar.
-
     // ── Cache availability ────────────────────────────────
 
     @Test
@@ -83,8 +77,7 @@ class MasterDataRepositoryTest {
 
         val result = repository.syncFromApi()
 
-        assertTrue((result as MasterDataSyncState.SyncResult).success)
-        assertEquals("Data berhasil diperbarui", result.message)
+        assertEquals("Data berhasil diperbarui", result)
         coVerify(exactly = 1) { dao.insertItems(any()) }
         coVerify(exactly = 1) { dao.insertRooms(any()) }
     }
@@ -123,7 +116,7 @@ class MasterDataRepositoryTest {
         }
     }
 
-    // ── Sync from API — partial / null / failure ──────────
+    // ── Sync from API — partial / empty ──────────────────
 
     @Test
     fun `syncFromApi does not insert items when items list is empty`() = runTest {
@@ -134,7 +127,7 @@ class MasterDataRepositoryTest {
 
         val result = repository.syncFromApi()
 
-        assertTrue((result as MasterDataSyncState.SyncResult).success)
+        assertEquals("Data berhasil diperbarui", result)
         coVerify(exactly = 0) { dao.insertItems(any()) }
         coVerify(exactly = 0) { dao.insertRooms(any()) }
     }
@@ -161,7 +154,7 @@ class MasterDataRepositoryTest {
 
         val result = repository.syncFromApi()
 
-        assertTrue((result as MasterDataSyncState.SyncResult).success)
+        assertEquals("Data berhasil diperbarui", result)
         coVerify(exactly = 0) { dao.insertItems(any()) }
         coVerify(exactly = 0) { dao.insertRooms(any()) }
     }
@@ -177,47 +170,33 @@ class MasterDataRepositoryTest {
 
         val result = repository.syncFromApi()
 
-        assertTrue((result as MasterDataSyncState.SyncResult).success)
+        assertEquals("Data berhasil diperbarui", result)
         coVerify(exactly = 0) { dao.insertItems(any()) }
         coVerify(exactly = 1) { dao.insertRooms(any()) }
     }
 
     // ── Sync from API — exception handling ────────────────
 
-    @Test
-    fun `syncFromApi catches network exception and returns failure`() = runTest {
+    @Test(expected = RuntimeException::class)
+    fun `syncFromApi throws when items API call fails`() = runTest {
         coEvery { api.getItems() } throws RuntimeException("Connection timeout")
 
-        val result = repository.syncFromApi()
-
-        assertFalse((result as MasterDataSyncState.SyncResult).success)
-        assertEquals("Connection timeout", result.message)
-        coVerify(exactly = 0) { dao.insertItems(any()) }
+        repository.syncFromApi()
     }
 
-    @Test
-    fun `syncFromApi catches rooms exception but items already saved`() = runTest {
+    @Test(expected = RuntimeException::class)
+    fun `syncFromApi throws when rooms API call fails`() = runTest {
         val apiItems = listOf(ItemOut(1, "Meja"))
         coEvery { api.getItems() } returns apiItems
         coEvery { api.getRooms() } throws RuntimeException("Rooms server error")
-        coEvery { dao.insertItems(any()) } returns Unit
 
-        val result = repository.syncFromApi()
-
-        assertFalse((result as MasterDataSyncState.SyncResult).success)
-        assertEquals("Rooms server error", result.message)
-        coVerify(exactly = 1) { dao.insertItems(any()) }
+        repository.syncFromApi()
     }
 
-    @Test
-    fun `syncFromApi returns failure when both API calls throw`() = runTest {
+    @Test(expected = RuntimeException::class)
+    fun `syncFromApi throws when both API calls fail`() = runTest {
         coEvery { api.getItems() } throws RuntimeException("Network down")
 
-        val result = repository.syncFromApi()
-
-        assertFalse((result as MasterDataSyncState.SyncResult).success)
-        // Exception from getItems() is caught before getRooms() is called
-        coVerify(exactly = 0) { dao.insertItems(any()) }
-        coVerify(exactly = 0) { dao.insertRooms(any()) }
+        repository.syncFromApi()
     }
 }

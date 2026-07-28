@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.MeetingRoom
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.SyncProblem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import my.id.kentoes.rsudajibarangapp.core.model.toStatusDisplay
 import my.id.kentoes.rsudajibarangapp.inspection.DaftarDrafViewModel
 import my.id.kentoes.rsudajibarangapp.inspection.DraftSummary
 import my.id.kentoes.rsudajibarangapp.inspection.ui.components.OfflineBanner
@@ -64,8 +66,9 @@ fun DaftarDrafScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val isOnline by viewModel.isOnline.collectAsState(initial = true)
 
-    LaunchedEffect(uiState.deletedMessage) {
-        uiState.deletedMessage?.let {
+    LaunchedEffect(uiState.deletedMessage, uiState.syncMessage) {
+        val msg = uiState.deletedMessage ?: uiState.syncMessage
+        msg?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearMessage()
         }
@@ -109,6 +112,21 @@ fun DaftarDrafScreen(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Kembali"
                         )
+                    }
+                },
+                actions = {
+                    val hasPending = uiState.drafts.any { it.status == "PENDING_SYNC" }
+                    if (hasPending) {
+                        IconButton(
+                            onClick = viewModel::triggerSync
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Sync,
+                                contentDescription = "Sync",
+                                tint = if (isOnline) MaterialTheme.colorScheme.primary
+                                       else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -182,24 +200,7 @@ private fun DraftCard(
     onResume: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val statusColor = when (draft.status) {
-        "DRAFT" -> MaterialTheme.colorScheme.primary
-        "PENDING_SYNC" -> Color(0xFFF9A825) // Kuning
-        "SYNCED" -> Color(0xFF388E3C) // Hijau
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    val statusIcon = when (draft.status) {
-        "DRAFT" -> Icons.Default.HourglassEmpty
-        "PENDING_SYNC" -> Icons.Default.SyncProblem
-        "SYNCED" -> Icons.Default.CheckCircle
-        else -> Icons.Default.Description
-    }
-    val statusLabel = when (draft.status) {
-        "DRAFT" -> "Draf"
-        "PENDING_SYNC" -> "Menunggu Kirim"
-        "SYNCED" -> "Terkirim"
-        else -> draft.status
-    }
+    val display = draft.status.toStatusDisplay()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -231,16 +232,16 @@ private fun DraftCard(
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = statusIcon,
+                        imageVector = display.icon,
                         contentDescription = null,
                         modifier = Modifier.size(14.dp),
-                        tint = statusColor
+                        tint = display.color
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = statusLabel,
+                        text = display.label,
                         style = MaterialTheme.typography.bodySmall,
-                        color = statusColor
+                        color = display.color
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(

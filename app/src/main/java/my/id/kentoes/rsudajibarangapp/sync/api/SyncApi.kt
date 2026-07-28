@@ -10,9 +10,9 @@ import retrofit2.http.Part
 
 @Serializable
 data class UploadPhotoResponse(
-    @SerialName("file_name")
+    @SerialName("photo_file_name")
     val fileName: String,
-    @SerialName("thumbnail_name")
+    @SerialName("thumbnail_file_name")
     val thumbnailName: String? = null
 )
 
@@ -49,7 +49,7 @@ interface SyncApi {
     @Multipart
     @POST("upload")
     suspend fun uploadPhoto(
-        @Part photo: MultipartBody.Part
+        @Part file: MultipartBody.Part
     ): UploadPhotoResponse
 
     /** Submit inspeksi lengkap (JSON + daftar nama foto) */

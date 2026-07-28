@@ -49,8 +49,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
-import my.id.kentoes.rsudajibarangapp.master.api.IssueFrequencyOut
-import my.id.kentoes.rsudajibarangapp.master.api.RoomScoreOut
+import my.id.kentoes.rsudajibarangapp.core.model.toStatusDisplay
+import my.id.kentoes.rsudajibarangapp.dashboard.api.IssueFrequencyOut
+import my.id.kentoes.rsudajibarangapp.dashboard.api.RoomScoreOut
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +59,6 @@ fun DashboardScreen(
     currentUser: UserOut?,
     onNavigateToInspection: () -> Unit,
     onNavigateToDrafts: () -> Unit,
-    onNavigateToProfile: () -> Unit,
     onLogout: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
@@ -84,15 +84,6 @@ fun DashboardScreen(
                     }
                 },
                 actions = {
-                    OutlinedButton(onClick = onNavigateToProfile) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Profil")
-                    }
                     OutlinedButton(onClick = onLogout) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Logout,
@@ -416,24 +407,7 @@ private fun IssueCard(issue: IssueFrequencyOut) {
 
 @Composable
 private fun RecentDraftCard(draft: DrafInspeksi) {
-    val statusColor = when (draft.status) {
-        "DRAFT" -> MaterialTheme.colorScheme.primary
-        "PENDING_SYNC" -> Color(0xFFF9A825)
-        "SYNCED" -> Color(0xFF388E3C)
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    val statusIcon = when (draft.status) {
-        "DRAFT" -> Icons.Default.HourglassEmpty
-        "PENDING_SYNC" -> Icons.Default.SyncProblem
-        "SYNCED" -> Icons.Default.CheckCircle
-        else -> Icons.Default.Description
-    }
-    val statusLabel = when (draft.status) {
-        "DRAFT" -> "Draf"
-        "PENDING_SYNC" -> "Menunggu Kirim"
-        "SYNCED" -> "Terkirim"
-        else -> draft.status
-    }
+    val display = draft.status.toStatusDisplay()
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -446,10 +420,10 @@ private fun RecentDraftCard(draft: DrafInspeksi) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                imageVector = statusIcon,
+                imageVector = display.icon,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
-                tint = statusColor
+                tint = display.color
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -467,9 +441,9 @@ private fun RecentDraftCard(draft: DrafInspeksi) {
                 )
             }
             Text(
-                text = statusLabel,
+                text = display.label,
                 style = MaterialTheme.typography.labelSmall,
-                color = statusColor
+                color = display.color
             )
         }
     }

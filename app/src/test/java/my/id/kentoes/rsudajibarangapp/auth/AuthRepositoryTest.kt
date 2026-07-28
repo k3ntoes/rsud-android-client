@@ -7,6 +7,7 @@ import io.mockk.mockk
 import io.mockk.runs
 import kotlinx.coroutines.test.runTest
 import my.id.kentoes.rsudajibarangapp.auth.api.AuthApi
+import my.id.kentoes.rsudajibarangapp.auth.api.LogoutRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.RefreshRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.TokenResponse
 import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
@@ -168,12 +169,13 @@ class AuthRepositoryTest {
     @Test
     fun `logout calls logout API then clears tokens`() = runTest {
         coEvery { tokenManager.getRefreshToken() } returns "rt"
+        coEvery { tokenManager.getAccessToken() } returns "at"
         coEvery { authApi.logout(any()) } returns Unit
         coEvery { tokenManager.clearTokens() } just runs
 
         repository.logout()
 
-        coVerify { authApi.logout(RefreshRequest("rt")) }
+        coVerify { authApi.logout(LogoutRequest("rt", "at")) }
         coVerify { tokenManager.clearTokens() }
         assertTrue(repository.authState.value is AuthState.Unauthenticated)
     }
@@ -192,11 +194,13 @@ class AuthRepositoryTest {
     @Test
     fun `logout still clears tokens even if API fails`() = runTest {
         coEvery { tokenManager.getRefreshToken() } returns "rt"
+        coEvery { tokenManager.getAccessToken() } returns "at"
         coEvery { authApi.logout(any()) } throws RuntimeException("Server down")
         coEvery { tokenManager.clearTokens() } just runs
 
         repository.logout()
 
+        coVerify { authApi.logout(LogoutRequest("rt", "at")) }
         coVerify { tokenManager.clearTokens() }
         assertTrue(repository.authState.value is AuthState.Unauthenticated)
     }

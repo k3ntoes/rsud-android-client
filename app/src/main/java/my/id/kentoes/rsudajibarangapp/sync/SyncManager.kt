@@ -66,7 +66,7 @@ class SyncManager @Inject constructor(
 
                     // Upload via Multipart
                     val requestBody = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-                    val multipart = MultipartBody.Part.createFormData("photo", file.name, requestBody)
+                    val multipart = MultipartBody.Part.createFormData("file", file.name, requestBody)
                     val uploadResponse = syncApi.uploadPhoto(multipart)
                     fotoFileNames.add(fotoPath to uploadResponse.fileName)
                 }

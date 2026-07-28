@@ -37,6 +37,14 @@ data class RefreshRequest(
 )
 
 @Serializable
+data class LogoutRequest(
+    @SerialName("refresh_token")
+    val refreshToken: String,
+    @SerialName("access_token")
+    val accessToken: String
+)
+
+@Serializable
 data class ChangePasswordRequest(
     @SerialName("old_password")
     val oldPassword: String,
@@ -53,7 +61,7 @@ interface AuthApi {
     suspend fun refresh(@Body request: RefreshRequest): TokenResponse
 
     @POST("auth/logout")
-    suspend fun logout(@Body request: RefreshRequest): Unit
+    suspend fun logout(@Body request: LogoutRequest): Unit
 
     @GET("auth/me")
     suspend fun me(): UserOut

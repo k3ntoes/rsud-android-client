@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import my.id.kentoes.rsudajibarangapp.auth.api.AuthApi
 import my.id.kentoes.rsudajibarangapp.auth.api.ChangePasswordRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.LoginRequest
+import my.id.kentoes.rsudajibarangapp.auth.api.LogoutRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.RefreshRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.TokenResponse
 import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
@@ -96,11 +97,14 @@ class AuthRepository @Inject constructor(
         authApi.changePassword(ChangePasswordRequest(oldPassword, newPassword))
     }
 
-    /** Logout — hapus token */
+    /** Logout — kirim kedua token, lalu hapus lokal */
     suspend fun logout() {
         val refreshToken = tokenManager.getRefreshToken()
+        val accessToken = tokenManager.getAccessToken()
         try {
-            refreshToken?.let { authApi.logout(RefreshRequest(it)) }
+            if (refreshToken != null && accessToken != null) {
+                authApi.logout(LogoutRequest(refreshToken, accessToken))
+            }
         } catch (_: Exception) { /* ignore */ }
         forceLogout()
     }
