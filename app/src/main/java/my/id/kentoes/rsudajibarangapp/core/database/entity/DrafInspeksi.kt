@@ -16,5 +16,6 @@ data class DrafInspeksi(
     val inspectorId: String? = null,
     val status: String = "DRAFT", // DRAFT, PENDING_SYNC, SYNCED
     val catatan: String? = null,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val businessDate: String? = null // explicit YYYY-MM-DD
 )

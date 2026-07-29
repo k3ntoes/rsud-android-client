@@ -2,7 +2,9 @@ package my.id.kentoes.rsudajibarangapp.sync
 
 import kotlinx.coroutines.flow.first
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
+import my.id.kentoes.rsudajibarangapp.inspection.InspectionHistoryRepository
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionRepository
+import my.id.kentoes.rsudajibarangapp.master.MasterDataRepository
 import my.id.kentoes.rsudajibarangapp.sync.api.DetailSubmit
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionSubmit
 import my.id.kentoes.rsudajibarangapp.sync.api.PhotoSubmit
@@ -26,10 +28,21 @@ data class SyncResult(
 @Singleton
 class SyncManager @Inject constructor(
     private val inspectionRepository: InspectionRepository,
+    private val inspectionHistoryRepository: InspectionHistoryRepository,
+    private val masterDataRepository: MasterDataRepository,
     private val drafDao: DrafDao,
     private val syncApi: SyncApi,
     private val imageCompressor: ImageCompressor
 ) {
+
+    /** Sync master data sebelum sync inspeksi */
+    suspend fun syncMasterData() {
+        masterDataRepository.syncItems()
+        masterDataRepository.syncRooms()
+        masterDataRepository.syncRoomItems()
+        masterDataRepository.syncMyRooms()
+        masterDataRepository.syncUserRooms()
+    }
 
     /**
      * Sinkronisasi semua draf dengan status PENDING_SYNC.
@@ -37,6 +50,9 @@ class SyncManager @Inject constructor(
      */
     suspend fun syncAllPending(): List<SyncResult> {
         val results = mutableListOf<SyncResult>()
+        // Sync master data dulu
+        runCatching { syncMasterData() }
+
         // Load draf dengan status PENDING_SYNC langsung via DAO
         val pendingDrafts = drafDao.getDraftsByStatus("PENDING_SYNC").first()
 
@@ -60,11 +76,8 @@ class SyncManager @Inject constructor(
 
             for (item in payload.items) {
                 for (fotoPath in item.fotoPaths) {
-                    // Kompres
                     val compressedPath = imageCompressor.compress(fotoPath)
                     val file = File(compressedPath)
-
-                    // Upload via Multipart
                     val requestBody = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
                     val multipart = MultipartBody.Part.createFormData("file", file.name, requestBody)
                     val uploadResponse = syncApi.uploadPhoto(multipart)
@@ -75,7 +88,7 @@ class SyncManager @Inject constructor(
             // 3. Buat serverFileName map dari hasil upload
             val uploadedNames = fotoFileNames.associate { (local, server) -> local to server }
 
-            // 4. Kirim inspection JSON (BE langsung return 201 tanpa wrapper)
+            // 4. Kirim inspection JSON
             val details = payload.items.map { item ->
                 val serverFileNames = item.fotoPaths.mapNotNull { uploadedNames[it] }
                 DetailSubmit(
@@ -94,12 +107,24 @@ class SyncManager @Inject constructor(
                 details = details
             )
 
-            syncApi.submitInspection(submitRequest)
+            // Submit returns InspectionOutDto now
+            val response = syncApi.submitInspection(submitRequest)
 
-            // 5. Sukses — atomic: update status + hapus draf (cegah ghost SYNCED entry)
+            // Simpan hasil submit ke history cache
+            runCatching { inspectionHistoryRepository.cacheInspection(response) }
+
+            // 5. Sukses — atomic: update status + hapus draf
             drafDao.markSyncedAndDelete(draftId)
-            SyncResult(draftId, true, "Inspeksi berhasil dikirim")
+            SyncResult(draftId, true, "Inspeksi berhasil dikirim (ID: ${response.id})")
         } catch (e: Exception) {
-            SyncResult(draftId, false, e.message ?: "Error sinkronisasi")
+            val msg = e.message ?: "Error sinkronisasi"
+            // ponytail: simple error handling; expand if 409/413 handling needed
+            if (msg.contains("DUPLICATE_INSPECTION") || msg.contains("409")) {
+                // Already synced — skip
+                drafDao.markSyncedAndDelete(draftId)
+                SyncResult(draftId, true, "Inspeksi sudah terkirim (duplicate)")
+            } else {
+                SyncResult(draftId, false, msg)
+            }
         }
 }

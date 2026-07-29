@@ -4,16 +4,21 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import okhttp3.MultipartBody
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 @Serializable
 data class UploadPhotoResponse(
     @SerialName("photo_file_name")
     val fileName: String,
     @SerialName("thumbnail_file_name")
-    val thumbnailName: String? = null
+    val thumbnailName: String? = null,
+    @SerialName("file_size")
+    val fileSize: Long? = null
 )
 
 @Serializable
@@ -43,6 +48,71 @@ data class PhotoSubmit(
     val sortOrder: Int = 0
 )
 
+@Serializable
+data class PhotoOutDto(
+    val id: Long,
+    @SerialName("photo_file_name")
+    val photoFileName: String,
+    @SerialName("thumbnail_file_name")
+    val thumbnailFileName: String? = null,
+    @SerialName("sort_order")
+    val sortOrder: Int = 0
+)
+
+@Serializable
+data class InspectionDetailOutDto(
+    val id: Long,
+    @SerialName("item_id")
+    val itemId: Long,
+    @SerialName("item_name_snapshot")
+    val itemNameSnapshot: String,
+    val score: Int,
+    val photos: List<PhotoOutDto> = emptyList()
+)
+
+@Serializable
+data class InspectionOutDto(
+    val id: Long,
+    @SerialName("room_id")
+    val roomId: Long,
+    @SerialName("inspector_id")
+    val inspectorId: Int,
+    val status: String,
+    @SerialName("business_date")
+    val businessDate: String? = null,
+    @SerialName("local_timestamp")
+    val localTimestamp: String? = null,
+    @SerialName("rejection_reason")
+    val rejectionReason: String? = null,
+    @SerialName("created_at")
+    val createdAt: String? = null,
+    val details: List<InspectionDetailOutDto> = emptyList()
+)
+
+@Serializable
+data class InspectionListItemDto(
+    val id: Long,
+    @SerialName("room_id")
+    val roomId: Long,
+    @SerialName("inspector_id")
+    val inspectorId: Int,
+    val status: String,
+    @SerialName("business_date")
+    val businessDate: String? = null,
+    @SerialName("local_timestamp")
+    val localTimestamp: String? = null,
+    @SerialName("created_at")
+    val createdAt: String? = null,
+    @SerialName("detail_count")
+    val detailCount: Int = 0
+)
+
+@Serializable
+data class ApiErrorDto(
+    val detail: String,
+    val code: String
+)
+
 interface SyncApi {
 
     /** Upload foto — return nama file di server */
@@ -56,5 +126,20 @@ interface SyncApi {
     @POST("inspections")
     suspend fun submitInspection(
         @Body request: InspectionSubmit
-    ): Unit
+    ): InspectionOutDto
+
+    /** List inspeksi (paginated) */
+    @GET("inspections")
+    suspend fun getInspections(
+        @Query("page") page: Int = 1,
+        @Query("per_page") perPage: Int = 20,
+        @Query("status") status: String? = null,
+        @Query("show_all") showAll: Boolean? = null
+    ): List<InspectionListItemDto>
+
+    /** Detail inspeksi */
+    @GET("inspections/{id}")
+    suspend fun getInspectionDetail(
+        @Path("id") id: Long
+    ): InspectionOutDto
 }

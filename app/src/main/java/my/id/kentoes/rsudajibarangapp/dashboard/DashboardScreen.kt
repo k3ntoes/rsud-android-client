@@ -59,6 +59,7 @@ fun DashboardScreen(
     currentUser: UserOut?,
     onNavigateToInspection: () -> Unit,
     onNavigateToDrafts: () -> Unit,
+    onNavigateToHistory: () -> Unit = {},
     onLogout: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
@@ -232,6 +233,22 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("Lihat Draf", style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+
+                item {
+                    FilledTonalButton(
+                        onClick = onNavigateToHistory,
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.HourglassEmpty,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Riwayat Inspeksi", style = MaterialTheme.typography.bodyLarge)
                     }
                 }
 

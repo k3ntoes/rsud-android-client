@@ -107,10 +107,11 @@ class InspectionRepository @Inject constructor(
                 fotoPaths = fotos.map { it.pathLokal }
             )
         }
-        val businessDate = draftWithItems.draft.localTimestamp.take(10)
+        val draft = draftWithItems.draft
+        val businessDate = draft.businessDate ?: draft.localTimestamp.take(10)
         return InspectionPayload(
-            roomId = draftWithItems.draft.roomId,
-            localTimestamp = draftWithItems.draft.localTimestamp,
+            roomId = draft.roomId,
+            localTimestamp = draft.localTimestamp,
             businessDate = businessDate,
             items = items
         )

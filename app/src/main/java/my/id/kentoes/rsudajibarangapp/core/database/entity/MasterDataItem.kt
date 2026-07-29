@@ -10,5 +10,6 @@ data class MasterDataItem(
     val nama: String,
     val kategori: String,
     val deskripsi: String? = null,
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val updatedAt: String? = null
 )

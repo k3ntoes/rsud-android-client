@@ -9,5 +9,6 @@ data class RuangEntity(
     val id: Long,
     val nama: String,
     val lantai: String? = null,
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val updatedAt: String? = null
 )

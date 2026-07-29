@@ -9,16 +9,13 @@ import javax.inject.Singleton
 
 /**
  * OkHttp Interceptor untuk menambahkan header Authorization: Bearer.
- *
- * Melewatkan endpoint yang tidak perlu autentikasi (login, refresh)
- * menggunakan [noAuthPaths] — bisa dikustomisasi via constructor.
+ * Juga mendeteksi error code TOKEN_EXPIRED / TOKEN_INVALID dari response.
  */
 @Singleton
 class AuthInterceptor @Inject constructor(
     private val tokenManager: TokenManager
 ) : Interceptor {
 
-    /** Endpoint yang TIDAK perlu header Authorization */
     private val noAuthPaths: List<String> = listOf(
         "/auth/login",
         "/auth/refresh"
@@ -27,13 +24,11 @@ class AuthInterceptor @Inject constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
 
-        // Skip auth header untuk endpoint publik
         val path = originalRequest.url.encodedPath
         if (noAuthPaths.any { path.endsWith(it) }) {
             return chain.proceed(originalRequest)
         }
 
-        // Ambil token dan tambahkan ke header
         val token = runBlocking { tokenManager.getAccessToken() }
 
         return if (token != null) {

@@ -12,11 +12,7 @@ import javax.inject.Singleton
 
 /**
  * OkHttp Authenticator untuk auto-refresh Access Token.
- *
- * Provider<AuthRepository> memutus circular dependency:
- * AuthRepo → AuthApi → Retrofit → OkHttpClient → TokenAuthenticator
- *
- * Hilt multi-module akan meresolve AuthRepository dari :feature:auth saat kompilasi :app.
+ * Mendeteksi error code TOKEN_EXPIRED (refresh) vs TOKEN_INVALID (force logout).
  */
 @Singleton
 class TokenAuthenticator @Inject constructor(
@@ -29,6 +25,13 @@ class TokenAuthenticator @Inject constructor(
     override fun authenticate(route: Route?, response: Response): Request? {
         if (response.request.header("Authorization") == null) return null
         if (responseCount(response) > 1) return null
+
+        // Parse error code — force logout for TOKEN_INVALID
+        val errorCode = ApiErrorUtil.extractErrorCode(response)
+        if (errorCode == "TOKEN_INVALID") {
+            runBlocking { authRepositoryProvider.get().forceLogout() }
+            return null
+        }
 
         return synchronized(refreshLock) {
             if (isRefreshing) return@synchronized null

@@ -5,23 +5,91 @@ import androidx.room3.Insert
 import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
 import kotlinx.coroutines.flow.Flow
+import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionDetailEntity
+import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionEntity
+import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionPhotoEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
+import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
+import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
 
 @Dao
 interface MasterDataDao {
 
-    /** Master Data Items */
+    // ── Master Data Items ──
+
     @Query("SELECT * FROM master_data_item WHERE isActive = 1 ORDER BY kategori, nama")
     fun getAllItems(): Flow<List<MasterDataItem>>
+
+    @Query("SELECT * FROM master_data_item WHERE isActive = 1")
+    suspend fun getAllItemsOnce(): List<MasterDataItem>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItems(items: List<MasterDataItem>)
 
-    /** Ruangan */
+    // ── Ruangan ──
+
     @Query("SELECT * FROM ruang WHERE isActive = 1 ORDER BY nama")
     fun getAllRooms(): Flow<List<RuangEntity>>
 
+    @Query("SELECT * FROM ruang WHERE id = :id")
+    suspend fun getRoomById(id: Long): RuangEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRooms(rooms: List<RuangEntity>)
+
+    // ── Room Items (pivot) ──
+
+    @Query("SELECT * FROM room_item")
+    suspend fun getAllRoomItems(): List<RoomItemEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertRoomItems(items: List<RoomItemEntity>)
+
+    @Query("DELETE FROM room_item")
+    suspend fun clearRoomItems()
+
+    // ── User Rooms (pivot) ──
+
+    @Query("SELECT * FROM user_room")
+    suspend fun getAllUserRooms(): List<UserRoomEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUserRooms(items: List<UserRoomEntity>)
+
+    @Query("DELETE FROM user_room")
+    suspend fun clearUserRooms()
+
+    // ── Inspection History ──
+
+    @Query("SELECT * FROM inspection ORDER BY createdAt DESC")
+    fun getAllInspections(): Flow<List<InspectionEntity>>
+
+    @Query("SELECT * FROM inspection ORDER BY createdAt DESC")
+    suspend fun getAllInspectionsOnce(): List<InspectionEntity>
+
+    @Query("SELECT * FROM inspection WHERE id = :id")
+    suspend fun getInspectionById(id: Long): InspectionEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertInspection(inspection: InspectionEntity)
+
+    @Query("DELETE FROM inspection WHERE id = :id")
+    suspend fun deleteInspection(id: Long)
+
+    // ── Inspection Details ──
+
+    @Query("SELECT * FROM inspection_detail WHERE inspectionId = :inspectionId")
+    suspend fun getDetailsForInspection(inspectionId: Long): List<InspectionDetailEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertDetails(details: List<InspectionDetailEntity>)
+
+    // ── Inspection Photos ──
+
+    @Query("SELECT * FROM inspection_photo WHERE detailId = :detailId")
+    suspend fun getPhotosForDetail(detailId: Long): List<InspectionPhotoEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPhotos(photos: List<InspectionPhotoEntity>)
 }

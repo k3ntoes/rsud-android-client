@@ -21,6 +21,8 @@ import my.id.kentoes.rsudajibarangapp.auth.ui.LoginScreen
 import my.id.kentoes.rsudajibarangapp.dashboard.DashboardScreen
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionFormScreen
 import my.id.kentoes.rsudajibarangapp.inspection.ui.DaftarDrafScreen
+import my.id.kentoes.rsudajibarangapp.inspection.ui.InspectionDetailScreen
+import my.id.kentoes.rsudajibarangapp.inspection.ui.InspectionListScreen
 import my.id.kentoes.rsudajibarangapp.master.ui.MasterDataListScreen
 
 object Routes {
@@ -29,6 +31,8 @@ object Routes {
     const val INSPECTION_LIST = "inspection_list"
     const val INSPECTION_FORM = "inspection_form/{roomId}/{roomName}?draftId={draftId}"
     const val DRAFT_LIST = "draft_list"
+    const val INSPECTION_HISTORY = "inspection_history"
+    const val INSPECTION_DETAIL = "inspection_detail/{inspectionId}"
 
     fun inspectionForm(roomId: String, roomName: String, draftId: Long? = null): String {
         return if (draftId != null) {
@@ -36,6 +40,10 @@ object Routes {
         } else {
             "inspection_form/$roomId/$roomName"
         }
+    }
+
+    fun inspectionDetail(inspectionId: Long): String {
+        return "inspection_detail/$inspectionId"
     }
 }
 
@@ -46,7 +54,6 @@ fun NavGraph(
 ) {
     val authState by authViewModel.authState.collectAsState()
 
-    // Tampilkan loading screen saat init
     if (authState is AuthState.Loading) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -84,6 +91,9 @@ fun NavGraph(
                 },
                 onNavigateToDrafts = {
                     navController.navigate(Routes.DRAFT_LIST)
+                },
+                onNavigateToHistory = {
+                    navController.navigate(Routes.INSPECTION_HISTORY)
                 },
                 onLogout = {
                     authViewModel.logout()
@@ -130,6 +140,26 @@ fun NavGraph(
                 onResumeDraft = { draftId ->
                     navController.navigate(Routes.inspectionForm("0", "Resume Draft", draftId))
                 }
+            )
+        }
+        composable(Routes.INSPECTION_HISTORY) {
+            InspectionListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onInspectionClick = { id ->
+                    navController.navigate(Routes.inspectionDetail(id))
+                }
+            )
+        }
+        composable(
+            route = Routes.INSPECTION_DETAIL,
+            arguments = listOf(
+                navArgument("inspectionId") { type = NavType.LongType }
+            )
+        ) {
+            val inspectionId = it.arguments?.getLong("inspectionId") ?: 0L
+            InspectionDetailScreen(
+                inspectionId = inspectionId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

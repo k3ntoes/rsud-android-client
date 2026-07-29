@@ -52,6 +52,9 @@ class SyncWorker(
         createNotificationChannel()
 
         return try {
+            // Sync master data first
+            runCatching { syncManager.syncMasterData() }
+
             val results = syncManager.syncAllPending()
 
             val successCount = results.count { it.success }
@@ -68,7 +71,6 @@ class SyncWorker(
                     "Sinkronisasi Sebagian Gagal",
                     "$successCount berhasil, $failCount gagal — akan dicoba lagi"
                 )
-                // Retry jika ada yang gagal
                 if (successCount > 0) Result.success() else Result.retry()
             }
         } catch (e: Exception) {

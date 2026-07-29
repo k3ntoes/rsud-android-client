@@ -9,8 +9,13 @@ import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafFoto
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafItem
+import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionDetailEntity
+import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionEntity
+import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionPhotoEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
+import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
+import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
 
 @Database(
     entities = [
@@ -18,9 +23,14 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
         RuangEntity::class,
         DrafInspeksi::class,
         DrafItem::class,
-        DrafFoto::class
+        DrafFoto::class,
+        RoomItemEntity::class,
+        UserRoomEntity::class,
+        InspectionEntity::class,
+        InspectionDetailEntity::class,
+        InspectionPhotoEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

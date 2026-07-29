@@ -155,7 +155,8 @@ class InspectionFormViewModel @Inject constructor(
                     DrafInspeksi(
                         roomId = _uiState.value.roomId,
                         localTimestamp = now,
-                        status = status
+                        status = status,
+                        businessDate = now.take(10)
                     )
                 )
 

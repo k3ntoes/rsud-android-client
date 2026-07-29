@@ -14,6 +14,7 @@ import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
 import my.id.kentoes.rsudajibarangapp.dashboard.api.AnalyticsApi
+import my.id.kentoes.rsudajibarangapp.dashboard.api.DashboardDto
 import my.id.kentoes.rsudajibarangapp.dashboard.api.IssueFrequencyOut
 import my.id.kentoes.rsudajibarangapp.dashboard.api.RoomScoreOut
 import java.text.SimpleDateFormat
@@ -31,7 +32,11 @@ data class DashboardUiState(
     val totalItems: Int = 0,
     val recentDrafts: List<DrafInspeksi> = emptyList(),
     val lowestRooms: List<RoomScoreOut> = emptyList(),
-    val topIssues: List<IssueFrequencyOut> = emptyList()
+    val topIssues: List<IssueFrequencyOut> = emptyList(),
+    val serverPendingCount: Int = 0,
+    val serverMonthlyCount: Int = 0,
+    val serverAvgScorePct: Double = 0.0,
+    val isForbidden: Boolean = false
 )
 
 @HiltViewModel
@@ -46,7 +51,6 @@ class DashboardViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            // Collect local DB stats
             combine(
                 drafDao.getAllDrafts(),
                 masterDataDao.getAllRooms().map { it.size },
@@ -63,19 +67,41 @@ class DashboardViewModel @Inject constructor(
                     recentDrafts = drafts.take(5)
                 )
             }.collect { state ->
-                // Preserve analytics data when local DB emits
                 _uiState.value = state.copy(
                     lowestRooms = _uiState.value.lowestRooms,
-                    topIssues = _uiState.value.topIssues
+                    topIssues = _uiState.value.topIssues,
+                    serverPendingCount = _uiState.value.serverPendingCount,
+                    serverMonthlyCount = _uiState.value.serverMonthlyCount,
+                    serverAvgScorePct = _uiState.value.serverAvgScorePct,
+                    isForbidden = _uiState.value.isForbidden
                 )
             }
         }
 
-        // Fetch analytics dari BE
+        fetchDashboard()
         fetchAnalytics()
     }
 
-    /** Fetch analytics dari BE */
+    private fun fetchDashboard() {
+        viewModelScope.launch {
+            val yearMonth = SimpleDateFormat("yyyy-MM", Locale.US).format(Date())
+            try {
+                val dash: DashboardDto = analyticsApi.getDashboard(yearMonth)
+                _uiState.value = _uiState.value.copy(
+                    serverPendingCount = dash.pendingCount,
+                    serverMonthlyCount = dash.monthlyInspectionCount,
+                    serverAvgScorePct = dash.avgScorePct,
+                    isForbidden = false
+                )
+            } catch (e: Exception) {
+                if (e.message?.contains("403") == true) {
+                    _uiState.value = _uiState.value.copy(isForbidden = true)
+                }
+                Log.w("DashboardVM", "Gagal fetch dashboard: ${e.message}")
+            }
+        }
+    }
+
     private fun fetchAnalytics() {
         viewModelScope.launch {
             val yearMonth = SimpleDateFormat("yyyy-MM", Locale.US).format(Date())
