@@ -13,7 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
@@ -36,11 +38,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
+import my.id.kentoes.rsudajibarangapp.BuildConfig
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionHistoryViewModel
+import my.id.kentoes.rsudajibarangapp.sync.api.PhotoOutDto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,7 +105,7 @@ fun InspectionDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize().padding(padding)
                 ) {
-                    // Header card
+                    // Header card — status, room, inspector, date
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
@@ -117,15 +124,24 @@ fun InspectionDetailScreen(
                                         modifier = Modifier.size(32.dp)
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Text("Status: ${detail.status}", fontWeight = FontWeight.Bold,
                                             style = MaterialTheme.typography.titleMedium)
-                                        detail.businessDate?.let {
-                                            Text("Tanggal: ${it.take(10)}",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                        }
+                                        Text(uiState.inspectorName,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    detail.businessDate?.let {
+                                        Text(it.take(10), style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    Spacer(modifier = Modifier.width(16.dp))
+                                    Text("Room: ${uiState.detailRoomName}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 detail.rejectionReason?.let { reason ->
                                     Spacer(modifier = Modifier.height(8.dp))
@@ -139,7 +155,8 @@ fun InspectionDetailScreen(
 
                     // Detail items
                     item {
-                        Text("Item Inspeksi", style = MaterialTheme.typography.titleMedium,
+                        Text("Item Inspeksi (${detail.details.size})",
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold)
                     }
 
@@ -168,17 +185,54 @@ fun InspectionDetailScreen(
                                         }
                                     )
                                 }
+                                // Photo thumbnails
                                 if (itemDetail.photos.isNotEmpty()) {
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text("${itemDetail.photos.size} foto",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    LazyRow(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        items(itemDetail.photos, key = { it.id }) { photo ->
+                                            PhotoThumbnailCard(photo = photo)
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PhotoThumbnailCard(photo: PhotoOutDto) {
+    // ponytail: URL path assumes BE serves uploads at <BASE_URL>/uploads/ — adjust if BE uses CDN/signed URL
+    val imageUrl = "${BuildConfig.BASE_URL}uploads/${photo.photoFileName}"
+    Card(
+        modifier = Modifier.size(96.dp),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Fallback icon — shows when AsyncImage fails (image is transparent on failure)
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .size(32.dp)
+            )
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = "Foto inspeksi",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(8.dp))
+            )
         }
     }
 }

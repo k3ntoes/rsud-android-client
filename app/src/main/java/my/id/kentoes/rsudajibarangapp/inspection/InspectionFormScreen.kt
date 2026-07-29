@@ -52,13 +52,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import my.id.kentoes.rsudajibarangapp.inspection.components.ItemCard
+import my.id.kentoes.rsudajibarangapp.inspection.components.createTempPhotoUri
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -297,11 +294,4 @@ fun InspectionFormScreen(
     }
 }
 
-/** Buat URI file foto temporer untuk kamera capture — inline dari CameraHelper yang dihapus */
-private fun createTempPhotoUri(context: android.content.Context): Uri {
-    val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-    val dir = File(context.getExternalFilesDir(null), "photos")
-    if (!dir.exists()) dir.mkdirs()
-    val photoFile = File.createTempFile("IMG_${timestamp}_", ".jpg", dir)
-    return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photoFile)
-}
+

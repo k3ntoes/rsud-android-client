@@ -8,7 +8,7 @@ Aplikasi Android *offline-first* untuk inspeksi kebersihan rumah sakit oleh Petu
 |---------|----------|-------------|
 | [Auth](./app/src/main/java/my/id/kentoes/rsudajibarangapp/auth/CONTEXT.md) | `auth/` | Token management, login/logout, session handling |
 | [Inspections](./app/src/main/java/my/id/kentoes/rsudajibarangapp/inspections/CONTEXT.md) | `inspections/` | Form inspeksi dinamis, skoring, validasi bukti foto |
-| [Sync](./app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/CONTEXT.md) | `sync/` | WorkManager, offline-first sync, upload dua langkah |
+| [Sync](./app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/CONTEXT.md) | `sync/` | WorkManager, offline-first sync, upload dua langkah, hybrid inspection history, UserEntity sync |
 | [Core](./app/src/main/java/my/id/kentoes/rsudajibarangapp/core/CONTEXT.md) | `core/` | App foundation, DI, shared models, base types |
 
 ## Relationships
@@ -17,5 +17,7 @@ Aplikasi Android *offline-first* untuk inspeksi kebersihan rumah sakit oleh Petu
 - **Inspections → Auth**: Setiap request API inspeksi membutuhkan Access Token dari Auth
 - **Inspections → Core**: Menggunakan shared models dan base types dari Core
 - **Inspections → Sync**: Data inspeksi yang disimpan lokal akan diproses oleh Sync untuk dikirim ke server
+- **Inspections → Core**: Menggunakan InspectionHistoryRepository + InspectionHistoryViewModel untuk hybrid history
 - **Sync → Auth**: WorkManager menggunakan Access Token milik sesi terakhir yang tersimpan
 - **Sync → Core**: Menggunakan base networking dan dependency injection dari Core
+- **Sync → Auth**: `syncUsers()` sync data user dari `GET /api/auth/users` ke `UserEntity`

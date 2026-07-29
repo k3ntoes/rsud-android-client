@@ -7,9 +7,13 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
+import my.id.kentoes.rsudajibarangapp.inspection.InspectionHistoryRepository
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionPayload
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionRepository
 import my.id.kentoes.rsudajibarangapp.inspection.PayloadItem
+import my.id.kentoes.rsudajibarangapp.master.MasterDataRepository
+import my.id.kentoes.rsudajibarangapp.sync.api.InspectionDetailOutDto
+import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
 import my.id.kentoes.rsudajibarangapp.sync.api.UploadPhotoResponse
 import okhttp3.MultipartBody
@@ -23,10 +27,23 @@ import org.junit.Test
 class SyncManagerTest {
 
     private lateinit var inspectionRepository: InspectionRepository
+    private lateinit var inspectionHistoryRepository: InspectionHistoryRepository
+    private lateinit var masterDataRepository: MasterDataRepository
     private lateinit var drafDao: DrafDao
     private lateinit var syncApi: SyncApi
     private lateinit var imageCompressor: ImageCompressor
     private lateinit var syncManager: SyncManager
+
+    private val sampleInspectionOut = InspectionOutDto(
+        id = 1,
+        roomId = 10,
+        inspectorId = 5,
+        status = "PENDING",
+        businessDate = "2026-01-01",
+        localTimestamp = "2026-01-01T00:00:00Z",
+        createdAt = "2026-01-01T00:00:00Z",
+        details = emptyList()
+    )
 
     private val sampleDraft = DrafInspeksi(
         id = 1,
@@ -58,10 +75,20 @@ class SyncManagerTest {
     @Before
     fun setup() {
         inspectionRepository = mockk()
+        inspectionHistoryRepository = mockk()
+        masterDataRepository = mockk()
+        coEvery { inspectionHistoryRepository.cacheInspection(any()) } returns Unit
         drafDao = mockk()
         syncApi = mockk()
         imageCompressor = mockk()
-        syncManager = SyncManager(inspectionRepository, drafDao, syncApi, imageCompressor)
+        syncManager = SyncManager(
+            inspectionRepository,
+            inspectionHistoryRepository,
+            masterDataRepository,
+            drafDao,
+            syncApi,
+            imageCompressor
+        )
     }
 
     // ── syncAllPending ──
@@ -77,14 +104,11 @@ class SyncManagerTest {
 
     @Test
     fun `syncAllPending syncs each pending draft`() = runTest {
-        coEvery { drafDao.getDraftsByStatus("PENDING_SYNC") } returns flowOf(
-            listOf(sampleDraft)
-        )
-        // syncSingleDraft will be called — mock its dependencies
+        coEvery { drafDao.getDraftsByStatus("PENDING_SYNC") } returns flowOf(listOf(sampleDraft))
         coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_a.jpg")
-        coEvery { syncApi.submitInspection(any()) } returns Unit
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
         coEvery { drafDao.markSyncedAndDelete(any()) } returns Unit
 
         val results = syncManager.syncAllPending()
@@ -103,29 +127,24 @@ class SyncManagerTest {
         coEvery { imageCompressor.compress("/photo/b.jpg") } returns "/compressed/b.jpg"
         coEvery { imageCompressor.compress("/photo/c.jpg") } returns "/compressed/c.jpg"
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_file.jpg")
-        coEvery { syncApi.submitInspection(any()) } returns Unit
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
         coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
 
         assertTrue(result.success)
         assertEquals(1L, result.draftId)
-        assertEquals("Inspeksi berhasil dikirim", result.message)
+        assertEquals("Inspeksi berhasil dikirim (ID: 1)", result.message)
 
-        // Verifikasi foto dikompres & diupload
         coVerify(exactly = 3) { imageCompressor.compress(any()) }
         coVerify(exactly = 3) { syncApi.uploadPhoto(any()) }
-
-        // Verifikasi submit request memiliki photos
         coVerify {
             syncApi.submitInspection(match { request ->
                 request.details.size == 2 &&
-                    request.details[0].photos.size == 1 && // 1 foto diupload
+                    request.details[0].photos.size == 1 &&
                     request.details[0].itemId == 1L
             })
         }
-
-        // Verifikasi atomic markSyncedAndDelete dipanggil
         coVerify(exactly = 1) { drafDao.markSyncedAndDelete(1L) }
     }
 
@@ -145,8 +164,6 @@ class SyncManagerTest {
     fun `syncSingleDraft handles upload failure gracefully`() = runTest {
         coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
-
-        // Upload throws exception — skip foto & tetap lanjut submit
         coEvery { syncApi.uploadPhoto(any()) } throws RuntimeException("Upload gagal")
 
         val result = syncManager.syncSingleDraft(1L)
@@ -160,15 +177,12 @@ class SyncManagerTest {
         coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server.jpg")
-        // Submit throws exception (422, 500, etc.)
         coEvery { syncApi.submitInspection(any()) } throws RuntimeException("HTTP 422 Unprocessable Entity")
 
         val result = syncManager.syncSingleDraft(1L)
 
         assertFalse(result.success)
         assertEquals("HTTP 422 Unprocessable Entity", result.message)
-
-        // markSyncedAndDelete TIDAK dipanggil
         coVerify(exactly = 0) { drafDao.markSyncedAndDelete(any()) }
     }
 
@@ -184,8 +198,6 @@ class SyncManagerTest {
         assertFalse(result.success)
         assertEquals("Gagal mengirim inspeksi", result.message)
     }
-
-    // ── syncSingleDraft — exception handling ──
 
     @Test
     fun `syncSingleDraft catches exception and returns failure`() = runTest {
@@ -226,7 +238,7 @@ class SyncManagerTest {
     fun `syncSingleDraft handles draft with no items`() = runTest {
         val emptyPayload = samplePayload.copy(items = emptyList())
         coEvery { inspectionRepository.preparePayload(1L) } returns emptyPayload
-        coEvery { syncApi.submitInspection(any()) } returns Unit
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
         coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
@@ -248,7 +260,7 @@ class SyncManagerTest {
             )
         )
         coEvery { inspectionRepository.preparePayload(1L) } returns payloadWithoutPhotos
-        coEvery { syncApi.submitInspection(any()) } returns Unit
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
         coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
@@ -260,8 +272,6 @@ class SyncManagerTest {
 
     @Test
     fun `syncSingleDraft sends multipart with correct field name 'file'`() = runTest {
-        // Regression test for MISSING_FILE bug:
-        // Server expects multipart field name "file", not "photo"
         coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
 
@@ -270,7 +280,7 @@ class SyncManagerTest {
             capturedParts.add(firstArg())
             UploadPhotoResponse("server_file.jpg")
         }
-        coEvery { syncApi.submitInspection(any()) } returns Unit
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
         coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         syncManager.syncSingleDraft(1L)
@@ -288,7 +298,6 @@ class SyncManagerTest {
 
     @Test
     fun `syncSingleDraft partial upload failure fails the entire draft`() = runTest {
-        // Item 1 has 2 photos: first upload succeeds, second throws
         val payload = InspectionPayload(
             roomId = 10,
             localTimestamp = "2026-01-01T00:00:00Z",
@@ -301,7 +310,6 @@ class SyncManagerTest {
         coEvery { imageCompressor.compress("/photo/a.jpg") } returns "/compressed/a.jpg"
         coEvery { imageCompressor.compress("/photo/b.jpg") } returns "/compressed/b.jpg"
 
-        // First upload succeeds, second throws — use coAnswers to defer the throw
         var uploadCall = 0
         coEvery { syncApi.uploadPhoto(any()) } coAnswers {
             uploadCall++
@@ -313,15 +321,12 @@ class SyncManagerTest {
 
         assertFalse(result.success)
         assertEquals("Upload gagal pada foto kedua", result.message)
-        // markSyncedAndDelete NOT called on failure
         coVerify(exactly = 0) { drafDao.markSyncedAndDelete(any()) }
-        // submitInspection NOT called on upload failure
         coVerify(exactly = 0) { syncApi.submitInspection(any()) }
     }
 
     @Test
     fun `syncSingleDraft partial upload failure on second item fails the entire draft`() = runTest {
-        // Item 1 has 1 photo (succeeds), Item 2 has 1 photo (throws)
         val payload = InspectionPayload(
             roomId = 10,
             localTimestamp = "2026-01-01T00:00:00Z",
@@ -354,7 +359,6 @@ class SyncManagerTest {
 
     @Test
     fun `syncSingleDraft compressor returns original path still uploads`() = runTest {
-        // compress returns the same path (file too small, or doesn't exist — handled by compressor)
         val payload = InspectionPayload(
             roomId = 10,
             localTimestamp = "2026-01-01T00:00:00Z",
@@ -364,10 +368,9 @@ class SyncManagerTest {
             )
         )
         coEvery { inspectionRepository.preparePayload(1L) } returns payload
-        // compressor returns the SAME path (no compression needed / file too small)
         coEvery { imageCompressor.compress("/photo/small.jpg") } returns "/photo/small.jpg"
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_small.jpg")
-        coEvery { syncApi.submitInspection(any()) } returns Unit
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
         coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
@@ -401,7 +404,6 @@ class SyncManagerTest {
 
     @Test
     fun `syncSingleDraft compressor exception on second photo does not submit`() = runTest {
-        // Two photos, first compresses fine, second throws during compression
         val payload = InspectionPayload(
             roomId = 10,
             localTimestamp = "2026-01-01T00:00:00Z",
@@ -411,7 +413,6 @@ class SyncManagerTest {
             )
         )
         coEvery { inspectionRepository.preparePayload(1L) } returns payload
-        // First photo must also have uploadPhoto stubbed to reach the second compress call
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_good.jpg")
 
         var compressCall = 0
@@ -425,9 +426,7 @@ class SyncManagerTest {
 
         assertFalse(result.success)
         assertEquals("File tidak ditemukan", result.message)
-        // First photo uploaded successfully before second compressor failed
         coVerify(exactly = 1) { syncApi.uploadPhoto(any()) }
-        // But submit was never called
         coVerify(exactly = 0) { syncApi.submitInspection(any()) }
     }
 
@@ -445,9 +444,8 @@ class SyncManagerTest {
         )
         coEvery { inspectionRepository.preparePayload(1L) } returns payload
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
-        // Server returns empty fileName
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse(fileName = "")
-        coEvery { syncApi.submitInspection(any()) } returns Unit
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
         coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
@@ -473,9 +471,8 @@ class SyncManagerTest {
         )
         coEvery { inspectionRepository.preparePayload(1L) } returns payload
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
-        // thumbnail_name is null by default
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse(fileName = "server.jpg", thumbnailName = null)
-        coEvery { syncApi.submitInspection(any()) } returns Unit
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
         coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
@@ -492,24 +489,20 @@ class SyncManagerTest {
 
         coEvery { drafDao.getDraftsByStatus("PENDING_SYNC") } returns flowOf(listOf(draft1, draft2))
 
-        // Draft 1 succeeds
         coEvery { inspectionRepository.preparePayload(1L) } returns InspectionPayload(
             roomId = 10, localTimestamp = "2026-01-01T00:00:00Z", businessDate = "2026-01-01",
             items = listOf(PayloadItem(itemId = 1, skor = 2, catatan = "OK", fotoPaths = emptyList()))
         )
-        // Draft 2 fails — preparePayload returns null
         coEvery { inspectionRepository.preparePayload(2L) } returns null
 
-        coEvery { syncApi.submitInspection(any()) } returns Unit
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
         coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val results = syncManager.syncAllPending()
 
         assertEquals(2, results.size)
-        // Draft 1 success
         assertTrue(results[0].success)
         assertEquals(1L, results[0].draftId)
-        // Draft 2 failure
         assertFalse(results[1].success)
         assertEquals(2L, results[1].draftId)
         assertEquals("Draf tidak ditemukan", results[1].message)
@@ -522,12 +515,10 @@ class SyncManagerTest {
 
         coEvery { drafDao.getDraftsByStatus("PENDING_SYNC") } returns flowOf(listOf(draft1, draft2))
 
-        // Draft 1 succeeds (no photos)
         coEvery { inspectionRepository.preparePayload(1L) } returns InspectionPayload(
             roomId = 10, localTimestamp = "2026-01-01T00:00:00Z", businessDate = "2026-01-01",
             items = listOf(PayloadItem(itemId = 1, skor = 2, catatan = "OK", fotoPaths = emptyList()))
         )
-        // Draft 2 fails — upload throws
         coEvery { inspectionRepository.preparePayload(2L) } returns InspectionPayload(
             roomId = 20, localTimestamp = "2026-01-02T00:00:00Z", businessDate = "2026-01-02",
             items = listOf(PayloadItem(itemId = 2, skor = 0, catatan = null, fotoPaths = listOf("/photo/fail.jpg")))
@@ -535,7 +526,7 @@ class SyncManagerTest {
         coEvery { imageCompressor.compress(any()) } returns "/compressed/fail.jpg"
         coEvery { syncApi.uploadPhoto(any()) } throws RuntimeException("Upload error")
 
-        coEvery { syncApi.submitInspection(any()) } returns Unit
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
         coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val results = syncManager.syncAllPending()
@@ -550,7 +541,6 @@ class SyncManagerTest {
 
     @Test
     fun `syncSingleDraft mixed fotoPaths across items includes empty server names`() = runTest {
-        // Item 1 has 2 photos (foto2 gets empty fileName via mapNotNull), Item 2 has 1 photo, Item 3 has none
         val payload = InspectionPayload(
             roomId = 5,
             localTimestamp = "2026-06-01T10:00:00Z",
@@ -565,13 +555,12 @@ class SyncManagerTest {
         coEvery { imageCompressor.compress(any()) } returnsMany listOf(
             "/compressed/foto1.jpg", "/compressed/foto2.jpg", "/compressed/foto3.jpg"
         )
-        // foto2 upload returns empty fileName — mapNotNull keeps it (empty != null)
         coEvery { syncApi.uploadPhoto(any()) } returnsMany listOf(
             UploadPhotoResponse("server_foto1.jpg"),
             UploadPhotoResponse(fileName = ""),
             UploadPhotoResponse("server_foto3.jpg")
         )
-        coEvery { syncApi.submitInspection(any()) } returns Unit
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
         coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
@@ -579,14 +568,11 @@ class SyncManagerTest {
         assertTrue(result.success)
         coVerify {
             syncApi.submitInspection(match { request ->
-                // Item 1: foto1 has server name, foto2 has empty string → mapNotNull keeps it
                 request.details[0].photos.size == 2 &&
                     request.details[0].photos[0].fileName == "server_foto1.jpg" &&
                     request.details[0].photos[1].fileName == "" &&
-                    // Item 2: foto3 has server name
                     request.details[1].photos.size == 1 &&
                     request.details[1].photos[0].fileName == "server_foto3.jpg" &&
-                    // Item 3: no photos
                     request.details[2].photos.isEmpty()
             })
         }
@@ -609,7 +595,7 @@ class SyncManagerTest {
             "/compressed/foto1.jpg", "/compressed/foto2.jpg", "/compressed/foto3.jpg"
         )
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_foto.jpg")
-        coEvery { syncApi.submitInspection(any()) } returns Unit
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
         coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)

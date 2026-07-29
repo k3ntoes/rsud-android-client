@@ -42,6 +42,7 @@ class SyncManager @Inject constructor(
         masterDataRepository.syncRoomItems()
         masterDataRepository.syncMyRooms()
         masterDataRepository.syncUserRooms()
+        masterDataRepository.syncUsers()
     }
 
     /**

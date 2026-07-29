@@ -7,6 +7,7 @@ import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
+import my.id.kentoes.rsudajibarangapp.core.database.entity.UserEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
 import my.id.kentoes.rsudajibarangapp.master.api.ItemOut
 import my.id.kentoes.rsudajibarangapp.master.api.MasterDataApi
@@ -111,6 +112,21 @@ class MasterDataRepository @Inject constructor(
                 )
             }
             masterDataDao.insertRooms(rooms)
+        }
+    }
+
+    suspend fun syncUsers() {
+        val apiUsers = authApi.getUsers()
+        masterDataDao.clearUsers()
+        if (apiUsers.isNotEmpty()) {
+            masterDataDao.insertUsers(apiUsers.map { user ->
+                UserEntity(
+                    id = user.id,
+                    username = user.username,
+                    role = user.role,
+                    isActive = user.isActive
+                )
+            })
         }
     }
 

@@ -179,23 +179,28 @@ class ApiEndpointIntegrationTest {
     // ═══════════════════════════════════════════════
 
     @Test
-    fun `GET master rooms - correct path with master prefix`() = runTest {
-        enqueueJson("""[{"id":1,"name":"Ruang A","is_active":true}]""")
+    fun `GET rooms - correct path without master prefix, returns SyncResponse`() = runTest {
+        enqueueJson("""{"data":[{"id":1,"name":"Ruang A","is_active":true}],"synced_at":"2026-01-01T00:00:00Z"}""")
 
-        masterDataApi.getRooms()
+        val response = masterDataApi.getRooms()
 
         val req = mockServer.takeRequest()
-        assertRequest(req, "GET", "/master/rooms")
+        assertRequest(req, "GET", "/rooms")
+        assertEquals(1, response.data.size)
+        assertEquals("Ruang A", response.data[0].name)
+        assertNotNull(response.syncedAt)
     }
 
     @Test
-    fun `GET master inspection-items - correct path with master prefix`() = runTest {
-        enqueueJson("""[{"id":1,"name":"Meja","is_active":true}]""")
+    fun `GET inspection-items - correct path without master prefix, returns SyncResponse`() = runTest {
+        enqueueJson("""{"data":[{"id":1,"name":"Meja","is_active":true}],"synced_at":"2026-01-01T00:00:00Z"}""")
 
-        masterDataApi.getItems()
+        val response = masterDataApi.getItems()
 
         val req = mockServer.takeRequest()
-        assertRequest(req, "GET", "/master/inspection-items")
+        assertRequest(req, "GET", "/inspection-items")
+        assertEquals(1, response.data.size)
+        assertEquals("Meja", response.data[0].name)
     }
 
     // ═══════════════════════════════════════════════
@@ -227,8 +232,8 @@ class ApiEndpointIntegrationTest {
     }
 
     @Test
-    fun `POST sync inspection - correct path and body field names`() = runTest {
-        enqueueJson("{}")
+    fun `POST sync inspection - correct path and body field names, returns InspectionOut`() = runTest {
+        enqueueJson("""{"id":1,"room_id":1,"inspector_id":5,"status":"PENDING"}""")
 
         val submit = InspectionSubmit(
             roomId = 1,
@@ -245,7 +250,7 @@ class ApiEndpointIntegrationTest {
             )
         )
 
-        syncApi.submitInspection(submit)
+        val response = syncApi.submitInspection(submit)
 
         val req = mockServer.takeRequest()
         assertRequest(req, "POST", "/inspections")
@@ -253,6 +258,8 @@ class ApiEndpointIntegrationTest {
             "\"room_id\"", "\"local_timestamp\"", "\"business_date\"",
             "\"item_id\"", "\"score\"", "\"file_name\"", "\"sort_order\""
         )
+        assertEquals(1L, response.id)
+        assertEquals("PENDING", response.status)
     }
 
     // ═══════════════════════════════════════════════
@@ -324,15 +331,16 @@ class ApiEndpointIntegrationTest {
 
     @Test
     fun `master data response deserializes snake_case correctly`() = runTest {
-        enqueueJson("""[{"id":1,"name":"Meja","is_active":true,"updated_at":"2026-01-01T00:00:00Z"}]""")
+        enqueueJson("""{"data":[{"id":1,"name":"Meja","is_active":true,"updated_at":"2026-01-01T00:00:00Z"}],"synced_at":"2026-01-01T00:00:00Z"}""")
 
-        val items: List<ItemOut> = masterDataApi.getItems()
+        val response = masterDataApi.getItems()
 
-        assertEquals(1, items.size)
-        assertEquals(1L, items[0].id)
-        assertEquals("Meja", items[0].name)
-        assertEquals(true, items[0].isActive)
-        assertNotNull(items[0].updatedAt)
+        assertEquals(1, response.data.size)
+        assertEquals(1L, response.data[0].id)
+        assertEquals("Meja", response.data[0].name)
+        assertEquals(true, response.data[0].isActive)
+        assertNotNull(response.data[0].updatedAt)
+        assertNotNull(response.syncedAt)
     }
 
     @Test

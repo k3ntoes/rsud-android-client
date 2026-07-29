@@ -15,6 +15,7 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionPhotoEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
+import my.id.kentoes.rsudajibarangapp.core.database.entity.UserEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
 
 @Database(
@@ -26,11 +27,12 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
         DrafFoto::class,
         RoomItemEntity::class,
         UserRoomEntity::class,
+        UserEntity::class,
         InspectionEntity::class,
         InspectionDetailEntity::class,
         InspectionPhotoEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

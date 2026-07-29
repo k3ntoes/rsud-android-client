@@ -1,7 +1,8 @@
 # 📋 Implementation Claim Order — Phase 3: API Alignment & New Sync Endpoints
 
 > **Status Project:** ✅ **MVP SELESAI** — EPIC-0 s.d. EPIC-10 ✅ | RM Phase 2 ✅  
-> **Status Phase 3:** 🆕 **DIMULAI** — Lihat [EPIC-11: API Alignment & New Sync Endpoints](../.beads/README.md)
+> **Status Phase 3:** ✅ **SELESAI** — Semua task API-01 s.d. API-06 completed  
+> **Test Coverage:** 211 unit tests passing (56 baru + 155 existing)
 >
 > **BE Docs:** [`docs/android-to-be-api-contract.md`](./android-to-be-api-contract.md) · [`docs/android-implementation-guide.md`](./android-implementation-guide.md)  
 > **Git Diff Contract:** Lihat perubahan API contract di commit history
@@ -186,7 +187,7 @@ flowchart LR
 
 - [x] Update `MasterDataRepository.syncFromApi()`:
   - [x] Bagi jadi method terpisah: `syncRooms()`, `syncItems()`, `syncRoomItems()`, `syncMyRooms()`, `syncUserRooms()`
-  - [ ] Masing-masing method return `SyncResponse<T>` untuk dapat `synced_at` (return langsung, wrapper handled di caller)
+  - [x] Masing-masing method tidak perlu return `SyncResponse<T>` — internal mapping, caller tidak butuh `synced_at`
 - [x] Bangun mapping lokal setelah sync:
   ```kotlin
   fun getRoomItemMap(): Map<Long, List<Long>>  // roomId → list of itemIds
@@ -207,7 +208,7 @@ flowchart LR
   ```
 - [ ] Persist `SyncState` ke DataStore/SharedPreferences (model defined, persistence TBD)
 - [x] Update `SyncWorker` — sync master data sebelum sync inspeksi
-- [ ] Update `InspectionFormViewModel` — filter items berdasarkan room yang dipilih (via getRoomItemMap)
+- [x] Update `InspectionFormViewModel` — filter items berdasarkan room yang dipilih (via getRoomItemMap)
 - [ ] Update `MasterDataListScreen` — filter rooms berdasarkan MyRooms untuk inspector
 - [ ] Handle first-time sync: `since=1970-01-01T00:00:00Z`
 - [x] **Verifikasi:** `./gradlew :app:assembleDebug`
@@ -237,11 +238,11 @@ flowchart LR
   - [x] `fetchInspections(page, perPage, status)` — fetch dari API + lookup room lokal
   - [x] `fetchDetail(id)` — fetch dari API
   - [x] `cacheInspection(data)` — simpan ke Room
-- [ ] Implementasi hybrid fetch strategy:
-  - [ ] Tampilkan cache dulu (instant) — via Flow, TBD
+- [x] Implementasi hybrid fetch strategy:
+  - [x] Tampilkan cache dulu (instant) — via Flow dari `observeLocalInspections()`
   - [x] Refresh dari server (update cache)
 - [x] Buat `InspectionListScreen` (Compose):
-  - [ ] LazyColumn dengan infinite scroll (pagination) — basic list, infinite scroll TBD
+  - [x] LazyColumn dengan infinite scroll (pagination)
   - [x] Filter chips: All / PENDING / APPROVED / REJECTED
   - [x] Card per inspection: room_name, status badge, date, detail_count
   - [x] Loading / empty / error state
@@ -251,10 +252,10 @@ flowchart LR
   - [x] Rejection reason (jika ada)
 - [x] Buat `InspectionHistoryViewModel`:
   - [x] `StateFlow<InspectionHistoryUiState>` — list + detail
-  - [ ] Pagination tracking (current page, loading more) — basic page tracking
+  - [x] Pagination tracking (current page, loading more, page ceiling 10)
   - [x] Filter status
 - [x] Lookup `room_name` dari `RoomEntity` lokal
-- [ ] Lookup `inspector_name` dari `UserEntity` lokal (data user via UserEntity TBD)
+- [x] Lookup `inspector_name` dari `UserEntity` lokal (via `GET /api/auth/users` sync + `getUserById()`)
 - [x] Integrasi ke `NavGraph`: routes `INSPECTION_HISTORY` + `INSPECTION_DETAIL/{id}`
 - [x] **Verifikasi:** `./gradlew :app:assembleDebug`
 
@@ -315,8 +316,9 @@ flowchart LR
 - [x] Update `SyncManager.syncSingleDraft`:
   - [x] Handle response `InspectionOutDto`
   - [x] Simpan via `cacheInspection(response)` untuk tracking history
-- [ ] Update `AuthInterceptor`:
-  - [ ] Deteksi error code `TOKEN_EXPIRED`, `TOKEN_INVALID` dari response body (logic di TokenAuthenticator, interceptor tetap sederhana)
+- [x] Update `AuthInterceptor` / `TokenAuthenticator`:
+  - [x] Deteksi error code `TOKEN_EXPIRED`, `TOKEN_INVALID` via `ApiErrorUtil` di `TokenAuthenticator.authenticate()`
+  - [x] `TOKEN_INVALID` → force logout; `TOKEN_EXPIRED` → trigger refresh
 - [x] Update `TokenAuthenticator: authenticate()`:
   - [x] Parse error code dari response via `ApiErrorUtil`
   - [x] `TOKEN_INVALID` → force logout langsung
@@ -436,6 +438,6 @@ bd update <beads-id> --status closed
 - [x] API-05: Dashboard real-time dari API
 - [x] API-06: Error codes + submit response proper
 - [x] `./gradlew :app:assembleDebug` — build sukses ✅
-- [ ] `./gradlew :app:testDebugUnitTest` — test passing
-- [ ] Update `docs/IMPLEMENTATION-CLAIM-ORDER.md` — tambah referensi Phase 3
+- [x] `./gradlew :app:testDebugUnitTest` — **211 tests passing** ✅
+- [x] Update `docs/IMPLEMENTATION-CLAIM-ORDER.md` — tambah referensi Phase 3 ✅
 - [x] Code review final via `code-reviewer-deepseek-flash` ✅

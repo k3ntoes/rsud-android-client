@@ -1,0 +1,312 @@
+package my.id.kentoes.rsudajibarangapp.inspection
+
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
+import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
+import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionDetailEntity
+import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionEntity
+import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionPhotoEntity
+import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
+import my.id.kentoes.rsudajibarangapp.sync.api.InspectionDetailOutDto
+import my.id.kentoes.rsudajibarangapp.sync.api.InspectionListItemDto
+import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
+import my.id.kentoes.rsudajibarangapp.sync.api.PhotoOutDto
+import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+
+class InspectionHistoryRepositoryTest {
+
+    private lateinit var syncApi: SyncApi
+    private lateinit var masterDataDao: MasterDataDao
+    private lateinit var repository: InspectionHistoryRepository
+
+    private val sampleRoom = RuangEntity(id = 1, nama = "Ruang A", lantai = "Lantai 1")
+    private val sampleRooms = listOf(sampleRoom)
+
+    private val sampleInspectionEntity = InspectionEntity(
+        id = 100, roomId = 1, inspectorId = 5, status = "APPROVED",
+        businessDate = "2026-07-28", createdAt = "2026-07-28T10:00:00Z"
+    )
+
+    @Before
+    fun setup() {
+        syncApi = mockk()
+        masterDataDao = mockk()
+        every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
+        repository = InspectionHistoryRepository(syncApi, masterDataDao)
+    }
+
+    // ── observeLocalInspections ──
+
+    @Test
+    fun `observeLocalInspections returns Flow that maps entities to items`() = runTest {
+        every { masterDataDao.getAllInspections() } returns flowOf(listOf(sampleInspectionEntity))
+
+        val items = repository.observeLocalInspections().first()
+
+        assertEquals(1, items.size)
+        assertEquals(100L, items[0].id)
+        assertEquals("Ruang A", items[0].roomName)
+        assertEquals("APPROVED", items[0].status)
+        assertEquals("2026-07-28", items[0].businessDate)
+    }
+
+    @Test
+    fun `observeLocalInspections filters by status when provided`() = runTest {
+        every { masterDataDao.getInspectionsByStatus("APPROVED") } returns flowOf(listOf(sampleInspectionEntity))
+
+        val items = repository.observeLocalInspections(status = "APPROVED").first()
+
+        assertEquals(1, items.size)
+        assertEquals("APPROVED", items[0].status)
+    }
+
+    @Test
+    fun `observeLocalInspections uses room name from cache`() = runTest {
+        val entity = sampleInspectionEntity.copy(roomId = 2) // roomId 2, not in sampleRooms
+        every { masterDataDao.getAllInspections() } returns flowOf(listOf(entity))
+
+        val items = repository.observeLocalInspections().first()
+
+        assertEquals(1, items.size)
+        assertEquals("Room #2", items[0].roomName) // fallback when room not found
+    }
+
+    @Test
+    fun `observeLocalInspections returns empty flow when no inspections`() = runTest {
+        every { masterDataDao.getAllInspections() } returns flowOf(emptyList())
+
+        val items = repository.observeLocalInspections().first()
+
+        assertTrue(items.isEmpty())
+    }
+
+    @Test
+    fun `observeLocalInspections maps room name correctly from local cache`() = runTest {
+        every { masterDataDao.getInspectionsByStatus("REJECTED") } returns flowOf(listOf(sampleInspectionEntity))
+
+        val items = repository.observeLocalInspections(status = "REJECTED").first()
+
+        assertEquals(1, items.size)
+        assertEquals("Ruang A", items[0].roomName)
+        assertEquals("APPROVED", items[0].status) // entity status, not filter status
+    }
+
+    // ── fetchInspections ──
+
+    @Test
+    fun `fetchInspections fetches from API and maps to items`() = runTest {
+        val apiResponse = listOf(
+            InspectionListItemDto(id = 1, roomId = 1, inspectorId = 5, status = "PENDING", businessDate = "2026-07-28", createdAt = "2026-07-28T10:00:00Z", detailCount = 3)
+        )
+        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns apiResponse
+        every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
+        coEvery { masterDataDao.insertInspection(any()) } returns Unit
+
+        val result = repository.fetchInspections(page = 1, perPage = 20)
+
+        assertEquals(1, result.items.size)
+        assertEquals(1L, result.items[0].id)
+        assertEquals("Ruang A", result.items[0].roomName)
+        assertEquals(3, result.items[0].detailCount)
+        assertEquals(1, result.currentPage)
+        coVerify(exactly = 1) { syncApi.getInspections(1, 20, null, null) }
+        coVerify(exactly = 1) { masterDataDao.insertInspection(any()) }
+    }
+
+    @Test
+    fun `fetchInspections passes status filter to API`() = runTest {
+        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns emptyList()
+        every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
+
+        repository.fetchInspections(page = 1, perPage = 10, status = "APPROVED")
+
+        coVerify { syncApi.getInspections(1, 10, "APPROVED", null) }
+    }
+
+    @Test
+    fun `fetchInspections returns empty result when API returns empty`() = runTest {
+        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns emptyList()
+        every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
+
+        val result = repository.fetchInspections()
+
+        assertTrue(result.items.isEmpty())
+        assertEquals(1, result.currentPage)
+    }
+
+    @Test
+    fun `fetchInspections uses empty string fallback for null room name`() = runTest {
+        val apiItems = listOf(
+            InspectionListItemDto(id = 2, roomId = 99, inspectorId = 1, status = "PENDING", businessDate = "2026-07-28", createdAt = null, detailCount = 0)
+        )
+        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns apiItems
+        every { masterDataDao.getAllRooms() } returns flowOf(emptyList())
+        coEvery { masterDataDao.insertInspection(any()) } returns Unit
+
+        val result = repository.fetchInspections()
+
+        assertEquals("Room #99", result.items[0].roomName) // fallback
+    }
+
+    // ── fetchDetail ──
+
+    @Test
+    fun `fetchDetail returns detail from API`() = runTest {
+        val detail = InspectionOutDto(
+            id = 1, roomId = 1, inspectorId = 5, status = "APPROVED",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T10:00:00Z", createdAt = "2026-07-28T10:00:00Z",
+            details = listOf(
+                InspectionDetailOutDto(id = 10, itemId = 1, itemNameSnapshot = "Meja", score = 2,
+                    photos = listOf(PhotoOutDto(id = 100, photoFileName = "photo.jpg", thumbnailFileName = null, sortOrder = 0)))
+            )
+        )
+        coEvery { syncApi.getInspectionDetail(1L) } returns detail
+
+        val result = repository.fetchDetail(1L)
+
+        assertNotNull(result)
+        assertEquals(1L, result!!.id)
+        assertEquals(1, result.details.size)
+        assertEquals("Meja", result.details[0].itemNameSnapshot)
+    }
+
+    @Test
+    fun `fetchDetail returns null when API throws`() = runTest {
+        coEvery { syncApi.getInspectionDetail(any()) } throws RuntimeException("Network error")
+
+        val result = repository.fetchDetail(1L)
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `fetchDetail returns null when detail not found`() = runTest {
+        coEvery { syncApi.getInspectionDetail(999L) } throws RuntimeException("Not found")
+
+        val result = repository.fetchDetail(999L)
+
+        assertNull(result)
+    }
+
+    // ── cacheInspection ──
+
+    @Test
+    fun `cacheInspection saves inspection entity`() = runTest {
+        val dto = InspectionOutDto(
+            id = 1, roomId = 1, inspectorId = 5, status = "APPROVED",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T10:00:00Z", createdAt = "2026-07-28T10:00:00Z",
+            rejectionReason = null, details = emptyList()
+        )
+        coEvery { masterDataDao.insertInspection(any()) } returns Unit
+
+        repository.cacheInspection(dto)
+
+        coVerify {
+            masterDataDao.insertInspection(match { it.id == 1L && it.status == "APPROVED" })
+        }
+    }
+
+    @Test
+    fun `cacheInspection saves details and photos`() = runTest {
+        val dto = InspectionOutDto(
+            id = 1, roomId = 1, inspectorId = 5, status = "APPROVED",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T10:00:00Z", createdAt = "2026-07-28T10:00:00Z",
+            rejectionReason = null,
+            details = listOf(
+                InspectionDetailOutDto(id = 10, itemId = 1, itemNameSnapshot = "Meja", score = 2,
+                    photos = listOf(
+                        PhotoOutDto(id = 100, photoFileName = "foto1.jpg", thumbnailFileName = "thumb1.jpg", sortOrder = 0),
+                        PhotoOutDto(id = 101, photoFileName = "foto2.jpg", thumbnailFileName = null, sortOrder = 1)
+                    )
+                )
+            )
+        )
+        coEvery { masterDataDao.insertInspection(any()) } returns Unit
+        coEvery { masterDataDao.insertDetails(any()) } returns Unit
+        coEvery { masterDataDao.insertPhotos(any()) } returns Unit
+
+        repository.cacheInspection(dto)
+
+        coVerify { masterDataDao.insertDetails(match { it.size == 1 && it[0].itemNameSnapshot == "Meja" }) }
+        coVerify { masterDataDao.insertPhotos(match { it.size == 2 }) }
+    }
+
+    @Test
+    fun `cacheInspection handles rejection reason`() = runTest {
+        val dto = InspectionOutDto(
+            id = 1, roomId = 1, inspectorId = 5, status = "REJECTED",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T10:00:00Z", createdAt = "2026-07-28T10:00:00Z",
+            rejectionReason = "Foto tidak jelas", details = emptyList()
+        )
+        coEvery { masterDataDao.insertInspection(any()) } returns Unit
+
+        repository.cacheInspection(dto)
+
+        coVerify {
+            masterDataDao.insertInspection(match {
+                it.rejectionReason == "Foto tidak jelas"
+            })
+        }
+    }
+
+    @Test
+    fun `cacheInspection does not save details or photos when empty`() = runTest {
+        val dto = InspectionOutDto(
+            id = 1, roomId = 1, inspectorId = 5, status = "APPROVED",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T10:00:00Z", createdAt = "2026-07-28T10:00:00Z",
+            details = emptyList()
+        )
+        coEvery { masterDataDao.insertInspection(any()) } returns Unit
+
+        repository.cacheInspection(dto)
+
+        coVerify(exactly = 0) { masterDataDao.insertDetails(any()) }
+        coVerify(exactly = 0) { masterDataDao.insertPhotos(any()) }
+    }
+
+    @Test
+    fun `cacheInspection saves photos per detail`() = runTest {
+        val dto = InspectionOutDto(
+            id = 2, roomId = 1, inspectorId = 5, status = "APPROVED",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T10:00:00Z", createdAt = "2026-07-28T10:00:00Z",
+            details = listOf(
+                InspectionDetailOutDto(id = 10, itemId = 1, itemNameSnapshot = "Meja", score = 2, photos = emptyList()),
+                InspectionDetailOutDto(id = 20, itemId = 2, itemNameSnapshot = "Kursi", score = 0,
+                    photos = listOf(PhotoOutDto(id = 200, photoFileName = "rusak.jpg", thumbnailFileName = null, sortOrder = 0)))
+            )
+        )
+        coEvery { masterDataDao.insertInspection(any()) } returns Unit
+        coEvery { masterDataDao.insertDetails(any()) } returns Unit
+        coEvery { masterDataDao.insertPhotos(any()) } returns Unit
+
+        repository.cacheInspection(dto)
+
+        // Only detail with photos triggers insertPhotos
+        coVerify(exactly = 1) { masterDataDao.insertPhotos(match { it.size == 1 }) }
+    }
+
+    // ── PaginatedResult ──
+
+    @Test
+    fun `fetchInspections returns PaginatedResult with correct page`() = runTest {
+        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns emptyList()
+        every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
+
+        val result = repository.fetchInspections(page = 3, perPage = 10)
+
+        assertEquals(3, result.currentPage)
+        assertEquals(1, result.totalPages)
+        assertTrue(result.items.isEmpty())
+    }
+}

@@ -42,6 +42,14 @@ Android SELALU menggunakan mode `?since=` (first-time sync kirim `since=1970-01-
 Semua error response dari server menggunakan format `{ detail: String, code: String }`. Field `code` digunakan oleh `AuthInterceptor` dan `TokenAuthenticator` untuk logika yang lebih stabil dibanding parsing string `detail`. Error codes: `TOKEN_EXPIRED`, `TOKEN_INVALID`, `FILE_TOO_LARGE`, `DUPLICATE_INSPECTION`, `DUPLICATE_ASSIGNMENT`, `VALIDATION_ERROR`.
 _Avoid_: Error code, status code, error format
 
+**Entitas Database**: 
+Room database `rsud_ajibarang.db` (version 3) berisi 11 entity:
+- `MasterDataItem`, `RuangEntity` — master data
+- `DrafInspeksi`, `DrafItem`, `DrafFoto` — draft inspeksi
+- `RoomItemEntity`, `UserRoomEntity` — pivot tables
+- `InspectionEntity`, `InspectionDetailEntity`, `InspectionPhotoEntity` — hybrid history cache
+- `UserEntity` — cache user untuk lookup nama petugas
+
 **Paginasi Server-Driven**: 
 Semua endpoint LIST menggunakan parameter `page`/`per_page` yang dikelola server. Android mengirim `page=1&per_page=10000` (atau menggunakan mode `?since=` untuk master data). Response menyertakan `total`, `total_pages`, dan `page` untuk tracking posisi halaman.
 _Avoid_: Server pagination, page-based pagination

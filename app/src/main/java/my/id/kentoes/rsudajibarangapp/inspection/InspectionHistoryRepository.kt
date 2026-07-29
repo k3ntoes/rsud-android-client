@@ -1,11 +1,14 @@
 package my.id.kentoes.rsudajibarangapp.inspection
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionDetailEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionPhotoEntity
-import my.id.kentoes.rsudajibarangapp.sync.api.InspectionDetailOutDto
-import my.id.kentoes.rsudajibarangapp.sync.api.InspectionListItemDto
+import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
 import javax.inject.Inject
@@ -37,25 +40,58 @@ data class PhotoDetail(
     val sortOrder: Int
 )
 
+data class PaginatedResult(
+    val items: List<InspectionHistoryItem>,
+    val totalPages: Int,
+    val currentPage: Int
+)
+
 @Singleton
 class InspectionHistoryRepository @Inject constructor(
     private val syncApi: SyncApi,
     private val masterDataDao: MasterDataDao
 ) {
 
-    /** Fetch list dari API + lookup room name lokal */
+    /** Flow dari cache lokal — tampilkan instant sebelum refresh server */
+    fun observeLocalInspections(status: String? = null): Flow<List<InspectionHistoryItem>> {
+        val flow = if (status != null) {
+            masterDataDao.getInspectionsByStatus(status)
+        } else {
+            masterDataDao.getAllInspections()
+        }
+        return combine(flow, masterDataDao.getAllRooms()) { inspections, rooms ->
+            val roomMap = rooms.associateBy { it.id }
+            inspections.map { entity ->
+                InspectionHistoryItem(
+                    id = entity.id,
+                    roomId = entity.roomId,
+                    roomName = roomMap[entity.roomId]?.nama ?: "Room #${entity.roomId}",
+                    inspectorId = entity.inspectorId,
+                    status = entity.status,
+                    businessDate = entity.businessDate,
+                    createdAt = entity.createdAt,
+                    detailCount = 0 // tidak tersimpan di InspectionEntity
+                )
+            }
+        }
+    }
+
+    /** Fetch dari server + update cache lokal + return hasil. Support pagination. */
     suspend fun fetchInspections(
         page: Int = 1,
         perPage: Int = 20,
         status: String? = null,
         showAll: Boolean? = null
-    ): List<InspectionHistoryItem> {
+    ): PaginatedResult {
         val response = syncApi.getInspections(page, perPage, status, showAll)
-        return response.map { item ->
+        val roomMap = with(masterDataDao) {
+            getAllRoomsOnce().associateBy { it.id }
+        }
+        val items = response.map { item ->
             InspectionHistoryItem(
                 id = item.id,
                 roomId = item.roomId,
-                roomName = masterDataDao.getRoomById(item.roomId)?.nama ?: "Room #${item.roomId}",
+                roomName = roomMap[item.roomId]?.nama ?: "Room #${item.roomId}",
                 inspectorId = item.inspectorId,
                 status = item.status,
                 businessDate = item.businessDate,
@@ -63,9 +99,22 @@ class InspectionHistoryRepository @Inject constructor(
                 detailCount = item.detailCount
             )
         }
+        // Cache hasil fetch ke Room
+        items.forEach { item ->
+            val entity = InspectionEntity(
+                id = item.id,
+                roomId = item.roomId,
+                inspectorId = item.inspectorId,
+                status = item.status,
+                businessDate = item.businessDate,
+                createdAt = item.createdAt
+            )
+            masterDataDao.insertInspection(entity)
+        }
+        return PaginatedResult(items = items, totalPages = 1, currentPage = page)
     }
 
-    /** Fetch detail dari API + simpan ke cache lokal */
+    /** Fetch detail dari API */
     suspend fun fetchDetail(id: Long): InspectionOutDto? {
         return try {
             syncApi.getInspectionDetail(id)
@@ -111,5 +160,10 @@ class InspectionHistoryRepository @Inject constructor(
             }
             if (photos.isNotEmpty()) masterDataDao.insertPhotos(photos)
         }
+    }
+
+    /** Ambil semua rooms sekali (non-Flow) untuk lookup */
+    private suspend fun MasterDataDao.getAllRoomsOnce(): List<RuangEntity> {
+        return getAllRooms().first()
     }
 }

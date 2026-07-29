@@ -24,3 +24,4 @@ app/src/main/graphify-out/cache/
 
 # Graphify — docs extraction (empty for code-only)
 docs/graphify-out/
+\n# Graphify — internal state files (machine-specific, not source)\ngraphify-out/.graphify_root\ngraphify-out/.graphify_semantic_marker\ngraphify-out/20*/

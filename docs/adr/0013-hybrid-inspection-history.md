@@ -84,6 +84,17 @@ fun getInspections(): Flow<List<InspectionListItem>> {
 - `room_name` — lookup dari `RoomEntity` lokal (data master yang sudah di-sync)
 - `inspector_name` — lookup dari `UserEntity` lokal (sync via `GET /api/auth/users`)
 
+### Pagination
+
+Server endpoint `GET /api/inspections` saat ini return flat `List<InspectionListItemDto>` tanpa pagination metadata. Android menggunakan `page` parameter sebagai safety ceiling 10 halaman — masing-masing request return data yang sama. Pagination sejati membutuhkan BE untuk return `PaginatedResponse<InspectionListItemDto>`.
+
+```kotlin
+// ponytail: pagination safety ceiling
+if (nextPage >= 10) {
+    _uiState.value = _uiState.value.copy(hasMorePages = false)
+}
+```
+
 ## Consequences
 
 ### Positif
@@ -91,14 +102,14 @@ fun getInspections(): Flow<List<InspectionListItem>> {
 - Instant load dari cache (tanpa spinner menunggu API)
 - Data tetap akurat karena di-refresh dari server
 - Bekerja offline penuh (data yang pernah di-cache bisa dilihat tanpa koneksi)
-- Tidak perlu storage besar — hanya inspeksi yang sudah dikirim yang di-cache
+- `Inspector name` di-lookup dari `UserEntity` — data nama asli, bukan placeholder
 
 ### Negatif
 
-- Kompleksitas: perlu 3 tabel Room tambahan + DAO methods
+- Kompleksitas: perlu 4 tabel Room tambahan (`InspectionEntity`, `InspectionDetailEntity`, `InspectionPhotoEntity`, `UserEntity`) + DAO methods
 - Race condition: cache bisa tampil dulu, lalu tiba-tiba berubah saat refresh selesai
-- Storage bertambah seiring jumlah inspeksi (mitigasi: bisa di-prune nanti)
-- `InspectionOut` dari response submit (POST) mungkin berbeda format dengan `InspectionOut` dari response detail (GET) — perlu diverifikasi
+- `UserEntity` perlu sync dari `GET /api/auth/users` — 1 extra request setiap sinkronisasi
+- Pagination sejati belum berfungsi sampai BE mengimplementasikan `PaginatedResponse<InspectionListItemDto>`
 
 ## Referensi
 

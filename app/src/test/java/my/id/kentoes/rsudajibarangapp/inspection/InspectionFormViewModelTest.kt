@@ -51,6 +51,9 @@ class InspectionFormViewModelTest {
         mockkObject(SyncWorker.Companion)
         every { SyncWorker.enqueue(any()) } returns Unit
 
+        // Mock getAllRoomItems — return empty so fallback shows all items
+        coEvery { masterDataDao.getAllRoomItems() } returns emptyList()
+
         viewModel = InspectionFormViewModel(context, masterDataDao, drafDao, inspectionRepository)
     }
 

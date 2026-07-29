@@ -50,3 +50,7 @@ _Avoid_: User room mapping, room access, assigned rooms
 **Idempotency Key**: 
 Kombinasi `(room_id, local_timestamp, inspector_id)` yang mencegah duplikasi inspeksi. `inspector_id` berasal dari `user.id` yang didapat saat login. Key ini dikirim ke server agar retry dari WorkManager tidak membuat inspeksi duplikat.
 _Avoid_: Idempotensi, duplicate prevention key
+
+**User Cache**: 
+`UserEntity` — tabel Room lokal untuk cache data user. Di-sync dari endpoint `GET /api/auth/users`. Digunakan oleh InspectionDetailScreen untuk menampilkan nama petugas (`username`) dan role yang melakukan inspeksi, bukan placeholder "Petugas #ID".
+_Avoid_: Pengguna, user table, user lookup

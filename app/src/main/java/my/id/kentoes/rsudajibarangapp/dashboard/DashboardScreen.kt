@@ -42,16 +42,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
-import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
-import my.id.kentoes.rsudajibarangapp.core.model.toStatusDisplay
-import my.id.kentoes.rsudajibarangapp.dashboard.api.IssueFrequencyOut
-import my.id.kentoes.rsudajibarangapp.dashboard.api.RoomScoreOut
+import my.id.kentoes.rsudajibarangapp.dashboard.components.IssueCard
+import my.id.kentoes.rsudajibarangapp.dashboard.components.RecentDraftCard
+import my.id.kentoes.rsudajibarangapp.dashboard.components.RoomScoreCard
+import my.id.kentoes.rsudajibarangapp.dashboard.components.StatCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -304,164 +303,3 @@ fun DashboardScreen(
     }
 }
 
-@Composable
-private fun StatCard(
-    modifier: Modifier = Modifier,
-    icon: ImageVector,
-    label: String,
-    value: String,
-    color: Color
-) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = color.copy(alpha = 0.08f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(32.dp),
-                tint = color
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
-}
-
-@Composable
-private fun RoomScoreCard(room: RoomScoreOut) {
-    val color = when {
-        room.scorePct < 0.5 -> MaterialTheme.colorScheme.error
-        room.scorePct < 0.75 -> Color(0xFFF9A825)
-        else -> Color(0xFF388E3C)
-    }
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Ruangan #${room.roomId}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = "${room.inspectionCount}x inspeksi",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Text(
-                text = "${(room.scorePct * 100).toInt()}%",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = color
-            )
-        }
-    }
-}
-
-@Composable
-private fun IssueCard(issue: IssueFrequencyOut) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Description,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = MaterialTheme.colorScheme.error
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = issue.itemNameSnapshot,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-            Text(
-                text = "${issue.scoreZeroCount}x",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.error
-            )
-        }
-    }
-}
-
-@Composable
-private fun RecentDraftCard(draft: DrafInspeksi) {
-    val display = draft.status.toStatusDisplay()
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = display.icon,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = display.color
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Ruangan #${draft.roomId}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = draft.localTimestamp.take(10),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Text(
-                text = display.label,
-                style = MaterialTheme.typography.labelSmall,
-                color = display.color
-            )
-        }
-    }
-}

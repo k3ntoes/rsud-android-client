@@ -93,4 +93,7 @@ interface AuthApi {
     suspend fun getUserRooms(
         @Query("since") since: String? = null
     ): SyncResponse<UserRoomDto>
+
+    @GET("auth/users")
+    suspend fun getUsers(): List<UserOut>
 }

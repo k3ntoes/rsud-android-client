@@ -62,15 +62,22 @@ class InspectionFormViewModel @Inject constructor(
         viewModelScope.launch {
             val allMasterItems = masterDataDao.getAllItems().first()
 
+            // Filter items by room: ambil mapping room→itemIds, filter hanya item yang terasosiasi dengan room ini
+            val roomItems = masterDataDao.getAllRoomItems()
+            val itemIdsForRoom = roomItems.filter { it.roomId == roomId }.map { it.itemId }.toSet()
+            val filteredItems = if (itemIdsForRoom.isNotEmpty()) {
+                allMasterItems.filter { it.id in itemIdsForRoom }
+            } else {
+                allMasterItems // fallback: jika belum ada mapping, tampilkan semua
+            }
+
             val states = if (draftId != null && draftId > 0) {
-                // Resume dari draft — load skor, foto, catatan yang sudah tersimpan
                 resumeDraftId = draftId
-                val (draftRoomId, draftStates) = inspectionRepository.draftToItemStates(draftId, allMasterItems)
+                val (draftRoomId, draftStates) = inspectionRepository.draftToItemStates(draftId, filteredItems)
                 _uiState.value = _uiState.value.copy(roomId = draftRoomId)
                 draftStates
             } else {
-                // Form baru — semua item default (-1, kosong)
-                allMasterItems.map { entity ->
+                filteredItems.map { entity ->
                     ItemState(
                         itemId = entity.id,
                         nama = entity.nama,

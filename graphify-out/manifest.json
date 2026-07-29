@@ -1,0 +1,567 @@
+{
+  ".agents/skills/diagnosing-bugs/scripts/hitl-loop.template.sh": {
+    "mtime": 1784649883.1698387,
+    "ast_hash": "46a2a00761be2785e59661f0e3c11471",
+    "semantic_hash": "46a2a00761be2785e59661f0e3c11471"
+  },
+  "app/build.gradle.kts": {
+    "mtime": 1785246370.1121254,
+    "ast_hash": "b393d0a125c7473a62b77544e39e0f0a",
+    "semantic_hash": "b393d0a125c7473a62b77544e39e0f0a"
+  },
+  "app/src/androidTest/java/my/id/kentoes/rsudajibarangapp/ExampleInstrumentedTest.kt": {
+    "mtime": 1785152852.9361126,
+    "ast_hash": "5a22ef23873150f6376cdcbc1789224d",
+    "semantic_hash": "5a22ef23873150f6376cdcbc1789224d"
+  },
+  "app/src/androidTest/java/my/id/kentoes/rsudajibarangapp/dashboard/components/DashboardComposablesTest.kt": {
+    "mtime": 1785342427.1819932,
+    "ast_hash": "b728a4639242f7bf8dcc2572a4d11895",
+    "semantic_hash": "b728a4639242f7bf8dcc2572a4d11895"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/App.kt": {
+    "mtime": 1785153539.942537,
+    "ast_hash": "598d1d5fba36290af907b3cdb6dba52a",
+    "semantic_hash": "598d1d5fba36290af907b3cdb6dba52a"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/auth/AuthRepository.kt": {
+    "mtime": 1785246098.378402,
+    "ast_hash": "4e34f80368ed7b47a6ac9505495c335c",
+    "semantic_hash": "4e34f80368ed7b47a6ac9505495c335c"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/auth/AuthViewModel.kt": {
+    "mtime": 1785148452.9392502,
+    "ast_hash": "57a05efe2008505d6bd7c5360ae4efb3",
+    "semantic_hash": "57a05efe2008505d6bd7c5360ae4efb3"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/auth/api/AuthApi.kt": {
+    "mtime": 1785341335.0991476,
+    "ast_hash": "684675273228887a145383b0d6e2da54",
+    "semantic_hash": "684675273228887a145383b0d6e2da54"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/auth/ui/LoginScreen.kt": {
+    "mtime": 1785083938.8543844,
+    "ast_hash": "9b5b03ab454455d132cab041f61eb1a7",
+    "semantic_hash": "9b5b03ab454455d132cab041f61eb1a7"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/AppDatabase.kt": {
+    "mtime": 1785341419.6428864,
+    "ast_hash": "e85d44543f1ee0303cfa24ea8e9e815c",
+    "semantic_hash": "e85d44543f1ee0303cfa24ea8e9e815c"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/dao/DrafDao.kt": {
+    "mtime": 1785155114.818199,
+    "ast_hash": "0a01a88c4c196c5de1410b7282c97d98",
+    "semantic_hash": "0a01a88c4c196c5de1410b7282c97d98"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/dao/MasterDataDao.kt": {
+    "mtime": 1785341343.7451162,
+    "ast_hash": "b86648a8654c35d035abffc25850a3ff",
+    "semantic_hash": "b86648a8654c35d035abffc25850a3ff"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/entity/DrafFoto.kt": {
+    "mtime": 1785083938.8538668,
+    "ast_hash": "f29559b7b5dd4b0069c9369435955c65",
+    "semantic_hash": "f29559b7b5dd4b0069c9369435955c65"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/entity/DrafInspeksi.kt": {
+    "mtime": 1785340067.8621294,
+    "ast_hash": "55629f6b7740aeb74a47c455d5864ada",
+    "semantic_hash": "55629f6b7740aeb74a47c455d5864ada"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/entity/DrafItem.kt": {
+    "mtime": 1785083938.8540773,
+    "ast_hash": "be83094bbcf07c8805ff26aedba5f569",
+    "semantic_hash": "be83094bbcf07c8805ff26aedba5f569"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/entity/InspectionDetailEntity.kt": {
+    "mtime": 1785340091.4363506,
+    "ast_hash": "e7779f200379e2a457ecee9232d04857",
+    "semantic_hash": "e7779f200379e2a457ecee9232d04857"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/entity/InspectionEntity.kt": {
+    "mtime": 1785340085.3422937,
+    "ast_hash": "9bfa62aaa6f29849ec5ee41e535b3057",
+    "semantic_hash": "9bfa62aaa6f29849ec5ee41e535b3057"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/entity/InspectionPhotoEntity.kt": {
+    "mtime": 1785340096.7093997,
+    "ast_hash": "1c07dbf526462073e9e4d1e74fcb201d",
+    "semantic_hash": "1c07dbf526462073e9e4d1e74fcb201d"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/entity/MasterDataItem.kt": {
+    "mtime": 1785340061.1240659,
+    "ast_hash": "05025acc8c9df45e62abcf4b0a2c5746",
+    "semantic_hash": "05025acc8c9df45e62abcf4b0a2c5746"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/entity/RoomItemEntity.kt": {
+    "mtime": 1785340073.553183,
+    "ast_hash": "c507b7ccc5c250900252cabe4dc02937",
+    "semantic_hash": "c507b7ccc5c250900252cabe4dc02937"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/entity/RuangEntity.kt": {
+    "mtime": 1785340054.1799998,
+    "ast_hash": "3a3fafca3e7230a2d05aabb76f4ae74c",
+    "semantic_hash": "3a3fafca3e7230a2d05aabb76f4ae74c"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/entity/UserEntity.kt": {
+    "mtime": 1785341413.2189028,
+    "ast_hash": "a4a7b0ec6da67f07f2c3700b311da61e",
+    "semantic_hash": "a4a7b0ec6da67f07f2c3700b311da61e"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/database/entity/UserRoomEntity.kt": {
+    "mtime": 1785340079.4752388,
+    "ast_hash": "eca9e958ff6e75f310d4b69ebf8f56be",
+    "semantic_hash": "eca9e958ff6e75f310d4b69ebf8f56be"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/datastore/TokenData.kt": {
+    "mtime": 1785148406.0481484,
+    "ast_hash": "dda57642d128eb76acea502814d2d4f2",
+    "semantic_hash": "dda57642d128eb76acea502814d2d4f2"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/datastore/TokenDataSerializer.kt": {
+    "mtime": 1785084250.3007765,
+    "ast_hash": "b99edf08f33bc21efb3fe57fd58d3c54",
+    "semantic_hash": "b99edf08f33bc21efb3fe57fd58d3c54"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/datastore/TokenEncryption.kt": {
+    "mtime": 1785084284.7178307,
+    "ast_hash": "6878cfe8caf2c3e35d19282853814899",
+    "semantic_hash": "6878cfe8caf2c3e35d19282853814899"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/datastore/TokenManager.kt": {
+    "mtime": 1785148927.0772245,
+    "ast_hash": "106f842bbd015e3a63f8270c16f9ead0",
+    "semantic_hash": "106f842bbd015e3a63f8270c16f9ead0"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/datastore/di/DatabaseModule.kt": {
+    "mtime": 1785089665.0474958,
+    "ast_hash": "9f2e6c2d2458df6bb3b648f59967d453",
+    "semantic_hash": "9f2e6c2d2458df6bb3b648f59967d453"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/di/AppModule.kt": {
+    "mtime": 1785156335.5479429,
+    "ast_hash": "109637987f7d4dc68560374303aad323",
+    "semantic_hash": "109637987f7d4dc68560374303aad323"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/model/ApiResponse.kt": {
+    "mtime": 1785340130.615712,
+    "ast_hash": "c3f67de812e1ab56024fccdbf19ecea0",
+    "semantic_hash": "c3f67de812e1ab56024fccdbf19ecea0"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/model/StatusDisplay.kt": {
+    "mtime": 1785156467.0799906,
+    "ast_hash": "1ac25012a72fa54514711ec0f6dd7a6f",
+    "semantic_hash": "1ac25012a72fa54514711ec0f6dd7a6f"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/model/UiState.kt": {
+    "mtime": 1785083938.8518927,
+    "ast_hash": "ad0c70b6c0d54bf7f5f5d586170221d6",
+    "semantic_hash": "ad0c70b6c0d54bf7f5f5d586170221d6"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/navigation/NavGraph.kt": {
+    "mtime": 1785340335.233491,
+    "ast_hash": "9f231acf95ddcaf5e6f5500c25ebffaf",
+    "semantic_hash": "9f231acf95ddcaf5e6f5500c25ebffaf"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/network/ApiErrorUtil.kt": {
+    "mtime": 1785340201.9053507,
+    "ast_hash": "ca6d451dc4508e24d4d4aac449fada92",
+    "semantic_hash": "ca6d451dc4508e24d4d4aac449fada92"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/network/AuthInterceptor.kt": {
+    "mtime": 1785340249.8847687,
+    "ast_hash": "c534817510ca5c84c73377ac8f92c881",
+    "semantic_hash": "c534817510ca5c84c73377ac8f92c881"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/network/NetworkConnectivityObserver.kt": {
+    "mtime": 1785083954.2404654,
+    "ast_hash": "d970a02edbfd222d749f41852fcf2ccf",
+    "semantic_hash": "d970a02edbfd222d749f41852fcf2ccf"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/network/TokenAuthenticator.kt": {
+    "mtime": 1785340260.7068617,
+    "ast_hash": "e86ab7417d178a22a95701317893bf5e",
+    "semantic_hash": "e86ab7417d178a22a95701317893bf5e"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/ui/MainActivity.kt": {
+    "mtime": 1785083938.8491333,
+    "ast_hash": "61f602a8596f65dd1164124e95077f0f",
+    "semantic_hash": "61f602a8596f65dd1164124e95077f0f"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/ui/theme/Theme.kt": {
+    "mtime": 1785083938.8517547,
+    "ast_hash": "bf05b4fa99eb2faff81713dd291f1745",
+    "semantic_hash": "bf05b4fa99eb2faff81713dd291f1745"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/dashboard/DashboardScreen.kt": {
+    "mtime": 1785342131.785197,
+    "ast_hash": "8a559047a0f42f45d26228534ba5b5ab",
+    "semantic_hash": "8a559047a0f42f45d26228534ba5b5ab"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/dashboard/DashboardViewModel.kt": {
+    "mtime": 1785340277.1750023,
+    "ast_hash": "c412d347656b0e3065cfe76fe5a0a82f",
+    "semantic_hash": "c412d347656b0e3065cfe76fe5a0a82f"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/dashboard/api/AnalyticsApi.kt": {
+    "mtime": 1785340170.6840737,
+    "ast_hash": "0eb22d228f1b6bd389bee6f0c7e6bb75",
+    "semantic_hash": "0eb22d228f1b6bd389bee6f0c7e6bb75"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/dashboard/components/IssueCard.kt": {
+    "mtime": 1785342109.6121464,
+    "ast_hash": "527509c6d62838a6876891423e129de8",
+    "semantic_hash": "527509c6d62838a6876891423e129de8"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/dashboard/components/RecentDraftCard.kt": {
+    "mtime": 1785342109.6161466,
+    "ast_hash": "b38c59952316192794067757cd1e0c1b",
+    "semantic_hash": "b38c59952316192794067757cd1e0c1b"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/dashboard/components/RoomScoreCard.kt": {
+    "mtime": 1785342109.6021464,
+    "ast_hash": "e22874e6a99452fe288f1ff20a921169",
+    "semantic_hash": "e22874e6a99452fe288f1ff20a921169"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/dashboard/components/StatCard.kt": {
+    "mtime": 1785342109.5801463,
+    "ast_hash": "2eff32f21aed5e57def4967f8933a707",
+    "semantic_hash": "2eff32f21aed5e57def4967f8933a707"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/DaftarDrafViewModel.kt": {
+    "mtime": 1785156656.3387563,
+    "ast_hash": "3d27425c7aa27586439945bc4795b028",
+    "semantic_hash": "3d27425c7aa27586439945bc4795b028"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/InspectionFormScreen.kt": {
+    "mtime": 1785342483.221165,
+    "ast_hash": "7b58187be57a834a2bcd71006daa8c7b",
+    "semantic_hash": "7b58187be57a834a2bcd71006daa8c7b"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/InspectionFormViewModel.kt": {
+    "mtime": 1785341023.7781854,
+    "ast_hash": "c48563419663bb3fd425bc9270a67193",
+    "semantic_hash": "c48563419663bb3fd425bc9270a67193"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/InspectionHistoryRepository.kt": {
+    "mtime": 1785340958.681247,
+    "ast_hash": "748c6aa141361ee98084f9590303ddf0",
+    "semantic_hash": "748c6aa141361ee98084f9590303ddf0"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/InspectionHistoryViewModel.kt": {
+    "mtime": 1785341376.980006,
+    "ast_hash": "194e8c1809d2a3828d508536423a1ab7",
+    "semantic_hash": "194e8c1809d2a3828d508536423a1ab7"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/InspectionRepository.kt": {
+    "mtime": 1785340122.6856394,
+    "ast_hash": "2bebf327351c5466888e78289b82c5ca",
+    "semantic_hash": "2bebf327351c5466888e78289b82c5ca"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/ItemState.kt": {
+    "mtime": 1785083938.8427296,
+    "ast_hash": "edeca7e399beeb8d2813f3668b0cd5af",
+    "semantic_hash": "edeca7e399beeb8d2813f3668b0cd5af"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/components/CameraHelper.kt": {
+    "mtime": 1785342474.0851364,
+    "ast_hash": "97d7de5461c71cf414f2f378db05590e",
+    "semantic_hash": "97d7de5461c71cf414f2f378db05590e"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/components/ItemCard.kt": {
+    "mtime": 1785152771.2279668,
+    "ast_hash": "84dc960c66da6167152380b2288d329c",
+    "semantic_hash": "84dc960c66da6167152380b2288d329c"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/components/PhotoThumbnail.kt": {
+    "mtime": 1785083938.8428638,
+    "ast_hash": "dd7a2599f2278e895bdb96503e00fedf",
+    "semantic_hash": "dd7a2599f2278e895bdb96503e00fedf"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/components/ScoreIndicator.kt": {
+    "mtime": 1785152771.2239668,
+    "ast_hash": "4cf031fe29bee69e2f9b29d0a6e578c2",
+    "semantic_hash": "4cf031fe29bee69e2f9b29d0a6e578c2"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/ui/DaftarDrafScreen.kt": {
+    "mtime": 1785156664.3459358,
+    "ast_hash": "db7dce37f7bdaddeb9fca62bfe89d612",
+    "semantic_hash": "db7dce37f7bdaddeb9fca62bfe89d612"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/ui/InspectionDetailScreen.kt": {
+    "mtime": 1785341991.830907,
+    "ast_hash": "90fc1a88df98c89d23d6d4e530bad72a",
+    "semantic_hash": "90fc1a88df98c89d23d6d4e530bad72a"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/ui/InspectionListScreen.kt": {
+    "mtime": 1785341269.9184206,
+    "ast_hash": "570864126b97b9ec5071052953ec1cf2",
+    "semantic_hash": "570864126b97b9ec5071052953ec1cf2"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/ui/components/OfflineBanner.kt": {
+    "mtime": 1785085103.2866824,
+    "ast_hash": "10149815e8159adecfc0e94ea20d1743",
+    "semantic_hash": "10149815e8159adecfc0e94ea20d1743"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/master/MasterDataRepository.kt": {
+    "mtime": 1785341360.3520591,
+    "ast_hash": "9c162a51b9a808e3825f6be928eba8e5",
+    "semantic_hash": "9c162a51b9a808e3825f6be928eba8e5"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/master/MasterDataViewModel.kt": {
+    "mtime": 1785156335.5659435,
+    "ast_hash": "87ab9199b353bfdbdc1abf5cfa7c090f",
+    "semantic_hash": "87ab9199b353bfdbdc1abf5cfa7c090f"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/master/SyncState.kt": {
+    "mtime": 1785340195.1162908,
+    "ast_hash": "07781a3cc01610330c5d7dd1e8477948",
+    "semantic_hash": "07781a3cc01610330c5d7dd1e8477948"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/master/api/MasterDataApi.kt": {
+    "mtime": 1785340139.0747888,
+    "ast_hash": "96a5172f56455081f2bd880f3d91a972",
+    "semantic_hash": "96a5172f56455081f2bd880f3d91a972"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/master/ui/MasterDataListScreen.kt": {
+    "mtime": 1785087472.5764327,
+    "ast_hash": "17d409ca6414746c16ca9f7fee4fd874",
+    "semantic_hash": "17d409ca6414746c16ca9f7fee4fd874"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/ImageCompressor.kt": {
+    "mtime": 1785153759.627555,
+    "ast_hash": "7eae4d44520b9898cc2e1e0f0a1dea6e",
+    "semantic_hash": "7eae4d44520b9898cc2e1e0f0a1dea6e"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/SyncAwareWorkerFactory.kt": {
+    "mtime": 1785153531.195498,
+    "ast_hash": "42cb5291c0c594f0ef89a250b3b34f07",
+    "semantic_hash": "42cb5291c0c594f0ef89a250b3b34f07"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/SyncManager.kt": {
+    "mtime": 1785341368.8960314,
+    "ast_hash": "a2d000c2175a02a7fee801dd39eae416",
+    "semantic_hash": "a2d000c2175a02a7fee801dd39eae416"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/SyncWorker.kt": {
+    "mtime": 1785340240.190685,
+    "ast_hash": "6245b9c98118d1307a4155efe14dc03f",
+    "semantic_hash": "6245b9c98118d1307a4155efe14dc03f"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/api/SyncApi.kt": {
+    "mtime": 1785340434.8943052,
+    "ast_hash": "5e4adddbb21e8bb9eaad06937771d302",
+    "semantic_hash": "5e4adddbb21e8bb9eaad06937771d302"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/ExampleUnitTest.kt": {
+    "mtime": 1785152852.9251125,
+    "ast_hash": "341a91a072b491f0f651467541f65ceb",
+    "semantic_hash": "341a91a072b491f0f651467541f65ceb"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/auth/AuthRepositoryTest.kt": {
+    "mtime": 1785246156.0761914,
+    "ast_hash": "229024d5d149a1cee7140e66bb0fff1b",
+    "semantic_hash": "229024d5d149a1cee7140e66bb0fff1b"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/core/datastore/TokenManagerTest.kt": {
+    "mtime": 1785152852.9121125,
+    "ast_hash": "0378120e0b3faf77a7b3e3d12aa36691",
+    "semantic_hash": "0378120e0b3faf77a7b3e3d12aa36691"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/core/model/ApiResponseSerializationTest.kt": {
+    "mtime": 1785343060.5372202,
+    "ast_hash": "ec22f2bad1c9792114a0d2bc9d3d8bd3",
+    "semantic_hash": "ec22f2bad1c9792114a0d2bc9d3d8bd3"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/core/network/ApiEndpointIntegrationTest.kt": {
+    "mtime": 1785341858.7847064,
+    "ast_hash": "6b1460de85f85caa0af3a3cba6cf6271",
+    "semantic_hash": "6b1460de85f85caa0af3a3cba6cf6271"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/core/network/ApiErrorUtilTest.kt": {
+    "mtime": 1785342663.9437492,
+    "ast_hash": "515a3c02ead2dc760757d0defe4ac4e3",
+    "semantic_hash": "515a3c02ead2dc760757d0defe4ac4e3"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/dashboard/DashboardViewModelTest.kt": {
+    "mtime": 1785245205.2307148,
+    "ast_hash": "2789ced933b07bb98ecc808f9d3d7c1b",
+    "semantic_hash": "2789ced933b07bb98ecc808f9d3d7c1b"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/inspection/InspectionFormViewModelTest.kt": {
+    "mtime": 1785341922.1347916,
+    "ast_hash": "b8746e93df347f4f6751890c6de4013a",
+    "semantic_hash": "b8746e93df347f4f6751890c6de4013a"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/inspection/InspectionHistoryRepositoryTest.kt": {
+    "mtime": 1785343124.4476972,
+    "ast_hash": "d957b23a53d0e0534f7a367fa14a8640",
+    "semantic_hash": "d957b23a53d0e0534f7a367fa14a8640"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/inspection/InspectionHistoryViewModelTest.kt": {
+    "mtime": 1785343543.8723567,
+    "ast_hash": "8a3981d3ceb862d2517a8c33e2869329",
+    "semantic_hash": "8a3981d3ceb862d2517a8c33e2869329"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/master/MasterDataRepositoryTest.kt": {
+    "mtime": 1785343650.0479414,
+    "ast_hash": "7ed4eb46dff9a6f9c98e4f356899b631",
+    "semantic_hash": "7ed4eb46dff9a6f9c98e4f356899b631"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/master/MasterDataViewModelTest.kt": {
+    "mtime": 1785244927.3220947,
+    "ast_hash": "a162a31df8ceac6ff98f84a06db81bc8",
+    "semantic_hash": "a162a31df8ceac6ff98f84a06db81bc8"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/sync/ImageCompressorTest.kt": {
+    "mtime": 1785152852.8971124,
+    "ast_hash": "5344c007354b87177fe827826222ae55",
+    "semantic_hash": "5344c007354b87177fe827826222ae55"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/sync/SyncManagerTest.kt": {
+    "mtime": 1785341790.5206385,
+    "ast_hash": "cb60f28fbcdcedbeaad4457cbaa7c03c",
+    "semantic_hash": "cb60f28fbcdcedbeaad4457cbaa7c03c"
+  },
+  "app/src/test/java/my/id/kentoes/rsudajibarangapp/sync/SyncWorkerTest.kt": {
+    "mtime": 1785087042.0793858,
+    "ast_hash": "1cd0bb614f3835dc96b4abb5860814bd",
+    "semantic_hash": "1cd0bb614f3835dc96b4abb5860814bd"
+  },
+  "build.gradle.kts": {
+    "mtime": 1785089558.1578853,
+    "ast_hash": "953e4767bfc7854eceb201fa86bb10d8",
+    "semantic_hash": "953e4767bfc7854eceb201fa86bb10d8"
+  },
+  "gradlew": {
+    "mtime": 1784735674.0408847,
+    "ast_hash": "a43be8432bac3ffd05b3769aa42fe996",
+    "semantic_hash": "a43be8432bac3ffd05b3769aa42fe996"
+  },
+  "scripts/context7.sh": {
+    "mtime": 1785071145.9770668,
+    "ast_hash": "1072b05296425db33d3618e3981fadb8",
+    "semantic_hash": "1072b05296425db33d3618e3981fadb8"
+  },
+  "settings.gradle.kts": {
+    "mtime": 1785089546.0918455,
+    "ast_hash": "76f65d855a170bc0dfbd5b4143336c4d",
+    "semantic_hash": "76f65d855a170bc0dfbd5b4143336c4d"
+  },
+  "AGENTS.md": {
+    "mtime": 1785340543.016159,
+    "ast_hash": "ccde02672af22c2c59e967ad71992ac1",
+    "semantic_hash": "ccde02672af22c2c59e967ad71992ac1"
+  },
+  "CLAUDE.md": {
+    "mtime": 1785340543.016159,
+    "ast_hash": "1180c6c13522e73bfacadd2ec9de2a32",
+    "semantic_hash": "1180c6c13522e73bfacadd2ec9de2a32"
+  },
+  "CODING-RULES.md": {
+    "mtime": 1785071238.1418982,
+    "ast_hash": "2f67533f25dbe7c67e75d8e7a80b5b7f",
+    "semantic_hash": "2f67533f25dbe7c67e75d8e7a80b5b7f"
+  },
+  "CONTEXT-MAP.md": {
+    "mtime": 1785341629.645599,
+    "ast_hash": "cfd482e5fa86c14e27726f314705b6ad",
+    "semantic_hash": "cfd482e5fa86c14e27726f314705b6ad"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/auth/CONTEXT.md": {
+    "mtime": 1785341639.6035957,
+    "ast_hash": "370f6627acc46272c349f862f1af1bd9",
+    "semantic_hash": "370f6627acc46272c349f862f1af1bd9"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/CONTEXT.md": {
+    "mtime": 1785341649.3635933,
+    "ast_hash": "2b6a920b5616cee8fff319ca6c70ab05",
+    "semantic_hash": "2b6a920b5616cee8fff319ca6c70ab05"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspections/CONTEXT.md": {
+    "mtime": 1785339487.4672718,
+    "ast_hash": "c9e4a351e547a837aea1bcbc2aeb2360",
+    "semantic_hash": "c9e4a351e547a837aea1bcbc2aeb2360"
+  },
+  "app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/CONTEXT.md": {
+    "mtime": 1785339487.469272,
+    "ast_hash": "681920595e8689c155bf6ab5c53f557e",
+    "semantic_hash": "681920595e8689c155bf6ab5c53f557e"
+  },
+  "docs/00-core-prompt.md": {
+    "mtime": 1784649213.8105092,
+    "ast_hash": "9f9cec9ca5dcb4ddf8820ad2e3607a8c",
+    "semantic_hash": "9f9cec9ca5dcb4ddf8820ad2e3607a8c"
+  },
+  "docs/01-media-auth.md": {
+    "mtime": 1784649230.6272774,
+    "ast_hash": "5d9fafa65771599f7aabe51907cdb245",
+    "semantic_hash": "5d9fafa65771599f7aabe51907cdb245"
+  },
+  "docs/02-prd-android.md": {
+    "mtime": 1784649376.3982553,
+    "ast_hash": "ad7b891d42c9bc170a522c522667c245",
+    "semantic_hash": "ad7b891d42c9bc170a522c522667c245"
+  },
+  "docs/03-directory-structure.md": {
+    "mtime": 1785089912.695077,
+    "ast_hash": "77d646584ea00d06bc0157d3008eff48",
+    "semantic_hash": "77d646584ea00d06bc0157d3008eff48"
+  },
+  "docs/IMPLEMENTATION-CLAIM-ORDER-PHASE2.md": {
+    "mtime": 1785089977.5588663,
+    "ast_hash": "3627d9d095b37e5f1923464599dcdb73",
+    "semantic_hash": "3627d9d095b37e5f1923464599dcdb73"
+  },
+  "docs/IMPLEMENTATION-CLAIM-ORDER-PHASE3.md": {
+    "mtime": 1785343731.4903738,
+    "ast_hash": "a42bceb3d18536f58902080ab0ef1095",
+    "semantic_hash": "a42bceb3d18536f58902080ab0ef1095"
+  },
+  "docs/adr/0004-jetpack-compose-modern-stack.md": {
+    "mtime": 1785083954.2574656,
+    "ast_hash": "462373708e958a8ffc43eb3f47070b56",
+    "semantic_hash": "462373708e958a8ffc43eb3f47070b56"
+  },
+  "docs/adr/0011-single-module-architecture.md": {
+    "mtime": 1785089717.954604,
+    "ast_hash": "9c132f0161376f49afc4cbf9b582eed2",
+    "semantic_hash": "9c132f0161376f49afc4cbf9b582eed2"
+  },
+  "docs/adr/0012-dual-mode-response.md": {
+    "mtime": 1785339519.3077495,
+    "ast_hash": "1ddd61d02067e4f2e057afc571eb6265",
+    "semantic_hash": "1ddd61d02067e4f2e057afc571eb6265"
+  },
+  "docs/adr/0013-hybrid-inspection-history.md": {
+    "mtime": 1785341619.9886026,
+    "ast_hash": "6ad0a5b6d943465dca0abeb3474ca1fa",
+    "semantic_hash": "6ad0a5b6d943465dca0abeb3474ca1fa"
+  },
+  "docs/agents/domain.md": {
+    "mtime": 1784737811.3221307,
+    "ast_hash": "f72402fcfb05d5ab20ce728181baf144",
+    "semantic_hash": "f72402fcfb05d5ab20ce728181baf144"
+  },
+  "docs/android-implementation-guide.md": {
+    "mtime": 1785338160.393423,
+    "ast_hash": "a74955e3fe7430bde8e418cefe2ded0d",
+    "semantic_hash": "a74955e3fe7430bde8e418cefe2ded0d"
+  },
+  "docs/android-to-be-api-contract.md": {
+    "mtime": 1785338043.073963,
+    "ast_hash": "6e20c492c3d1a575cacc7e8d7c931dcb",
+    "semantic_hash": "6e20c492c3d1a575cacc7e8d7c931dcb"
+  },
+  "knowledge.md": {
+    "mtime": 1785071238.1268985,
+    "ast_hash": "3f3a372452dc32133e1d544a4dfeb42b",
+    "semantic_hash": "3f3a372452dc32133e1d544a4dfeb42b"
+  },
+  "app/src/main/res/mipmap-hdpi/ic_launcher.webp": {
+    "mtime": 1784735440.2442567,
+    "ast_hash": "39d9bb21eb48f128a71c3f01ad3cd427",
+    "semantic_hash": "39d9bb21eb48f128a71c3f01ad3cd427"
+  }
+}
