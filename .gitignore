@@ -16,3 +16,11 @@ local.properties
 
 # MCP config — contains API keys, copy from .example file
 .mcp.json
+
+# Graphify — auto-generated cache files (not source)
+graphify-out/cache/
+app/src/main/graphify-out/cache/
+**/graphify-out/cache/
+
+# Graphify — docs extraction (empty for code-only)
+docs/graphify-out/

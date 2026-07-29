@@ -1,8 +1,9 @@
 # 📋 Implementation Claim Order — RSUD Ajibarang Android Client
 
-> **Status Project:** ✅ **MVP SELESAI** — EPIC-0 s.d. EPIC-10 completed. All features implemented: build system, DI & navigation, network layer, database & token storage, auth login, master data sync, dynamic form & scoring, camera capture, draft management, WorkManager sync, dashboard & statistics
+> **Status Project:** ✅ **MVP SELESAI** — EPIC-0 s.d. EPIC-10 completed ✅ | RM Phase 2 completed ✅  
+> **Phase 3 (current):** 🆕 **EPIC-11** — API Alignment & New Sync Endpoints — Lihat [Phase 3](./IMPLEMENTATION-CLAIM-ORDER-PHASE3.md)
 > **Stack:** Jetpack Compose · Hilt · Room 3.0+ · Retrofit · Proto DataStore · WorkManager · Coil
-> **ADR Compliance:** ADR-0001 (multi-module) ✅ **Full Compliance**. ADR-0002 (Tink encryption) ✅ **Full Compliance** — `datastore-tink` native (`AeadSerializer`) + Android Keystore via `AndroidKeysetManager`. Enkripsi transparan di layer DataStore.
+> **ADR Compliance:** ADR-0001 (multi-module) ✅ **Superseded by ADR-0011**. ADR-0002 (Tink encryption) ✅ **Full Compliance** — `datastore-tink` native (`AeadSerializer`) + Android Keystore via `AndroidKeysetManager`. Enkripsi transparan di layer DataStore.
 
 ---
 
@@ -70,6 +71,7 @@ Ringkasan kepatuhan implementasi terhadap Architectural Decision Records.
 | **4: Sinkronisasi** | Upload Worker | `EPIC-8` | 🟠 TINGGI | EPIC-7,2,3 | ✅ **Selesai** | 1-2 session |
 | **5: Poles** | Refinement | `EPIC-9` | 🟢 NORMAL | EPIC-8 | ✅ **Selesai** | 1-2 session |
 | **6: Dashboard** | Dashboard & Statistics | `EPIC-10` | 🟢 NORMAL | EPIC-9 | ✅ **Selesai** | 1 session |
+| **7: API Alignment** | API Contract Align & Sync Endpoints | `EPIC-11` | 🔴 KRITIS | EPIC-10, RM-05 | 🆕 **Dimulai** — lihat [Phase 3](./IMPLEMENTATION-CLAIM-ORDER-PHASE3.md) | 5-6 session |
 
 ---
 

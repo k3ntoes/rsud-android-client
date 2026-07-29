@@ -1,6 +1,38 @@
 {
   "communities": {
     "0": [
+      "aead",
+      "datastore",
+      "java_my_id_kentoes_rsudajibarangapp_auth_api_authapi_authapi_me",
+      "java_my_id_kentoes_rsudajibarangapp_auth_api_authapi_userout",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule_provideappdatabase",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule_providetokendatastore",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule_providetokenencryption",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule_providetokenmanager",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_kt_context",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokendata",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokendata_tokendata",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokendataserializer",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokendataserializer_tokendataserializer",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokendataserializer_tokendataserializer_readfrom",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokendataserializer_tokendataserializer_writeto",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenencryption",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenencryption_tokenencryption",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenencryption_tokenencryption_createaead",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_cleartokens",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_getaccesstoken",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_getrefreshtoken",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_getuser",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_isloggedin",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_savetokens",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_saveuser",
+      "serializer"
+    ],
+    "1": [
       "java_my_id_kentoes_rsudajibarangapp_auth_api_authapi",
       "java_my_id_kentoes_rsudajibarangapp_auth_api_authapi_authapi",
       "java_my_id_kentoes_rsudajibarangapp_auth_api_authapi_authapi_changepassword",
@@ -9,6 +41,7 @@
       "java_my_id_kentoes_rsudajibarangapp_auth_api_authapi_authapi_refresh",
       "java_my_id_kentoes_rsudajibarangapp_auth_api_authapi_changepasswordrequest",
       "java_my_id_kentoes_rsudajibarangapp_auth_api_authapi_loginrequest",
+      "java_my_id_kentoes_rsudajibarangapp_auth_api_authapi_logoutrequest",
       "java_my_id_kentoes_rsudajibarangapp_auth_api_authapi_refreshrequest",
       "java_my_id_kentoes_rsudajibarangapp_auth_api_authapi_tokenresponse",
       "java_my_id_kentoes_rsudajibarangapp_auth_authrepository",
@@ -28,57 +61,29 @@
       "java_my_id_kentoes_rsudajibarangapp_auth_authrepository_loading",
       "java_my_id_kentoes_rsudajibarangapp_auth_authrepository_unauthenticated"
     ],
-    "1": [
-      "bundle",
-      "componentactivity",
-      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel",
-      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_authviewmodel",
-      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_authviewmodel_clearerror",
-      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_authviewmodel_login",
-      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_authviewmodel_logout",
-      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_authviewmodel_onpasswordchanged",
-      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_authviewmodel_onusernamechanged",
-      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_kt_stateflow",
-      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_kt_viewmodel",
-      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_loginuistate",
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_loginscreen",
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_loginscreen_loginscreen",
-      "java_my_id_kentoes_rsudajibarangapp_core_navigation_navgraph",
-      "java_my_id_kentoes_rsudajibarangapp_core_navigation_navgraph_navgraph",
-      "java_my_id_kentoes_rsudajibarangapp_core_navigation_navgraph_routes",
-      "java_my_id_kentoes_rsudajibarangapp_core_navigation_navgraph_routes_inspectionform",
-      "java_my_id_kentoes_rsudajibarangapp_core_ui_mainactivity",
-      "java_my_id_kentoes_rsudajibarangapp_core_ui_mainactivity_mainactivity",
-      "java_my_id_kentoes_rsudajibarangapp_core_ui_mainactivity_mainactivity_oncreate",
-      "java_my_id_kentoes_rsudajibarangapp_core_ui_theme_theme",
-      "java_my_id_kentoes_rsudajibarangapp_core_ui_theme_theme_rsuapptheme",
-      "navhostcontroller"
-    ],
     "2": [
-      "java_my_id_kentoes_rsudajibarangapp_core_database_appdatabase_appdatabase_masterdatadao",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao_kt_flow",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao_masterdatadao",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao_masterdatadao_getallitems",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao_masterdatadao_getallrooms",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao_masterdatadao_insertitems",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao_masterdatadao_insertrooms",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_entity_masterdataitem",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_entity_masterdataitem_masterdataitem",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_entity_ruangentity",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_entity_ruangentity_ruangentity",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule_providemasterdatadao",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionrepository_drafttoitemstates",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_itemstate",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_itemstate_itemstate",
-      "java_my_id_kentoes_rsudajibarangapp_master_masterdatarepository",
-      "java_my_id_kentoes_rsudajibarangapp_master_masterdatarepository_kt_flow",
-      "java_my_id_kentoes_rsudajibarangapp_master_masterdatarepository_masterdatarepository",
-      "java_my_id_kentoes_rsudajibarangapp_master_masterdatarepository_masterdatarepository_iscacheavailable",
-      "java_my_id_kentoes_rsudajibarangapp_master_masterdatarepository_masterdatarepository_syncfromapi",
-      "java_my_id_kentoes_rsudajibarangapp_master_masterdatarepository_masterdatasyncstate",
-      "java_my_id_kentoes_rsudajibarangapp_master_masterdatarepository_syncing",
-      "java_my_id_kentoes_rsudajibarangapp_master_masterdatarepository_syncresult"
+      "color",
+      "drafinspeksi",
+      "imagevector",
+      "java_my_id_kentoes_rsudajibarangapp_core_model_statusdisplay",
+      "java_my_id_kentoes_rsudajibarangapp_core_model_statusdisplay_statusdisplay",
+      "java_my_id_kentoes_rsudajibarangapp_core_model_statusdisplay_tostatusdisplay",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_api_analyticsapi",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_api_analyticsapi_analyticsapi",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_api_analyticsapi_analyticsapi_getlowestrooms",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_api_analyticsapi_analyticsapi_gettopissues",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_api_analyticsapi_issuefrequencyout",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_api_analyticsapi_roomscoreout",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen_dashboardscreen",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen_issuecard",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen_recentdraftcard",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen_roomscorecard",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen_statcard",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_ui_components_offlinebanner",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_ui_components_offlinebanner_kt_modifier",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_ui_components_offlinebanner_offlinebanner",
+      "modifier"
     ],
     "3": [
       "java_my_id_kentoes_rsudajibarangapp_core_database_dao_drafdao",
@@ -105,29 +110,6 @@
       "java_my_id_kentoes_rsudajibarangapp_core_database_entity_drafitem_drafitem"
     ],
     "4": [
-      "color",
-      "imagevector",
-      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen",
-      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen_dashboardscreen",
-      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen_issuecard",
-      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen_kt_modifier",
-      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen_recentdraftcard",
-      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen_roomscorecard",
-      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen_statcard",
-      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardviewmodel",
-      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardviewmodel_dashboarduistate",
-      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardviewmodel_dashboardviewmodel",
-      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardviewmodel_dashboardviewmodel_fetchanalytics",
-      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardviewmodel_kt_stateflow",
-      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardviewmodel_kt_viewmodel",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_ui_components_offlinebanner",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_ui_components_offlinebanner_kt_modifier",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_ui_components_offlinebanner_offlinebanner",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_ui_daftardrafscreen",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_ui_daftardrafscreen_daftardrafscreen",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_ui_daftardrafscreen_draftcard"
-    ],
-    "5": [
       "application",
       "configuration",
       "coroutineworker",
@@ -149,88 +131,51 @@
       "workerfactory",
       "workerparameters"
     ],
-    "6": [
-      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafuistate",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafviewmodel",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafviewmodel_canceldelete",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafviewmodel_clearmessage",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafviewmodel_confirmdelete",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafviewmodel_requestdelete",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_kt_stateflow",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_kt_viewmodel",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_draftsummary",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_draftwithitems",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionpayload",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionrepository",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionrepository_deletedraft",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionrepository_getdraftwithitems",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionrepository_preparepayload",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionrepository_updatestatus",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_kt_flow",
-      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_payloaditem"
-    ],
-    "7": [
-      "aead",
-      "datastore",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_appdatabase",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_appdatabase_appdatabase",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_appdatabase_appdatabase_drafdao",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_appdatabase_create",
-      "java_my_id_kentoes_rsudajibarangapp_core_database_appdatabase_kt_context",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule_provideappdatabase",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule_providedrafdao",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule_providetokendatastore",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule_providetokenencryption",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule_providetokenmanager",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_kt_context",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenencryption",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenencryption_tokenencryption",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenencryption_tokenencryption_createaead",
-      "roomdatabase"
-    ],
-    "8": [
-      "java_my_id_kentoes_rsudajibarangapp_auth_api_authapi_authapi_me",
-      "java_my_id_kentoes_rsudajibarangapp_auth_api_authapi_userout",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokendata",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokendata_tokendata",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokendataserializer",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokendataserializer_tokendataserializer",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokendataserializer_tokendataserializer_readfrom",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokendataserializer_tokendataserializer_writeto",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_cleartokens",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_getaccesstoken",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_getrefreshtoken",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_getuser",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_isloggedin",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_savetokens",
-      "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager_saveuser",
-      "serializer"
-    ],
-    "9": [
-      "interceptor",
+    "5": [
+      "authinterceptor",
       "java_my_id_kentoes_rsudajibarangapp_core_di_appmodule",
       "java_my_id_kentoes_rsudajibarangapp_core_di_appmodule_appmodule",
+      "java_my_id_kentoes_rsudajibarangapp_core_di_appmodule_appmodule_provideanalyticsapi",
       "java_my_id_kentoes_rsudajibarangapp_core_di_appmodule_appmodule_provideauthapi",
       "java_my_id_kentoes_rsudajibarangapp_core_di_appmodule_appmodule_providejson",
       "java_my_id_kentoes_rsudajibarangapp_core_di_appmodule_appmodule_providemasterdataapi",
       "java_my_id_kentoes_rsudajibarangapp_core_di_appmodule_appmodule_provideokhttpclient",
       "java_my_id_kentoes_rsudajibarangapp_core_di_appmodule_appmodule_provideretrofit",
       "java_my_id_kentoes_rsudajibarangapp_core_di_appmodule_appmodule_providesyncapi",
-      "java_my_id_kentoes_rsudajibarangapp_core_network_authinterceptor",
-      "java_my_id_kentoes_rsudajibarangapp_core_network_authinterceptor_authinterceptor",
-      "java_my_id_kentoes_rsudajibarangapp_core_network_authinterceptor_authinterceptor_intercept",
-      "java_my_id_kentoes_rsudajibarangapp_core_network_authinterceptor_kt_response",
+      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi",
+      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_itemout",
+      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_masterdataapi",
+      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_masterdataapi_getitems",
+      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_masterdataapi_getrooms",
+      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_roomout",
       "json",
       "okhttpclient",
-      "retrofit"
+      "retrofit",
+      "tokenauthenticator"
     ],
-    "10": [
+    "6": [
+      "java_my_id_kentoes_rsudajibarangapp_core_database_appdatabase",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_appdatabase_appdatabase",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_appdatabase_appdatabase_drafdao",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_appdatabase_appdatabase_masterdatadao",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_appdatabase_create",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_appdatabase_kt_context",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao_kt_flow",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao_masterdatadao",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao_masterdatadao_getallitems",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao_masterdatadao_getallrooms",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao_masterdatadao_insertitems",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_dao_masterdatadao_masterdatadao_insertrooms",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_entity_masterdataitem",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_entity_masterdataitem_masterdataitem",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_entity_ruangentity",
+      "java_my_id_kentoes_rsudajibarangapp_core_database_entity_ruangentity_ruangentity",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule_providedrafdao",
+      "java_my_id_kentoes_rsudajibarangapp_core_datastore_di_databasemodule_databasemodule_providemasterdatadao",
+      "roomdatabase"
+    ],
+    "7": [
       "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionformviewmodel",
       "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionformviewmodel_inspectionformuistate",
       "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionformviewmodel_inspectionformviewmodel",
@@ -248,7 +193,7 @@
       "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionformviewmodel_kt_stateflow",
       "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionformviewmodel_kt_viewmodel"
     ],
-    "11": [
+    "8": [
       "android",
       "java_my_id_kentoes_rsudajibarangapp_inspection_components_itemcard",
       "java_my_id_kentoes_rsudajibarangapp_inspection_components_itemcard_itemcard",
@@ -265,7 +210,40 @@
       "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionformscreen_inspectionformscreen",
       "uri"
     ],
-    "12": [
+    "9": [
+      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafuistate",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafviewmodel",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafviewmodel_canceldelete",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafviewmodel_clearmessage",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafviewmodel_confirmdelete",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafviewmodel_requestdelete",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafviewmodel_triggersync",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_kt_draftsummary",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_kt_stateflow",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_kt_viewmodel",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_ui_daftardrafscreen",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_ui_daftardrafscreen_daftardrafscreen",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_ui_daftardrafscreen_draftcard",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_ui_daftardrafscreen_kt_draftsummary"
+    ],
+    "10": [
+      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_draftsummary",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_draftwithitems",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionpayload",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionrepository",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionrepository_deletedraft",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionrepository_drafttoitemstates",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionrepository_getdraftwithitems",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionrepository_preparepayload",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_inspectionrepository_updatestatus",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_kt_flow",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_inspectionrepository_payloaditem",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_itemstate",
+      "java_my_id_kentoes_rsudajibarangapp_inspection_itemstate_itemstate"
+    ],
+    "11": [
       "java_my_id_kentoes_rsudajibarangapp_sync_api_syncapi",
       "java_my_id_kentoes_rsudajibarangapp_sync_api_syncapi_detailsubmit",
       "java_my_id_kentoes_rsudajibarangapp_sync_api_syncapi_inspectionsubmit",
@@ -281,19 +259,34 @@
       "java_my_id_kentoes_rsudajibarangapp_sync_syncmanager_syncresult",
       "multipartbody"
     ],
+    "12": [
+      "authviewmodel",
+      "bundle",
+      "componentactivity",
+      "java_my_id_kentoes_rsudajibarangapp_core_navigation_navgraph",
+      "java_my_id_kentoes_rsudajibarangapp_core_navigation_navgraph_navgraph",
+      "java_my_id_kentoes_rsudajibarangapp_core_navigation_navgraph_routes",
+      "java_my_id_kentoes_rsudajibarangapp_core_navigation_navgraph_routes_inspectionform",
+      "java_my_id_kentoes_rsudajibarangapp_core_ui_mainactivity",
+      "java_my_id_kentoes_rsudajibarangapp_core_ui_mainactivity_mainactivity",
+      "java_my_id_kentoes_rsudajibarangapp_core_ui_mainactivity_mainactivity_oncreate",
+      "java_my_id_kentoes_rsudajibarangapp_core_ui_theme_theme",
+      "java_my_id_kentoes_rsudajibarangapp_core_ui_theme_theme_rsuapptheme",
+      "navhostcontroller"
+    ],
     "13": [
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profilescreen",
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profilescreen_profilescreen",
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profileviewmodel",
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profileviewmodel_kt_stateflow",
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profileviewmodel_kt_viewmodel",
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profileviewmodel_profileuistate",
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profileviewmodel_profileviewmodel",
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profileviewmodel_profileviewmodel_changepassword",
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profileviewmodel_profileviewmodel_clearmessages",
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profileviewmodel_profileviewmodel_onconfirmpasswordchanged",
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profileviewmodel_profileviewmodel_onnewpasswordchanged",
-      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profileviewmodel_profileviewmodel_onoldpasswordchanged"
+      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel",
+      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_authviewmodel",
+      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_authviewmodel_clearerror",
+      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_authviewmodel_login",
+      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_authviewmodel_logout",
+      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_authviewmodel_onpasswordchanged",
+      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_authviewmodel_onusernamechanged",
+      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_kt_stateflow",
+      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_kt_viewmodel",
+      "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_loginuistate",
+      "java_my_id_kentoes_rsudajibarangapp_auth_ui_loginscreen",
+      "java_my_id_kentoes_rsudajibarangapp_auth_ui_loginscreen_loginscreen"
     ],
     "14": [
       "java_my_id_kentoes_rsudajibarangapp_master_masterdataviewmodel",
@@ -309,18 +302,6 @@
       "java_my_id_kentoes_rsudajibarangapp_master_ui_masterdatalistscreen_roomcard"
     ],
     "15": [
-      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi",
-      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_issuefrequencyout",
-      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_itemout",
-      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_masterdataapi",
-      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_masterdataapi_getitems",
-      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_masterdataapi_getlowestrooms",
-      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_masterdataapi_getrooms",
-      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_masterdataapi_gettopissues",
-      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_roomout",
-      "java_my_id_kentoes_rsudajibarangapp_master_api_masterdataapi_roomscoreout"
-    ],
-    "16": [
       "authenticator",
       "java_my_id_kentoes_rsudajibarangapp_core_network_tokenauthenticator",
       "java_my_id_kentoes_rsudajibarangapp_core_network_tokenauthenticator_kt_response",
@@ -329,6 +310,15 @@
       "java_my_id_kentoes_rsudajibarangapp_core_network_tokenauthenticator_tokenauthenticator_responsecount",
       "request",
       "route"
+    ],
+    "16": [
+      "flow",
+      "java_my_id_kentoes_rsudajibarangapp_master_masterdatarepository",
+      "java_my_id_kentoes_rsudajibarangapp_master_masterdatarepository_masterdatarepository",
+      "java_my_id_kentoes_rsudajibarangapp_master_masterdatarepository_masterdatarepository_iscacheavailable",
+      "java_my_id_kentoes_rsudajibarangapp_master_masterdatarepository_masterdatarepository_syncfromapi",
+      "masterdataitem",
+      "ruangentity"
     ],
     "17": [
       "java_my_id_kentoes_rsudajibarangapp_core_model_uistate",
@@ -339,44 +329,77 @@
       "t"
     ],
     "18": [
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardviewmodel",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardviewmodel_dashboarduistate",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardviewmodel_dashboardviewmodel",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardviewmodel_dashboardviewmodel_fetchanalytics",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardviewmodel_kt_stateflow",
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardviewmodel_kt_viewmodel"
+    ],
+    "19": [
+      "interceptor",
+      "java_my_id_kentoes_rsudajibarangapp_core_network_authinterceptor",
+      "java_my_id_kentoes_rsudajibarangapp_core_network_authinterceptor_authinterceptor",
+      "java_my_id_kentoes_rsudajibarangapp_core_network_authinterceptor_authinterceptor_intercept",
+      "java_my_id_kentoes_rsudajibarangapp_core_network_authinterceptor_kt_response"
+    ],
+    "20": [
       "java_my_id_kentoes_rsudajibarangapp_sync_imagecompressor",
       "java_my_id_kentoes_rsudajibarangapp_sync_imagecompressor_imagecompressor",
       "java_my_id_kentoes_rsudajibarangapp_sync_imagecompressor_imagecompressor_calculatesamplesize",
       "java_my_id_kentoes_rsudajibarangapp_sync_imagecompressor_imagecompressor_compress",
       "java_my_id_kentoes_rsudajibarangapp_sync_imagecompressor_imagecompressor_createcompressedfile"
     ],
-    "19": [
+    "21": [
       "java_my_id_kentoes_rsudajibarangapp_core_network_networkconnectivityobserver",
       "java_my_id_kentoes_rsudajibarangapp_core_network_networkconnectivityobserver_kt_flow",
       "java_my_id_kentoes_rsudajibarangapp_core_network_networkconnectivityobserver_networkconnectivityobserver"
     ],
-    "20": [
+    "22": [
       "java_my_id_kentoes_rsudajibarangapp_core_model_apiresponse",
       "java_my_id_kentoes_rsudajibarangapp_core_model_apiresponse_apiresponse"
+    ],
+    "23": [
+      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profileviewmodel_kt_stateflow"
+    ],
+    "24": [
+      "java_my_id_kentoes_rsudajibarangapp_auth_ui_profileviewmodel_kt_viewmodel"
+    ],
+    "25": [
+      "java_my_id_kentoes_rsudajibarangapp_dashboard_dashboardscreen_kt_modifier"
+    ],
+    "26": [
+      "java_my_id_kentoes_rsudajibarangapp_master_masterdatarepository_kt_flow"
     ]
   },
   "cohesion": {
-    "0": 0.12307692307692308,
-    "1": 0.09420289855072464,
-    "2": 0.11231884057971014,
+    "0": 0.09425287356321839,
+    "1": 0.11965811965811966,
+    "2": 0.1341991341991342,
     "3": 0.1471861471861472,
-    "4": 0.14285714285714285,
-    "5": 0.11052631578947368,
-    "6": 0.13157894736842105,
-    "7": 0.14619883040935672,
-    "8": 0.1437908496732026,
-    "9": 0.175,
-    "10": 0.2,
-    "11": 0.14285714285714285,
-    "12": 0.21978021978021978,
+    "4": 0.11052631578947368,
+    "5": 0.14210526315789473,
+    "6": 0.12631578947368421,
+    "7": 0.2,
+    "8": 0.14285714285714285,
+    "9": 0.1523809523809524,
+    "10": 0.1978021978021978,
+    "11": 0.21978021978021978,
+    "12": 0.16666666666666666,
     "13": 0.18181818181818182,
     "14": 0.23636363636363636,
-    "15": 0.28888888888888886,
-    "16": 0.32142857142857145,
+    "15": 0.32142857142857145,
+    "16": 0.38095238095238093,
     "17": 0.3333333333333333,
-    "18": 0.6,
-    "19": 0.6666666666666666,
-    "20": 1.0
+    "18": 0.4,
+    "19": 0.5,
+    "20": 0.6,
+    "21": 0.6666666666666666,
+    "22": 1.0,
+    "23": 1.0,
+    "24": 1.0,
+    "25": 1.0,
+    "26": 1.0
   },
   "gods": [
     {
@@ -397,22 +420,12 @@
     {
       "id": "java_my_id_kentoes_rsudajibarangapp_auth_authviewmodel_authviewmodel",
       "label": "AuthViewModel",
-      "degree": 12
-    },
-    {
-      "id": "java_my_id_kentoes_rsudajibarangapp_core_navigation_navgraph_navgraph",
-      "label": "NavGraph()",
       "degree": 11
     },
     {
-      "id": "java_my_id_kentoes_rsudajibarangapp_auth_ui_profileviewmodel_profileviewmodel",
-      "label": "ProfileViewModel",
+      "id": "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafviewmodel",
+      "label": "DaftarDrafViewModel",
       "degree": 10
-    },
-    {
-      "id": "java_my_id_kentoes_rsudajibarangapp_core_database_entity_drafinspeksi_drafinspeksi",
-      "label": "DrafInspeksi",
-      "degree": 9
     },
     {
       "id": "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokenmanager_tokenmanager",
@@ -425,40 +438,28 @@
       "degree": 9
     },
     {
-      "id": "java_my_id_kentoes_rsudajibarangapp_inspection_daftardrafviewmodel_daftardrafviewmodel",
-      "label": "DaftarDrafViewModel",
-      "degree": 9
+      "id": "java_my_id_kentoes_rsudajibarangapp_core_database_appdatabase_appdatabase",
+      "label": "AppDatabase",
+      "degree": 8
+    },
+    {
+      "id": "java_my_id_kentoes_rsudajibarangapp_core_database_entity_drafinspeksi_drafinspeksi",
+      "label": "DrafInspeksi",
+      "degree": 8
+    },
+    {
+      "id": "java_my_id_kentoes_rsudajibarangapp_core_datastore_tokendata_tokendata",
+      "label": "TokenData",
+      "degree": 8
     }
   ],
   "surprises": [
-    {
-      "source": "NavGraph()",
-      "target": "ProfileScreen()",
-      "source_files": [
-        "java/my/id/kentoes/rsudajibarangapp/core/navigation/NavGraph.kt",
-        "java/my/id/kentoes/rsudajibarangapp/auth/ui/ProfileScreen.kt"
-      ],
-      "confidence": "INFERRED",
-      "relation": "calls",
-      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
-    },
     {
       "source": "NavGraph()",
       "target": "DashboardScreen()",
       "source_files": [
         "java/my/id/kentoes/rsudajibarangapp/core/navigation/NavGraph.kt",
         "java/my/id/kentoes/rsudajibarangapp/dashboard/DashboardScreen.kt"
-      ],
-      "confidence": "INFERRED",
-      "relation": "calls",
-      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
-    },
-    {
-      "source": "NavGraph()",
-      "target": "InspectionFormScreen()",
-      "source_files": [
-        "java/my/id/kentoes/rsudajibarangapp/core/navigation/NavGraph.kt",
-        "java/my/id/kentoes/rsudajibarangapp/inspection/InspectionFormScreen.kt"
       ],
       "confidence": "INFERRED",
       "relation": "calls",
@@ -476,19 +477,74 @@
       "why": "inferred connection - not explicitly stated in source; bridges separate communities"
     },
     {
-      "source": "NavGraph()",
-      "target": "MasterDataListScreen()",
+      "source": "AuthViewModel",
+      "target": "UserOut",
       "source_files": [
-        "java/my/id/kentoes/rsudajibarangapp/core/navigation/NavGraph.kt",
-        "java/my/id/kentoes/rsudajibarangapp/master/ui/MasterDataListScreen.kt"
+        "java/my/id/kentoes/rsudajibarangapp/auth/AuthViewModel.kt",
+        "java/my/id/kentoes/rsudajibarangapp/auth/api/AuthApi.kt"
       ],
-      "confidence": "INFERRED",
-      "relation": "calls",
-      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities"
+    },
+    {
+      "source": "LoginScreen()",
+      "target": "AuthViewModel",
+      "source_files": [
+        "java/my/id/kentoes/rsudajibarangapp/auth/ui/LoginScreen.kt",
+        "java/my/id/kentoes/rsudajibarangapp/auth/AuthViewModel.kt"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "peripheral node `LoginScreen()` unexpectedly reaches hub `AuthViewModel`"
+    },
+    {
+      "source": "RoomCard()",
+      "target": "RuangEntity",
+      "source_files": [
+        "java/my/id/kentoes/rsudajibarangapp/master/ui/MasterDataListScreen.kt",
+        "java/my/id/kentoes/rsudajibarangapp/core/database/entity/RuangEntity.kt"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "references",
+      "why": "bridges separate communities"
     }
   ],
-  "tokens": {
-    "input": 0,
-    "output": 0
-  }
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `UserOut` connect `Token Storage and Security` to `Authentication Data Layer`, `Dashboard and Analytics`, `Authentication UI Logic`?",
+      "why": "High betweenness centrality (0.425) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `DatabaseModule` connect `Token Storage and Security` to `Local Database Management`?",
+      "why": "High betweenness centrality (0.326) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `ApiResponse`, `Loading`, `Error` to the rest of the system?",
+      "why": "7 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Token Storage and Security` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.09425287356321839 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Authentication Data Layer` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.11965811965811966 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Dashboard and Analytics` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.1341991341991342 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Draft Database Access` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.1471861471861472 - nodes in this community are weakly interconnected."
+    }
+  ]
 }
