@@ -59,5 +59,20 @@ Status inspeksi yang dikelola server: `PENDING` (menunggu review Supervisor), `A
 _Avoid_: State, status
 
 **Riwayat Inspeksi**: 
-Daftar inspeksi yang sudah dikirim. Disimpan secara hybrid: cache lokal dari hasil submit + fetch dari server via endpoint `GET /api/inspections` untuk data terbaru. Mendukung pagination server-driven dan filter status.
+Daftar inspeksi yang sudah dikirim. Disimpan secara hybrid: cache lokal dari hasil submit + fetch dari server via endpoint `GET /api/inspections` untuk data terbaru. Mendukung pagination server-driven, filter status, dan filter tanggal (businessDate).
 _Avoid_: History, inspection list, log
+
+**Status Inspeksi Hari Ini**: 
+Dua metrik yang ditampilkan di dashboard untuk inspector: jumlah ruangan yang sudah vs belum diinspeksi pada hari ini (businessDate = today). 
+- Scope: 1 hari (hari ini). Akan diperpanjang jika ada perubahan requirement.
+- Definisi "sudah": memiliki catatan di `DrafInspeksi` (DRAFT/PENDING_SYNC) ATAU `InspectionEntity` (PENDING/APPROVED/REJECTED) dengan `businessDate` hari ini.
+- Card "Belum Diinspeksi": click → navigasi ke room selection, hanya tampilkan ruangan yang belum dicatat hari ini.
+- Card "Sudah Diinspeksi": click → navigasi ke riwayat inspeksi dengan filter businessDate = hari ini (filter lokal via Room DB).
+_Avoid_: Daily stats, hari ini
+
+**Retensi Data**: 
+Kebijakan penyimpanan data lokal:
+- Metadata inspeksi (`InspectionEntity`, `InspectionDetailEntity`): disimpan permanen (ukuran kecil).
+- Foto bukti: disimpan di `Pictures/rsud_ajibarang/` via MediaStore; dihapus otomatis setelah 30 hari via WorkManager; user bisa hapus manual dari galeri.
+- Draf aktif: foto tidak dihapus sampai draf berhasil dikirim.
+_Avoid_: Cache, storage policy

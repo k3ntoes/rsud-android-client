@@ -179,28 +179,27 @@ class ApiEndpointIntegrationTest {
     // ═══════════════════════════════════════════════
 
     @Test
-    fun `GET rooms - correct path without master prefix, returns SyncResponse`() = runTest {
-        enqueueJson("""{"data":[{"id":1,"name":"Ruang A","is_active":true}],"synced_at":"2026-01-01T00:00:00Z"}""")
+    fun `GET rooms - correct path without master prefix, returns PaginatedResponse`() = runTest {
+        enqueueJson("""{"items":[{"id":1,"name":"Ruang A","is_active":true}],"total":1,"page":1,"per_page":20,"total_pages":1}""")
 
         val response = masterDataApi.getRooms()
 
         val req = mockServer.takeRequest()
         assertRequest(req, "GET", "/rooms")
-        assertEquals(1, response.data.size)
-        assertEquals("Ruang A", response.data[0].name)
-        assertNotNull(response.syncedAt)
+        assertEquals(1, response.items.size)
+        assertEquals("Ruang A", response.items[0].name)
     }
 
     @Test
-    fun `GET inspection-items - correct path without master prefix, returns SyncResponse`() = runTest {
-        enqueueJson("""{"data":[{"id":1,"name":"Meja","is_active":true}],"synced_at":"2026-01-01T00:00:00Z"}""")
+    fun `GET inspection-items - correct path without master prefix, returns PaginatedResponse`() = runTest {
+        enqueueJson("""{"items":[{"id":1,"name":"Meja","is_active":true}],"total":1,"page":1,"per_page":20,"total_pages":1}""")
 
         val response = masterDataApi.getItems()
 
         val req = mockServer.takeRequest()
         assertRequest(req, "GET", "/inspection-items")
-        assertEquals(1, response.data.size)
-        assertEquals("Meja", response.data[0].name)
+        assertEquals(1, response.items.size)
+        assertEquals("Meja", response.items[0].name)
     }
 
     // ═══════════════════════════════════════════════
@@ -331,16 +330,15 @@ class ApiEndpointIntegrationTest {
 
     @Test
     fun `master data response deserializes snake_case correctly`() = runTest {
-        enqueueJson("""{"data":[{"id":1,"name":"Meja","is_active":true,"updated_at":"2026-01-01T00:00:00Z"}],"synced_at":"2026-01-01T00:00:00Z"}""")
+        enqueueJson("""{"items":[{"id":1,"name":"Meja","is_active":true,"updated_at":"2026-01-01T00:00:00Z"}],"total":1,"page":1,"per_page":20,"total_pages":1}""")
 
         val response = masterDataApi.getItems()
 
-        assertEquals(1, response.data.size)
-        assertEquals(1L, response.data[0].id)
-        assertEquals("Meja", response.data[0].name)
-        assertEquals(true, response.data[0].isActive)
-        assertNotNull(response.data[0].updatedAt)
-        assertNotNull(response.syncedAt)
+        assertEquals(1, response.items.size)
+        assertEquals(1L, response.items[0].id)
+        assertEquals("Meja", response.items[0].name)
+        assertEquals(true, response.items[0].isActive)
+        assertNotNull(response.items[0].updatedAt)
     }
 
     @Test

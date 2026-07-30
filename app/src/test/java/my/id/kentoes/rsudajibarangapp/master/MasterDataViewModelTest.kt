@@ -102,22 +102,24 @@ class MasterDataViewModelTest {
     // ── Init — auto-sync behavior ─────────────────────────
 
     @Test
-    fun `init triggers syncFromApi when cache is empty`() = runTest {
+    fun `init triggers syncItems and syncMyRooms when cache is empty`() = runTest {
         val itemsFlow = MutableStateFlow(emptyList<MasterDataItem>())
         val roomsFlow = MutableStateFlow(emptyList<RuangEntity>())
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns false
-        coEvery { repository.syncFromApi() } returns "Synced"
+        coEvery { repository.syncItems() } returns Unit
+        coEvery { repository.syncMyRooms() } returns Unit
 
         MasterDataViewModel(repository)
         advanceUntilIdle()
 
-        coVerify(exactly = 1) { repository.syncFromApi() }
+        coVerify(exactly = 1) { repository.syncItems() }
+        coVerify(exactly = 1) { repository.syncMyRooms() }
     }
 
     @Test
-    fun `init does not syncFromApi when cache is available`() = runTest {
+    fun `init does not sync when cache is available`() = runTest {
         val itemsFlow = MutableStateFlow(emptyList<MasterDataItem>())
         val roomsFlow = MutableStateFlow(emptyList<RuangEntity>())
         every { repository.items } returns itemsFlow
@@ -127,7 +129,8 @@ class MasterDataViewModelTest {
         MasterDataViewModel(repository)
         advanceUntilIdle()
 
-        coVerify(exactly = 0) { repository.syncFromApi() }
+        coVerify(exactly = 0) { repository.syncItems() }
+        coVerify(exactly = 0) { repository.syncMyRooms() }
     }
 
     @Test
@@ -149,13 +152,14 @@ class MasterDataViewModelTest {
     // ── Refresh ───────────────────────────────────────────
 
     @Test
-    fun `refresh triggers syncFromApi once`() = runTest {
+    fun `refresh triggers syncItems and syncMyRooms once`() = runTest {
         val itemsFlow = MutableStateFlow(emptyList<MasterDataItem>())
         val roomsFlow = MutableStateFlow(emptyList<RuangEntity>())
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns true
-        coEvery { repository.syncFromApi() } returns "Refreshed"
+        coEvery { repository.syncItems() } returns Unit
+        coEvery { repository.syncMyRooms() } returns Unit
 
         val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
@@ -163,7 +167,8 @@ class MasterDataViewModelTest {
         viewModel.refresh()
         advanceUntilIdle()
 
-        coVerify(exactly = 1) { repository.syncFromApi() }
+        coVerify(exactly = 1) { repository.syncItems() }
+        coVerify(exactly = 1) { repository.syncMyRooms() }
     }
 
     @Test
@@ -173,7 +178,8 @@ class MasterDataViewModelTest {
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns true
-        coEvery { repository.syncFromApi() } returns "Refresh done"
+        coEvery { repository.syncItems() } returns Unit
+        coEvery { repository.syncMyRooms() } returns Unit
 
         val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
@@ -181,7 +187,7 @@ class MasterDataViewModelTest {
         viewModel.refresh()
         advanceUntilIdle()
 
-        assertEquals("Refresh done", viewModel.uiState.value.syncMessage)
+        assertEquals("Data berhasil diperbarui", viewModel.uiState.value.syncMessage)
     }
 
     // ── Sync state transitions ────────────────────────────
@@ -193,7 +199,8 @@ class MasterDataViewModelTest {
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns false
-        coEvery { repository.syncFromApi() } returns "Done"
+        coEvery { repository.syncItems() } returns Unit
+        coEvery { repository.syncMyRooms() } returns Unit
 
         val viewModel = MasterDataViewModel(repository)
         // Before advanceUntilIdle: isLoading is true, isSyncing false
@@ -204,7 +211,7 @@ class MasterDataViewModelTest {
 
         assertFalse(viewModel.uiState.value.isSyncing)
         assertFalse(viewModel.uiState.value.isLoading)
-        assertEquals("Done", viewModel.uiState.value.syncMessage)
+        assertEquals("Data berhasil diperbarui", viewModel.uiState.value.syncMessage)
     }
 
     @Test
@@ -214,7 +221,7 @@ class MasterDataViewModelTest {
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns false
-        coEvery { repository.syncFromApi() } throws RuntimeException("Server error 500")
+        coEvery { repository.syncItems() } throws RuntimeException("Server error 500")
 
         val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
@@ -232,11 +239,12 @@ class MasterDataViewModelTest {
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns false
-        coEvery { repository.syncFromApi() } returns "Done"
+        coEvery { repository.syncItems() } returns Unit
+        coEvery { repository.syncMyRooms() } returns Unit
 
         val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
-        assertEquals("Done", viewModel.uiState.value.syncMessage)
+        assertEquals("Data berhasil diperbarui", viewModel.uiState.value.syncMessage)
 
         viewModel.clearSyncMessage()
 

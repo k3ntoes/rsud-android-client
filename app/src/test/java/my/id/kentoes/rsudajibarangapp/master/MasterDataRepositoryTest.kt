@@ -15,6 +15,7 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.UserEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
+import my.id.kentoes.rsudajibarangapp.core.model.PaginatedResponse
 import my.id.kentoes.rsudajibarangapp.core.model.SyncResponse
 import my.id.kentoes.rsudajibarangapp.master.api.ItemOut
 import my.id.kentoes.rsudajibarangapp.master.api.MasterDataApi
@@ -69,8 +70,8 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncFromApi inserts mapped items and rooms on full success`() = runTest {
-        val apiItems = SyncResponse(data = listOf(ItemOut(1, "Meja"), ItemOut(2, "Kursi")))
-        val apiRooms = SyncResponse(data = listOf(RoomOut(1, "Ruang 1")))
+        val apiItems = PaginatedResponse(items = listOf(ItemOut(1, "Meja"), ItemOut(2, "Kursi")))
+        val apiRooms = PaginatedResponse(items = listOf(RoomOut(1, "Ruang 1")))
         coEvery { api.getItems() } returns apiItems
         coEvery { api.getRooms() } returns apiRooms
         coEvery { dao.insertItems(any()) } returns Unit
@@ -85,8 +86,8 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncFromApi maps API response fields correctly to entities`() = runTest {
-        val apiItems = SyncResponse(data = listOf(ItemOut(id = 10, name = "AC", isActive = true)))
-        val apiRooms = SyncResponse(data = listOf(RoomOut(id = 5, name = "IGD", isActive = true)))
+        val apiItems = PaginatedResponse(items = listOf(ItemOut(id = 10, name = "AC", isActive = true)))
+        val apiRooms = PaginatedResponse(items = listOf(RoomOut(id = 5, name = "IGD", isActive = true)))
         coEvery { api.getItems() } returns apiItems
         coEvery { api.getRooms() } returns apiRooms
         coEvery { dao.insertItems(any()) } returns Unit
@@ -117,8 +118,8 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncFromApi does not insert items when items list is empty`() = runTest {
-        coEvery { api.getItems() } returns SyncResponse(data = emptyList())
-        coEvery { api.getRooms() } returns SyncResponse(data = emptyList())
+        coEvery { api.getItems() } returns PaginatedResponse(items = emptyList())
+        coEvery { api.getRooms() } returns PaginatedResponse(items = emptyList())
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -131,8 +132,8 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncFromApi does not insert rooms when rooms list is empty`() = runTest {
-        coEvery { api.getItems() } returns SyncResponse(data = listOf(ItemOut(1, "Meja")))
-        coEvery { api.getRooms() } returns SyncResponse(data = emptyList())
+        coEvery { api.getItems() } returns PaginatedResponse(items = listOf(ItemOut(1, "Meja")))
+        coEvery { api.getRooms() } returns PaginatedResponse(items = emptyList())
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -144,8 +145,8 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncFromApi does not insert when both lists are empty`() = runTest {
-        coEvery { api.getItems() } returns SyncResponse(data = emptyList())
-        coEvery { api.getRooms() } returns SyncResponse(data = emptyList())
+        coEvery { api.getItems() } returns PaginatedResponse(items = emptyList())
+        coEvery { api.getRooms() } returns PaginatedResponse(items = emptyList())
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -158,8 +159,8 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncFromApi inserts rooms even when items list is empty`() = runTest {
-        coEvery { api.getItems() } returns SyncResponse(data = emptyList())
-        coEvery { api.getRooms() } returns SyncResponse(data = sampleRooms.map { RoomOut(it.id, it.nama) })
+        coEvery { api.getItems() } returns PaginatedResponse(items = emptyList())
+        coEvery { api.getRooms() } returns PaginatedResponse(items = sampleRooms.map { RoomOut(it.id, it.nama) })
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -180,7 +181,7 @@ class MasterDataRepositoryTest {
 
     @Test(expected = RuntimeException::class)
     fun `syncFromApi throws when rooms API call fails`() = runTest {
-        coEvery { api.getItems() } returns SyncResponse(data = listOf(ItemOut(1, "Meja")))
+        coEvery { api.getItems() } returns PaginatedResponse(items = listOf(ItemOut(1, "Meja")))
         coEvery { api.getRooms() } throws RuntimeException("Rooms server error")
         repository.syncFromApi()
     }

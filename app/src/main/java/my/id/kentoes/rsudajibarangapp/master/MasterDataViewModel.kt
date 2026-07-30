@@ -66,8 +66,9 @@ class MasterDataViewModel @Inject constructor(
     private suspend fun syncFromApi() {
         _uiState.value = _uiState.value.copy(isSyncing = true, syncMessage = null)
         try {
-            val message = repository.syncFromApi()
-            _uiState.value = _uiState.value.copy(isSyncing = false, syncMessage = message)
+            repository.syncItems()
+            repository.syncMyRooms()
+            _uiState.value = _uiState.value.copy(isSyncing = false, syncMessage = "Data berhasil diperbarui")
         } catch (e: Exception) {
             _uiState.value = _uiState.value.copy(
                 isSyncing = false,

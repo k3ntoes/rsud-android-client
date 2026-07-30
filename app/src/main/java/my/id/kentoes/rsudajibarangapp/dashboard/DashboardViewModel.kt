@@ -113,6 +113,9 @@ class DashboardViewModel @Inject constructor(
                     topIssues = topIssues
                 )
             } catch (e: Exception) {
+                if (e.message?.contains("403") == true) {
+                    _uiState.value = _uiState.value.copy(isForbidden = true)
+                }
                 Log.w("DashboardVM", "Gagal fetch analytics: ${e.message}")
             }
         }

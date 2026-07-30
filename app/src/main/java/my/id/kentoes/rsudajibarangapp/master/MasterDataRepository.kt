@@ -28,7 +28,7 @@ class MasterDataRepository @Inject constructor(
     /** Observasi rooms dari cache lokal */
     val rooms: Flow<List<RuangEntity>> = masterDataDao.getAllRooms()
 
-    /** Cek apakah cache lokal sudah terisi */
+    /** Cek apakah item cache lokal sudah terisi */
     suspend fun isCacheAvailable(): Boolean {
         val itemsCount = masterDataDao.getAllItems().first().size
         return itemsCount > 0
@@ -49,7 +49,7 @@ class MasterDataRepository @Inject constructor(
 
     suspend fun syncItems() {
         val response = masterDataApi.getItems()
-        val apiItems = response.data
+        val apiItems = response.items
         if (apiItems.isNotEmpty()) {
             val items = apiItems.map { api ->
                 MasterDataItem(
@@ -67,7 +67,7 @@ class MasterDataRepository @Inject constructor(
 
     suspend fun syncRooms() {
         val response = masterDataApi.getRooms()
-        val apiRooms = response.data
+        val apiRooms = response.items
         if (apiRooms.isNotEmpty()) {
             val rooms = apiRooms.map { api ->
                 RuangEntity(
