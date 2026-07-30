@@ -16,13 +16,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.MeetingRoom
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.SyncProblem
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,9 +54,10 @@ import my.id.kentoes.rsudajibarangapp.dashboard.components.StatCard
 @Composable
 fun DashboardScreen(
     currentUser: UserOut?,
-    onNavigateToInspection: () -> Unit,
     onNavigateToDrafts: () -> Unit,
     onNavigateToHistory: () -> Unit = {},
+    onNavigateToUninspectedRooms: () -> Unit = {},
+    onNavigateToHistoryWithDate: () -> Unit = {},
     onLogout: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
@@ -136,7 +135,8 @@ fun DashboardScreen(
                             icon = Icons.Default.HourglassEmpty,
                             label = "Draf",
                             value = uiState.draftCount.toString(),
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
+                            onClick = onNavigateToDrafts
                         )
                         StatCard(
                             modifier = Modifier.weight(1f),
@@ -193,6 +193,40 @@ fun DashboardScreen(
                     }
                 }
 
+                // ── Status Inspeksi Hari Ini ──
+                item {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Status Inspeksi Hari Ini",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        StatCard(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.HourglassEmpty,
+                            label = "Belum Diinspeksi",
+                            value = uiState.uninspectedRoomCount.toString(),
+                            color = MaterialTheme.colorScheme.error,
+                            onClick = onNavigateToUninspectedRooms
+                        )
+                        StatCard(
+                            modifier = Modifier.weight(1f),
+                            icon = Icons.Default.CheckCircle,
+                            label = "Sudah Diinspeksi",
+                            value = uiState.inspectedRoomCount.toString(),
+                            color = Color(0xFF388E3C),
+                            onClick = onNavigateToHistoryWithDate
+                        )
+                    }
+                }
+
                 // ── Action Buttons ──
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -201,38 +235,6 @@ fun DashboardScreen(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
-                }
-
-                item {
-                    FilledTonalButton(
-                        onClick = onNavigateToInspection,
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(16.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AddCircle,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Inspeksi Baru", style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-
-                item {
-                    FilledTonalButton(
-                        onClick = onNavigateToDrafts,
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(16.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Description,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Lihat Draf", style = MaterialTheme.typography.bodyLarge)
-                    }
                 }
 
                 item {

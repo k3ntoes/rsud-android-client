@@ -20,6 +20,7 @@ data class InspectionHistoryUiState(
     val isLoadingDetail: Boolean = false,
     val error: String? = null,
     val filterStatus: String? = null,
+    val filterDate: String? = null,
     val currentPage: Int = 1,
     val isLoadingMore: Boolean = false,
     val hasMorePages: Boolean = true,
@@ -41,16 +42,22 @@ class InspectionHistoryViewModel @Inject constructor(
     private var cacheJob: Job? = null
 
     /** Collect cache dari Room — cancel job sebelumnya jika ada (cegah conflict) */
-    private fun collectCache(status: String? = null) {
+    private fun collectCache(status: String? = null, date: String? = null) {
         cacheJob?.cancel()
         cacheJob = viewModelScope.launch {
-            repository.observeLocalInspections(status).collect { cached ->
+            repository.observeLocalInspections(status, date).collect { cached ->
                 _uiState.value = _uiState.value.copy(
                     inspections = cached,
                     isInitialLoading = false
                 )
             }
         }
+    }
+
+    fun setFilterDate(date: String?) {
+        _uiState.value = _uiState.value.copy(filterDate = date, currentPage = 1, hasMorePages = true)
+        collectCache(status = _uiState.value.filterStatus, date = date)
+        if (date != null) refreshFromServer()
     }
 
     init {
@@ -140,8 +147,9 @@ class InspectionHistoryViewModel @Inject constructor(
     }
 
     fun setFilter(status: String?) {
+        val date = _uiState.value.filterDate
         _uiState.value = _uiState.value.copy(filterStatus = status, currentPage = 1, hasMorePages = true)
-        collectCache(status) // cancel previous + collect filtered
+        collectCache(status, date) // cancel previous + collect filtered
         refreshFromServer()
     }
 

@@ -1,7 +1,7 @@
 # 📋 Implementation Claim Order — Phase 4: Dashboard Inspection Status Cards
 
 > **Status Project:** ✅ **MVP SELESAI** — EPIC-0 s.d. EPIC-10 ✅ | RM Phase 2 ✅ | Phase 3 ✅  
-> **Status Phase 4:** 🆕 **DIMULAI** — Epic-12: Dashboard Inspeksi Hari Ini  
+> **Status Phase 4:** ✅ **SELESAI** — Epic-12: Dashboard Inspeksi Hari Ini  
 > **Spec:** [`docs/dashboard-inspection-status-cards-spec.md`](./dashboard-inspection-status-cards-spec.md)  
 > **ADR Baru:** `ADR-0014` — MediaStore Photo Storage & 30-Day Retention  
 > **Glossary:** [`app/.../inspections/CONTEXT.md`](../app/src/main/java/my/id/kentoes/rsudajibarangapp/inspections/CONTEXT.md)
@@ -56,12 +56,12 @@ flowchart LR
 
 | ID | Judul | Beads ID | Dependensi | Status | Estimasi |
 |----|-------|----------|------------|--------|----------|
-| **EPIC-12** | Dashboard Inspeksi Hari Ini — Inspection Status Cards | `rsud-android-client-36o` | EPIC-11 | 🆕 | 4 jam |
-| **DSC-01** | DAO Queries + Repository | `rsud-android-client-bu6` | EPIC-12 | 🆕 | 30 menit |
-| **DSC-02** | DashboardViewModel — counts state | `rsud-android-client-54f` | DSC-01, EPIC-12 | 🆕 | 45 menit |
-| **DSC-03** | DashboardScreen — layout cards | `rsud-android-client-f64` | DSC-02, DSC-04, EPIC-12 | 🆕 | 90 menit |
-| **DSC-04** | Room Selection — uninspected filter | `rsud-android-client-7va` | DSC-01, EPIC-12 | 🆕 | 60 menit |
-| **DSC-05** | Inspection History — date filter | `rsud-android-client-6kn` | DSC-01, EPIC-12 | 🆕 | 60 menit |
+| **EPIC-12** | Dashboard Inspeksi Hari Ini — Inspection Status Cards | `rsud-android-client-36o` | EPIC-11 | ✅ | 4 jam |
+| **DSC-01** | DAO Queries + Repository | `rsud-android-client-bu6` | EPIC-12 | ✅ | 30 menit |
+| **DSC-02** | DashboardViewModel — counts state | `rsud-android-client-54f` | DSC-01, EPIC-12 | ✅ | 45 menit |
+| **DSC-03** | DashboardScreen — layout cards | `rsud-android-client-f64` | DSC-02, DSC-04, EPIC-12 | ✅ | 90 menit |
+| **DSC-04** | Room Selection — uninspected filter | `rsud-android-client-7va` | DSC-01, EPIC-12 | ✅ | 60 menit |
+| **DSC-05** | Inspection History — date filter | `rsud-android-client-6kn` | DSC-01, EPIC-12 | ✅ | 60 menit |
 
 ---
 

@@ -34,6 +34,13 @@ class MasterDataRepository @Inject constructor(
         return itemsCount > 0
     }
 
+    /** Dapatkan set room IDs yang sudah diinspeksi hari ini (draft + inspection) */
+    suspend fun getInspectedRoomIdsForDate(date: String): Set<Long> {
+        val draftIds = masterDataDao.getDraftRoomIdsForDate(date)
+        val inspectionIds = masterDataDao.getInspectedRoomIdsForDate(date)
+        return (draftIds + inspectionIds).toSet()
+    }
+
     /** Build mapping roomId → list of itemIds dari cache lokal */
     suspend fun getRoomItemMap(): Map<Long, List<Long>> {
         val items = masterDataDao.getAllRoomItems()

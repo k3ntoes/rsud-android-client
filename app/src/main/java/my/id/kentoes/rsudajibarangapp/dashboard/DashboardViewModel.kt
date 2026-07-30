@@ -17,6 +17,7 @@ import my.id.kentoes.rsudajibarangapp.dashboard.api.AnalyticsApi
 import my.id.kentoes.rsudajibarangapp.dashboard.api.DashboardDto
 import my.id.kentoes.rsudajibarangapp.dashboard.api.IssueFrequencyOut
 import my.id.kentoes.rsudajibarangapp.dashboard.api.RoomScoreOut
+import my.id.kentoes.rsudajibarangapp.master.MasterDataRepository
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -36,14 +37,17 @@ data class DashboardUiState(
     val serverPendingCount: Int = 0,
     val serverMonthlyCount: Int = 0,
     val serverAvgScorePct: Double = 0.0,
-    val isForbidden: Boolean = false
+    val isForbidden: Boolean = false,
+    val inspectedRoomCount: Int = 0,
+    val uninspectedRoomCount: Int = 0
 )
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val drafDao: DrafDao,
     private val masterDataDao: MasterDataDao,
-    private val analyticsApi: AnalyticsApi
+    private val analyticsApi: AnalyticsApi,
+    private val masterDataRepository: MasterDataRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -78,8 +82,21 @@ class DashboardViewModel @Inject constructor(
             }
         }
 
+        computeInspectionStatus()
         fetchDashboard()
         fetchAnalytics()
+    }
+
+    private fun computeInspectionStatus() {
+        viewModelScope.launch {
+            val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+            val allRooms = masterDataDao.getAllRoomsOnce()
+            val allInspectedIds = masterDataRepository.getInspectedRoomIdsForDate(date)
+            _uiState.value = _uiState.value.copy(
+                inspectedRoomCount = allInspectedIds.size,
+                uninspectedRoomCount = (allRooms.size - allInspectedIds.size).coerceAtLeast(0)
+            )
+        }
     }
 
     private fun fetchDashboard() {

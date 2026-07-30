@@ -18,13 +18,21 @@ data class MasterDataUiState(
     val items: List<MasterDataItem> = emptyList(),
     val rooms: List<RuangEntity> = emptyList(),
     val syncMessage: String? = null,
-    val groupedItems: Map<String, List<MasterDataItem>> = emptyMap()
+    val groupedItems: Map<String, List<MasterDataItem>> = emptyMap(),
+    val excludeRoomIds: Set<Long> = emptySet()
 )
 
 @HiltViewModel
 class MasterDataViewModel @Inject constructor(
     private val repository: MasterDataRepository
 ) : ViewModel() {
+
+    fun setUninspectedFilter(date: String) {
+        viewModelScope.launch {
+            val ids = repository.getInspectedRoomIdsForDate(date)
+            _uiState.value = _uiState.value.copy(excludeRoomIds = ids)
+        }
+    }
 
     private val _uiState = MutableStateFlow(MasterDataUiState())
     val uiState: StateFlow<MasterDataUiState> = _uiState.asStateFlow()
@@ -36,10 +44,13 @@ class MasterDataViewModel @Inject constructor(
                 repository.items,
                 repository.rooms
             ) { items, rooms ->
+                val currentState = _uiState.value
+                val filteredRooms = if (currentState.excludeRoomIds.isEmpty()) rooms
+                    else rooms.filter { it.id !in currentState.excludeRoomIds }
                 _uiState.value.copy(
                     items = items,
                     groupedItems = items.groupBy { it.kategori },
-                    rooms = rooms,
+                    rooms = filteredRooms,
                     isLoading = false
                 )
             }.collect { state ->

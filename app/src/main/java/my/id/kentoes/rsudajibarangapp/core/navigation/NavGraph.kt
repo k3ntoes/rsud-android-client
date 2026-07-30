@@ -28,10 +28,10 @@ import my.id.kentoes.rsudajibarangapp.master.ui.MasterDataListScreen
 object Routes {
     const val LOGIN = "login"
     const val DASHBOARD = "dashboard"
-    const val INSPECTION_LIST = "inspection_list"
+    const val INSPECTION_LIST = "inspection_list?uninspectedOnly={uninspectedOnly}&date={date}"
     const val INSPECTION_FORM = "inspection_form/{roomId}/{roomName}?draftId={draftId}"
     const val DRAFT_LIST = "draft_list"
-    const val INSPECTION_HISTORY = "inspection_history"
+    const val INSPECTION_HISTORY = "inspection_history?filterDate={filterDate}"
     const val INSPECTION_DETAIL = "inspection_detail/{inspectionId}"
 
     fun inspectionForm(roomId: String, roomName: String, draftId: Long? = null): String {
@@ -40,6 +40,17 @@ object Routes {
         } else {
             "inspection_form/$roomId/$roomName"
         }
+    }
+
+    fun inspectionList(uninspectedOnly: Boolean = false, date: String? = null): String {
+        val params = mutableListOf<String>()
+        if (uninspectedOnly) params.add("uninspectedOnly=true")
+        if (date != null) params.add("date=$date")
+        return if (params.isEmpty()) "inspection_list" else "inspection_list?${params.joinToString("&")}"
+    }
+
+    fun inspectionHistory(filterDate: String? = null): String {
+        return if (filterDate != null) "inspection_history?filterDate=$filterDate" else "inspection_history"
     }
 
     fun inspectionDetail(inspectionId: Long): String {
@@ -84,16 +95,20 @@ fun NavGraph(
         }
         composable(Routes.DASHBOARD) {
             val currentUser by authViewModel.currentUser.collectAsState()
+            val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
             DashboardScreen(
                 currentUser = currentUser,
-                onNavigateToInspection = {
-                    navController.navigate(Routes.INSPECTION_LIST)
-                },
                 onNavigateToDrafts = {
                     navController.navigate(Routes.DRAFT_LIST)
                 },
                 onNavigateToHistory = {
                     navController.navigate(Routes.INSPECTION_HISTORY)
+                },
+                onNavigateToUninspectedRooms = {
+                    navController.navigate(Routes.inspectionList(uninspectedOnly = true, date = today))
+                },
+                onNavigateToHistoryWithDate = {
+                    navController.navigate(Routes.inspectionHistory(filterDate = today))
                 },
                 onLogout = {
                     authViewModel.logout()
@@ -104,8 +119,25 @@ fun NavGraph(
             )
         }
 
-        composable(Routes.INSPECTION_LIST) {
+        composable(
+            route = Routes.INSPECTION_LIST,
+            arguments = listOf(
+                navArgument("uninspectedOnly") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                },
+                navArgument("date") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) {
+            val uninspectedOnly = it.arguments?.getBoolean("uninspectedOnly") ?: false
+            val date = it.arguments?.getString("date")
             MasterDataListScreen(
+                uninspectedOnly = uninspectedOnly,
+                date = date,
                 onNavigateBack = { navController.popBackStack() },
                 onRoomSelected = { roomId, roomName ->
                     navController.navigate(Routes.inspectionForm(roomId.toString(), roomName))
@@ -142,8 +174,19 @@ fun NavGraph(
                 }
             )
         }
-        composable(Routes.INSPECTION_HISTORY) {
+        composable(
+            route = Routes.INSPECTION_HISTORY,
+            arguments = listOf(
+                navArgument("filterDate") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) {
+            val filterDate = it.arguments?.getString("filterDate")
             InspectionListScreen(
+                initialFilterDate = filterDate,
                 onNavigateBack = { navController.popBackStack() },
                 onInspectionClick = { id ->
                     navController.navigate(Routes.inspectionDetail(id))

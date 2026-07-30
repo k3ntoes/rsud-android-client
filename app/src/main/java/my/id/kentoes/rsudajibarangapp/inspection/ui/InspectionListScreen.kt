@@ -59,12 +59,20 @@ private val filterOptions = listOf(null to "Semua", "PENDING" to "Pending", "APP
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InspectionListScreen(
+    initialFilterDate: String? = null,
     onNavigateBack: () -> Unit,
     onInspectionClick: (Long) -> Unit,
     viewModel: InspectionHistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+
+    // Trigger date filter when navigated from dashboard
+    LaunchedEffect(initialFilterDate) {
+        if (initialFilterDate != null) {
+            viewModel.setFilterDate(initialFilterDate)
+        }
+    }
 
     // Detect scroll near bottom → load more
     val shouldLoadMore by remember {
@@ -88,7 +96,8 @@ fun InspectionListScreen(
                     Column {
                         Text("Riwayat Inspeksi", fontWeight = FontWeight.Bold)
                         Text(
-                            "${uiState.inspections.size} inspeksi",
+                            if (uiState.filterDate != null) "${uiState.filterDate} · ${uiState.inspections.size} inspeksi"
+                            else "${uiState.inspections.size} inspeksi",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

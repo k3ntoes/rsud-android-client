@@ -1,5 +1,6 @@
 package my.id.kentoes.rsudajibarangapp.dashboard.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,10 +26,12 @@ fun StatCard(
     icon: ImageVector,
     label: String,
     value: String,
-    color: Color
+    color: Color,
+    onClick: (() -> Unit)? = null
 ) {
+    val cardModifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier
     Card(
-        modifier = modifier,
+        modifier = cardModifier,
         colors = CardDefaults.cardColors(
             containerColor = color.copy(alpha = 0.08f)
         ),

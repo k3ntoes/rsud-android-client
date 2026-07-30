@@ -2,13 +2,11 @@ package my.id.kentoes.rsudajibarangapp.inspection
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionDetailEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionPhotoEntity
-import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
 import javax.inject.Inject
@@ -53,11 +51,12 @@ class InspectionHistoryRepository @Inject constructor(
 ) {
 
     /** Flow dari cache lokal — tampilkan instant sebelum refresh server */
-    fun observeLocalInspections(status: String? = null): Flow<List<InspectionHistoryItem>> {
-        val flow = if (status != null) {
-            masterDataDao.getInspectionsByStatus(status)
-        } else {
-            masterDataDao.getAllInspections()
+    fun observeLocalInspections(status: String? = null, date: String? = null): Flow<List<InspectionHistoryItem>> {
+        val flow = when {
+            status != null && date != null -> masterDataDao.getInspectionsByStatusAndDate(status, date)
+            date != null -> masterDataDao.getInspectionsByDate(date)
+            status != null -> masterDataDao.getInspectionsByStatus(status)
+            else -> masterDataDao.getAllInspections()
         }
         return combine(flow, masterDataDao.getAllRooms()) { inspections, rooms ->
             val roomMap = rooms.associateBy { it.id }
@@ -84,9 +83,7 @@ class InspectionHistoryRepository @Inject constructor(
         showAll: Boolean? = null
     ): PaginatedResult {
         val response = syncApi.getInspections(page, perPage, status, showAll)
-        val roomMap = with(masterDataDao) {
-            getAllRoomsOnce().associateBy { it.id }
-        }
+        val roomMap = masterDataDao.getAllRoomsOnce().associateBy { it.id }
         val items = response.map { item ->
             InspectionHistoryItem(
                 id = item.id,
@@ -162,8 +159,4 @@ class InspectionHistoryRepository @Inject constructor(
         }
     }
 
-    /** Ambil semua rooms sekali (non-Flow) untuk lookup */
-    private suspend fun MasterDataDao.getAllRoomsOnce(): List<RuangEntity> {
-        return getAllRooms().first()
-    }
 }

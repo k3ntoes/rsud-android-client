@@ -51,12 +51,21 @@ import my.id.kentoes.rsudajibarangapp.master.MasterDataViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MasterDataListScreen(
+    uninspectedOnly: Boolean = false,
+    date: String? = null,
     onRoomSelected: (roomId: Long, roomName: String) -> Unit,
     onNavigateBack: (() -> Unit)? = null,
     viewModel: MasterDataViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Trigger uninspected-only filter when navigated from dashboard
+    LaunchedEffect(uninspectedOnly, date) {
+        if (uninspectedOnly && date != null) {
+            viewModel.setUninspectedFilter(date)
+        }
+    }
 
     // Tampilkan snackbar saat sync selesai
     LaunchedEffect(uiState.syncMessage) {
@@ -73,7 +82,8 @@ fun MasterDataListScreen(
                     Column {
                         Text("Pilih Ruangan", fontWeight = FontWeight.Bold)
                         Text(
-                            "Pilih ruangan untuk memulai inspeksi",
+                            if (uninspectedOnly) "Ruangan yang belum diinspeksi hari ini"
+                            else "Pilih ruangan untuk memulai inspeksi",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

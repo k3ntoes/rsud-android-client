@@ -36,6 +36,9 @@ interface MasterDataDao {
     @Query("SELECT * FROM ruang WHERE id = :id")
     suspend fun getRoomById(id: Long): RuangEntity?
 
+    @Query("SELECT * FROM ruang WHERE isActive = 1")
+    suspend fun getAllRoomsOnce(): List<RuangEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRooms(rooms: List<RuangEntity>)
 
@@ -61,6 +64,14 @@ interface MasterDataDao {
     @Query("DELETE FROM user_room")
     suspend fun clearUserRooms()
 
+    // ── Inspection Status by Date ──
+
+    @Query("SELECT DISTINCT roomId FROM draf_inspeksi WHERE businessDate = :date")
+    suspend fun getDraftRoomIdsForDate(date: String): List<Long>
+
+    @Query("SELECT DISTINCT roomId FROM inspection WHERE businessDate = :date")
+    suspend fun getInspectedRoomIdsForDate(date: String): List<Long>
+
     // ── Inspection History ──
 
     @Query("SELECT * FROM inspection ORDER BY createdAt DESC")
@@ -68,6 +79,12 @@ interface MasterDataDao {
 
     @Query("SELECT * FROM inspection WHERE status = :status ORDER BY createdAt DESC")
     fun getInspectionsByStatus(status: String): Flow<List<InspectionEntity>>
+
+    @Query("SELECT * FROM inspection WHERE businessDate = :date ORDER BY createdAt DESC")
+    fun getInspectionsByDate(date: String): Flow<List<InspectionEntity>>
+
+    @Query("SELECT * FROM inspection WHERE status = :status AND businessDate = :date ORDER BY createdAt DESC")
+    fun getInspectionsByStatusAndDate(status: String, date: String): Flow<List<InspectionEntity>>
 
     @Query("SELECT * FROM inspection ORDER BY createdAt DESC")
     suspend fun getAllInspectionsOnce(): List<InspectionEntity>
