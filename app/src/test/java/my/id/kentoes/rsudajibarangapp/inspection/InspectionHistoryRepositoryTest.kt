@@ -43,6 +43,7 @@ class InspectionHistoryRepositoryTest {
         syncApi = mockk()
         masterDataDao = mockk()
         every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
+        coEvery { masterDataDao.getAllRoomsOnce() } returns sampleRooms
         repository = InspectionHistoryRepository(syncApi, masterDataDao)
     }
 

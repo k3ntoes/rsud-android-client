@@ -251,6 +251,72 @@ class MasterDataViewModelTest {
         assertNull(viewModel.uiState.value.syncMessage)
     }
 
+    // ── Phase 4: Uninspected Filter ──
+
+    @Test
+    fun `setUninspectedFilter sets excludeRoomIds from repository`() = runTest {
+        val itemsFlow = MutableStateFlow(sampleItems)
+        val roomsFlow = MutableStateFlow(sampleRooms)
+        every { repository.items } returns itemsFlow
+        every { repository.rooms } returns roomsFlow
+        coEvery { repository.isCacheAvailable() } returns true
+        coEvery { repository.getInspectedRoomIdsForDate(any()) } returns setOf(1L)
+
+        val viewModel = MasterDataViewModel(repository)
+        advanceUntilIdle()
+
+        assertEquals(0, viewModel.uiState.value.excludeRoomIds.size)
+
+        viewModel.setUninspectedFilter("2026-07-30")
+        advanceUntilIdle()
+
+        assertEquals(setOf(1L), viewModel.uiState.value.excludeRoomIds)
+        coVerify { repository.getInspectedRoomIdsForDate("2026-07-30") }
+    }
+
+    @Test
+    fun `setUninspectedFilter excludes inspected rooms from list`() = runTest {
+        val roomsWithExtra = sampleRooms + RuangEntity(id = 2, nama = "Ruang 2", lantai = "Lantai 2")
+        val itemsFlow = MutableStateFlow(sampleItems)
+        val roomsFlow = MutableStateFlow(roomsWithExtra)
+        every { repository.items } returns itemsFlow
+        every { repository.rooms } returns roomsFlow
+        coEvery { repository.isCacheAvailable() } returns true
+        coEvery { repository.getInspectedRoomIdsForDate(any()) } returns setOf(1L)
+
+        val viewModel = MasterDataViewModel(repository)
+        advanceUntilIdle()
+
+        // Initially all rooms visible
+        assertEquals(2, viewModel.uiState.value.rooms.size)
+
+        viewModel.setUninspectedFilter("2026-07-30")
+        advanceUntilIdle()
+
+        // After filter: only room 2 remains (room 1 excluded)
+        assertEquals(1, viewModel.uiState.value.rooms.size)
+        assertEquals(2, viewModel.uiState.value.rooms[0].id)
+    }
+
+    @Test
+    fun `setUninspectedFilter with empty inspected set shows all rooms`() = runTest {
+        val roomsWithExtra = sampleRooms + RuangEntity(id = 2, nama = "Ruang 2", lantai = "Lantai 2")
+        val itemsFlow = MutableStateFlow(sampleItems)
+        val roomsFlow = MutableStateFlow(roomsWithExtra)
+        every { repository.items } returns itemsFlow
+        every { repository.rooms } returns roomsFlow
+        coEvery { repository.isCacheAvailable() } returns true
+        coEvery { repository.getInspectedRoomIdsForDate(any()) } returns emptySet()
+
+        val viewModel = MasterDataViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.setUninspectedFilter("2026-07-30")
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.rooms.size)
+    }
+
     @Test
     fun `clearSyncMessage does not affect other state fields`() = runTest {
         val itemsFlow = MutableStateFlow(sampleItems)

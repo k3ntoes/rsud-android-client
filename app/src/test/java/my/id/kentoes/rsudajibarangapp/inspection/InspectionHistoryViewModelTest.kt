@@ -1,6 +1,7 @@
 package my.id.kentoes.rsudajibarangapp.inspection
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +42,7 @@ class InspectionHistoryViewModelTest {
         every { masterDataDao.getInspectionsByStatus(any()) } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         coEvery { masterDataDao.getUserById(any()) } returns null
-        coEvery { repository.observeLocalInspections(any()) } returns MutableStateFlow(emptyList())
+        coEvery { repository.observeLocalInspections(any(), any()) } returns MutableStateFlow(emptyList())
     }
 
     @After
@@ -300,5 +301,109 @@ class InspectionHistoryViewModelTest {
         viewModel.refreshFromServer()
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.isRefreshing)
+    }
+
+    // ── Phase 4: Date Filter ──
+
+    @Test
+    fun `setFilterDate updates filterDate state`() = runTest(testDispatcher) {
+        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+            items = emptyList(), totalPages = 1, currentPage = 1
+        )
+        coEvery { repository.observeLocalInspections(any(), any()) } returns MutableStateFlow(emptyList())
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.filterDate)
+        viewModel.setFilterDate("2026-07-30")
+        advanceUntilIdle()
+
+        assertEquals("2026-07-30", viewModel.uiState.value.filterDate)
+    }
+
+    @Test
+    fun `setFilterDate resets to page 1`() = runTest(testDispatcher) {
+        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+            items = emptyList(), totalPages = 1, currentPage = 1
+        )
+        coEvery { repository.observeLocalInspections(any(), any()) } returns MutableStateFlow(emptyList())
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setFilterDate("2026-07-30")
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.value.currentPage)
+        assertTrue(viewModel.uiState.value.hasMorePages)
+    }
+
+    @Test
+    fun `setFilterDate passes date to observeLocalInspections`() = runTest(testDispatcher) {
+        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+            items = emptyList(), totalPages = 1, currentPage = 1
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setFilterDate("2026-07-30")
+        advanceUntilIdle()
+
+        coVerify { repository.observeLocalInspections(null, "2026-07-30") }
+    }
+
+    @Test
+    fun `setFilterDate with null clears filter`() = runTest(testDispatcher) {
+        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+            items = emptyList(), totalPages = 1, currentPage = 1
+        )
+        coEvery { repository.observeLocalInspections(any(), any()) } returns MutableStateFlow(emptyList())
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setFilterDate("2026-07-30")
+        advanceUntilIdle()
+        assertEquals("2026-07-30", viewModel.uiState.value.filterDate)
+
+        viewModel.setFilterDate(null)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.filterDate)
+    }
+
+    @Test
+    fun `setFilter preserves filterDate when changing status`() = runTest(testDispatcher) {
+        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+            items = emptyList(), totalPages = 1, currentPage = 1
+        )
+        coEvery { repository.observeLocalInspections(any(), any()) } returns MutableStateFlow(emptyList())
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setFilterDate("2026-07-30")
+        advanceUntilIdle()
+
+        viewModel.setFilter("APPROVED")
+        advanceUntilIdle()
+
+        assertEquals("2026-07-30", viewModel.uiState.value.filterDate)
+        assertEquals("APPROVED", viewModel.uiState.value.filterStatus)
+        coVerify { repository.observeLocalInspections("APPROVED", "2026-07-30") }
+    }
+
+    @Test
+    fun `setFilter with date passes both to repository`() = runTest(testDispatcher) {
+        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+            items = emptyList(), totalPages = 1, currentPage = 1
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setFilterDate("2026-07-30")
+        advanceUntilIdle()
+
+        viewModel.setFilter("REJECTED")
+        advanceUntilIdle()
+
+        coVerify { repository.observeLocalInspections("REJECTED", "2026-07-30") }
     }
 }

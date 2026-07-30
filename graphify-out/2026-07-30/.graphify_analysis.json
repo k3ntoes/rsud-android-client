@@ -799,7 +799,7 @@
       ],
       "confidence": "INFERRED",
       "relation": "conceptually_related_to",
-      "why": "inferred connection - not explicitly stated in source; crosses file types (doc ↔ code); connects across different repos/directories"
+      "why": "inferred connection - not explicitly stated in source; crosses file types (doc \u2194 code); connects across different repos/directories"
     },
     {
       "source": "ADR-0003: Offline-First Submission",
@@ -810,7 +810,7 @@
       ],
       "confidence": "INFERRED",
       "relation": "conceptually_related_to",
-      "why": "inferred connection - not explicitly stated in source; crosses file types (doc ↔ code); connects across different repos/directories"
+      "why": "inferred connection - not explicitly stated in source; crosses file types (doc \u2194 code); connects across different repos/directories"
     },
     {
       "source": "Implementation Tracking",
@@ -821,7 +821,7 @@
       ],
       "confidence": "EXTRACTED",
       "relation": "references",
-      "why": "crosses file types (doc ↔ code); connects across different repos/directories"
+      "why": "crosses file types (doc \u2194 code); connects across different repos/directories"
     },
     {
       "source": "Refactoring Tracker",
@@ -832,7 +832,7 @@
       ],
       "confidence": "EXTRACTED",
       "relation": "references",
-      "why": "crosses file types (doc ↔ code); connects across different repos/directories"
+      "why": "crosses file types (doc \u2194 code); connects across different repos/directories"
     },
     {
       "source": "Background Jobs Gaps",
@@ -843,44 +843,11 @@
       ],
       "confidence": "EXTRACTED",
       "relation": "references",
-      "why": "crosses file types (doc ↔ code); connects across different repos/directories"
+      "why": "crosses file types (doc \u2194 code); connects across different repos/directories"
     }
   ],
-  "questions": [
-    {
-      "type": "bridge_node",
-      "question": "Why does `MasterDataDao` connect `MasterDataDao` to `MasterDataRepositoryTest`, `InspectionHistoryRepositoryTest`, `InspectionHistoryViewModelTest`, `DashboardViewModel`?",
-      "why": "High betweenness centrality (0.252) - this node is a cross-community bridge."
-    },
-    {
-      "type": "bridge_node",
-      "question": "Why does `MasterDataRepositoryTest` connect `MasterDataRepositoryTest` to `MasterDataDao`, `MasterDataRepository`, `NavGraph`?",
-      "why": "High betweenness centrality (0.235) - this node is a cross-community bridge."
-    },
-    {
-      "type": "bridge_node",
-      "question": "Why does `MasterDataRepository` connect `MasterDataRepository` to `MasterDataDao`, `MasterDataRepositoryTest`, `DashboardViewModel`, `MasterDataViewModel`?",
-      "why": "High betweenness centrality (0.123) - this node is a cross-community bridge."
-    },
-    {
-      "type": "verify_inferred",
-      "question": "Are the 15 inferred relationships involving `MasterDataViewModel` (e.g. with `.`clearSyncMessage clears syncMessage to null`()` and `.`clearSyncMessage does not affect other state fields`()`) actually correct?",
-      "why": "`MasterDataViewModel` has 15 INFERRED edges - model-reasoned connections that need verification."
-    },
-    {
-      "type": "isolated_nodes",
-      "question": "What connects `InspectionDetailItem`, `PhotoDetail`, `DashboardViewModelTest.kt` to the rest of the system?",
-      "why": "35 weakly-connected nodes found - possible documentation gaps or missing edges."
-    },
-    {
-      "type": "low_cohesion",
-      "question": "Should `MasterDataDao` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.06475485661424607 - nodes in this community are weakly interconnected."
-    },
-    {
-      "type": "low_cohesion",
-      "question": "Should `MasterDataRepositoryTest` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.07781649245063879 - nodes in this community are weakly interconnected."
-    }
-  ]
+  "tokens": {
+    "input": 149255,
+    "output": 6877
+  }
 }

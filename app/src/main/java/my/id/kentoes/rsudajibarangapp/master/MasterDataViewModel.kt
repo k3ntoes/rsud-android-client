@@ -27,30 +27,27 @@ class MasterDataViewModel @Inject constructor(
     private val repository: MasterDataRepository
 ) : ViewModel() {
 
-    fun setUninspectedFilter(date: String) {
-        viewModelScope.launch {
-            val ids = repository.getInspectedRoomIdsForDate(date)
-            _uiState.value = _uiState.value.copy(excludeRoomIds = ids)
-        }
-    }
-
     private val _uiState = MutableStateFlow(MasterDataUiState())
     val uiState: StateFlow<MasterDataUiState> = _uiState.asStateFlow()
+
+    // Reactive flow so combine re-emits when filter changes
+    private val _excludeRoomIds = MutableStateFlow<Set<Long>>(emptySet())
 
     init {
         // Observasi perubahan dari Room — gabung items + rooms via combine
         viewModelScope.launch {
             combine(
                 repository.items,
-                repository.rooms
-            ) { items, rooms ->
-                val currentState = _uiState.value
-                val filteredRooms = if (currentState.excludeRoomIds.isEmpty()) rooms
-                    else rooms.filter { it.id !in currentState.excludeRoomIds }
+                repository.rooms,
+                _excludeRoomIds
+            ) { items, rooms, excludeIds ->
+                val filteredRooms = if (excludeIds.isEmpty()) rooms
+                    else rooms.filter { it.id !in excludeIds }
                 _uiState.value.copy(
                     items = items,
                     groupedItems = items.groupBy { it.kategori },
                     rooms = filteredRooms,
+                    excludeRoomIds = excludeIds,
                     isLoading = false
                 )
             }.collect { state ->
@@ -72,6 +69,14 @@ class MasterDataViewModel @Inject constructor(
     /** Refresh data dari API (pull-to-refresh) */
     fun refresh() {
         viewModelScope.launch { syncFromApi() }
+    }
+
+    /** Set filter to show only uninspected rooms for given date */
+    fun setUninspectedFilter(date: String) {
+        viewModelScope.launch {
+            val ids = repository.getInspectedRoomIdsForDate(date)
+            _excludeRoomIds.value = ids
+        }
     }
 
     private suspend fun syncFromApi() {

@@ -37,6 +37,10 @@
 }
 -keep,allowobfuscation class my.id.kentoes.rsudajibarangapp.**.api.*Response
 -keep,allowobfuscation class my.id.kentoes.rsudajibarangapp.**.api.*Request
+-keep,allowobfuscation class my.id.kentoes.rsudajibarangapp.**.api.*Dto
+-keep,allowobfuscation class my.id.kentoes.rsudajibarangapp.**.api.*Out
+-keep,allowobfuscation class my.id.kentoes.rsudajibarangapp.**.api.*In
+-keep,allowobfuscation class my.id.kentoes.rsudajibarangapp.**.api.*Submit
 
 # ── Coil ──
 -keep class coil.** { *; }

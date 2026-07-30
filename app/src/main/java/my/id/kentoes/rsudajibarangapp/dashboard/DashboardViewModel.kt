@@ -77,7 +77,9 @@ class DashboardViewModel @Inject constructor(
                     serverPendingCount = _uiState.value.serverPendingCount,
                     serverMonthlyCount = _uiState.value.serverMonthlyCount,
                     serverAvgScorePct = _uiState.value.serverAvgScorePct,
-                    isForbidden = _uiState.value.isForbidden
+                    isForbidden = _uiState.value.isForbidden,
+                    inspectedRoomCount = _uiState.value.inspectedRoomCount,
+                    uninspectedRoomCount = _uiState.value.uninspectedRoomCount
                 )
             }
         }

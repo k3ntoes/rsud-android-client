@@ -409,4 +409,71 @@ class MasterDataRepositoryTest {
 
         assertTrue(result.isEmpty())
     }
+
+    // ═══════════════════════════════════════════════
+    // getInspectedRoomIdsForDate  (Phase 4)
+    // ═══════════════════════════════════════════════
+
+    @Test
+    fun `getInspectedRoomIdsForDate merges draft and inspection IDs`() = runTest {
+        coEvery { dao.getDraftRoomIdsForDate("2026-07-30") } returns listOf(1L, 2L)
+        coEvery { dao.getInspectedRoomIdsForDate("2026-07-30") } returns listOf(2L, 3L)
+
+        val result = repository.getInspectedRoomIdsForDate("2026-07-30")
+
+        assertEquals(setOf(1L, 2L, 3L), result)
+    }
+
+    @Test
+    fun `getInspectedRoomIdsForDate returns empty set when no data`() = runTest {
+        coEvery { dao.getDraftRoomIdsForDate(any()) } returns emptyList()
+        coEvery { dao.getInspectedRoomIdsForDate(any()) } returns emptyList()
+
+        val result = repository.getInspectedRoomIdsForDate("2026-07-29")
+
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `getInspectedRoomIdsForDate deduplicates overlapping IDs`() = runTest {
+        // Same room has both a draft AND an inspection today
+        coEvery { dao.getDraftRoomIdsForDate("2026-07-30") } returns listOf(1L, 2L, 3L)
+        coEvery { dao.getInspectedRoomIdsForDate("2026-07-30") } returns listOf(1L, 4L) // 1 is overlap
+
+        val result = repository.getInspectedRoomIdsForDate("2026-07-30")
+
+        assertEquals(setOf(1L, 2L, 3L, 4L), result)
+        assertEquals(4, result.size) // no duplicate
+    }
+
+    @Test
+    fun `getInspectedRoomIdsForDate returns only draft IDs when no inspections`() = runTest {
+        coEvery { dao.getDraftRoomIdsForDate("2026-07-30") } returns listOf(5L, 6L)
+        coEvery { dao.getInspectedRoomIdsForDate("2026-07-30") } returns emptyList()
+
+        val result = repository.getInspectedRoomIdsForDate("2026-07-30")
+
+        assertEquals(setOf(5L, 6L), result)
+    }
+
+    @Test
+    fun `getInspectedRoomIdsForDate returns only inspection IDs when no drafts`() = runTest {
+        coEvery { dao.getDraftRoomIdsForDate("2026-07-30") } returns emptyList()
+        coEvery { dao.getInspectedRoomIdsForDate("2026-07-30") } returns listOf(10L, 20L)
+
+        val result = repository.getInspectedRoomIdsForDate("2026-07-30")
+
+        assertEquals(setOf(10L, 20L), result)
+    }
+
+    @Test
+    fun `getInspectedRoomIdsForDate passes correct date to DAO`() = runTest {
+        coEvery { dao.getDraftRoomIdsForDate(any()) } returns emptyList()
+        coEvery { dao.getInspectedRoomIdsForDate(any()) } returns emptyList()
+
+        repository.getInspectedRoomIdsForDate("2026-08-01")
+
+        coVerify { dao.getDraftRoomIdsForDate("2026-08-01") }
+        coVerify { dao.getInspectedRoomIdsForDate("2026-08-01") }
+    }
 }

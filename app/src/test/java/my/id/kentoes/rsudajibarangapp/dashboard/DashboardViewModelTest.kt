@@ -1,6 +1,7 @@
 package my.id.kentoes.rsudajibarangapp.dashboard
 
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
 import my.id.kentoes.rsudajibarangapp.dashboard.api.AnalyticsApi
 import my.id.kentoes.rsudajibarangapp.dashboard.api.IssueFrequencyOut
 import my.id.kentoes.rsudajibarangapp.dashboard.api.RoomScoreOut
+import my.id.kentoes.rsudajibarangapp.master.MasterDataRepository
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -30,6 +32,7 @@ class DashboardViewModelTest {
     private lateinit var drafDao: DrafDao
     private lateinit var masterDataDao: MasterDataDao
     private lateinit var analyticsApi: AnalyticsApi
+    private lateinit var masterDataRepository: MasterDataRepository
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
@@ -38,6 +41,10 @@ class DashboardViewModelTest {
         drafDao = mockk()
         masterDataDao = mockk()
         analyticsApi = mockk(relaxed = true)
+        masterDataRepository = mockk()
+        // Default mocks for computeInspectionStatus() called in init
+        coEvery { masterDataDao.getAllRoomsOnce() } returns emptyList()
+        coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns emptySet()
     }
 
     @After
@@ -73,7 +80,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns roomsFlow
         every { masterDataDao.getAllItems() } returns itemsFlow
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -103,7 +110,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -119,7 +126,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -144,7 +151,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
         advanceUntilIdle()
 
         assertEquals(5, viewModel.uiState.value.recentDrafts.size)
@@ -158,7 +165,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
 
         assertTrue(viewModel.uiState.value.isLoading)
         assertEquals(0, viewModel.uiState.value.totalDrafts)
@@ -176,7 +183,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -196,7 +203,7 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
         advanceUntilIdle()
 
         assertEquals(1, viewModel.uiState.value.totalDrafts)
@@ -231,13 +238,118 @@ class DashboardViewModelTest {
         coEvery { analyticsApi.getLowestRooms(any(), any()) } returns sampleRooms
         coEvery { analyticsApi.getTopIssues(any(), any()) } returns sampleIssues
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
         advanceUntilIdle()
 
         assertEquals(2, viewModel.uiState.value.lowestRooms.size)
         assertEquals(1, viewModel.uiState.value.topIssues.size)
         assertEquals(1, viewModel.uiState.value.lowestRooms[0].roomId)
         assertEquals("Meja", viewModel.uiState.value.topIssues[0].itemNameSnapshot)
+    }
+
+    // ── Phase 4: Inspection Status ──
+
+    @Test
+    fun `init computes inspectedRoomCount from repository`() = runTest {
+        val sampleRoomList = listOf(
+            RuangEntity(id = 1, nama = "Ruang A"),
+            RuangEntity(id = 2, nama = "Ruang B"),
+            RuangEntity(id = 3, nama = "Ruang C"),
+        )
+        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllRooms() } returns MutableStateFlow(sampleRoomList)
+        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
+        coEvery { masterDataDao.getAllRoomsOnce() } returns sampleRoomList
+        coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns setOf(1L, 2L)
+
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.inspectedRoomCount)
+        assertEquals(1, viewModel.uiState.value.uninspectedRoomCount)
+    }
+
+    @Test
+    fun `init sets inspectedRoomCount zero when no inspections today`() = runTest {
+        val sampleRoomList = listOf(
+            RuangEntity(id = 1, nama = "Ruang A"),
+            RuangEntity(id = 2, nama = "Ruang B"),
+        )
+        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllRooms() } returns MutableStateFlow(sampleRoomList)
+        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
+        coEvery { masterDataDao.getAllRoomsOnce() } returns sampleRoomList
+        coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns emptySet()
+
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
+        advanceUntilIdle()
+
+        assertEquals(0, viewModel.uiState.value.inspectedRoomCount)
+        assertEquals(2, viewModel.uiState.value.uninspectedRoomCount)
+    }
+
+    @Test
+    fun `init sets all rooms inspected when all are done`() = runTest {
+        val sampleRoomList = listOf(
+            RuangEntity(id = 1, nama = "Ruang A"),
+            RuangEntity(id = 2, nama = "Ruang B"),
+        )
+        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllRooms() } returns MutableStateFlow(sampleRoomList)
+        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
+        coEvery { masterDataDao.getAllRoomsOnce() } returns sampleRoomList
+        coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns setOf(1L, 2L)
+
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.inspectedRoomCount)
+        assertEquals(0, viewModel.uiState.value.uninspectedRoomCount)
+    }
+
+    @Test
+    fun `init handles empty rooms list for inspection status`() = runTest {
+        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
+        coEvery { masterDataDao.getAllRoomsOnce() } returns emptyList()
+        coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns emptySet()
+
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
+        advanceUntilIdle()
+
+        assertEquals(0, viewModel.uiState.value.inspectedRoomCount)
+        assertEquals(0, viewModel.uiState.value.uninspectedRoomCount)
+    }
+
+    @Test
+    fun `init uninspected count never goes negative`() = runTest {
+        // Edge case: more inspected rooms than total (should be guarded by coerceAtLeast)
+        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllRooms() } returns MutableStateFlow(listOf(RuangEntity(id = 1, nama = "Ruang A")))
+        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
+        coEvery { masterDataDao.getAllRoomsOnce() } returns listOf(RuangEntity(id = 1, nama = "Ruang A"))
+        coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns setOf(1L, 99L) // 99 doesn't exist
+
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
+        advanceUntilIdle()
+
+        assertEquals(0, viewModel.uiState.value.uninspectedRoomCount)
+    }
+
+    @Test
+    fun `init calls computeInspectionStatus with today date`() = runTest {
+        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
+        coEvery { masterDataDao.getAllRoomsOnce() } returns emptyList()
+        coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns emptySet()
+
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
+        advanceUntilIdle()
+
+        // Verify the repository was called with a yyyy-MM-dd formatted date
+        coVerify { masterDataRepository.getInspectedRoomIdsForDate(match { it.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) }) }
     }
 
     @Test
@@ -248,7 +360,7 @@ class DashboardViewModelTest {
         coEvery { analyticsApi.getLowestRooms(any(), any()) } throws RuntimeException("Network error")
         coEvery { analyticsApi.getTopIssues(any(), any()) } throws RuntimeException("Network error")
 
-        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi)
+        val viewModel = DashboardViewModel(drafDao, masterDataDao, analyticsApi, masterDataRepository)
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.lowestRooms.isEmpty())

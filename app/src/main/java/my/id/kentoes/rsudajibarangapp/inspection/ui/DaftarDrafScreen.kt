@@ -53,7 +53,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import my.id.kentoes.rsudajibarangapp.core.model.toStatusDisplay
 import my.id.kentoes.rsudajibarangapp.inspection.DaftarDrafViewModel
 import my.id.kentoes.rsudajibarangapp.inspection.DraftSummary
-import my.id.kentoes.rsudajibarangapp.inspection.ui.components.OfflineBanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +63,6 @@ fun DaftarDrafScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
-    val isOnline by viewModel.isOnline.collectAsState(initial = true)
 
     LaunchedEffect(uiState.deletedMessage, uiState.syncMessage) {
         val msg = uiState.deletedMessage ?: uiState.syncMessage
@@ -123,8 +121,7 @@ fun DaftarDrafScreen(
                             Icon(
                                 imageVector = Icons.Default.Sync,
                                 contentDescription = "Sync",
-                                tint = if (isOnline) MaterialTheme.colorScheme.primary
-                                       else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
@@ -137,9 +134,6 @@ fun DaftarDrafScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize()) {
-            // Offline banner
-            OfflineBanner(isOffline = !isOnline)
-
             if (uiState.isLoading) {
                 Box(
                     modifier = Modifier
