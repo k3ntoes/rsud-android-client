@@ -60,7 +60,11 @@ class SyncWorker(
             val successCount = results.count { it.success }
             val failCount = results.size - successCount
 
-            if (failCount == 0) {
+            if (results.isEmpty()) {
+                // Tidak ada draf pending — worker hanya menjalankan sync master data
+                // (mis. pemicu saat login). Tidak perlu notifikasi "0 inspeksi".
+                Result.success()
+            } else if (failCount == 0) {
                 showNotification(
                     "Sinkronisasi Berhasil",
                     "$successCount inspeksi berhasil dikirim"

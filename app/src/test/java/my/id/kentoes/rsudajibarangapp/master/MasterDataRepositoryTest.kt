@@ -14,8 +14,6 @@ import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
-import my.id.kentoes.rsudajibarangapp.core.database.entity.UserEntity
-import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
 import my.id.kentoes.rsudajibarangapp.core.model.PaginatedResponse
 import my.id.kentoes.rsudajibarangapp.core.model.SyncResponse
 import my.id.kentoes.rsudajibarangapp.master.api.ItemOut
@@ -103,19 +101,19 @@ class MasterDataRepositoryTest {
         coVerify {
             dao.insertItems(match { items ->
                 items.size == 1 &&
-                    items[0].id == 10L &&
-                    items[0].nama == "AC" &&
-                    items[0].kategori == "" &&
-                    items[0].deskripsi == null &&
-                    items[0].isActive
+                        items[0].id == 10L &&
+                        items[0].nama == "AC" &&
+                        items[0].kategori == "" &&
+                        items[0].deskripsi == null &&
+                        items[0].isActive
             })
             dao.insertRooms(match { rooms ->
                 rooms.size == 1 &&
-                    rooms[0].id == 5L &&
-                    rooms[0].nama == "IGD" &&
-                    rooms[0].lantai == null &&
-                    rooms[0].isActive &&
-                    !rooms[0].isMyRoom // room umum dari /rooms tidak ditandai
+                        rooms[0].id == 5L &&
+                        rooms[0].nama == "IGD" &&
+                        rooms[0].lantai == null &&
+                        rooms[0].isActive &&
+                        !rooms[0].isMyRoom // room umum dari /rooms tidak ditandai
             })
         }
     }
@@ -137,7 +135,8 @@ class MasterDataRepositoryTest {
     }
 
     @Test
-    fun `syncFromApi does not insert rooms when rooms list is empty`() = runTest {        coEvery { api.getItems(any()) } returns SyncResponse(data = listOf(ItemOut(1, "Meja")))
+    fun `syncFromApi does not insert rooms when rooms list is empty`() = runTest {
+        coEvery { api.getItems(any()) } returns SyncResponse(data = listOf(ItemOut(1, "Meja")))
         coEvery { api.getRooms(any()) } returns SyncResponse(data = emptyList())
 
         coEvery { dao.insertItems(any()) } returns Unit
@@ -166,7 +165,12 @@ class MasterDataRepositoryTest {
     @Test
     fun `syncFromApi inserts rooms even when items list is empty`() = runTest {
         coEvery { api.getItems(any()) } returns SyncResponse(data = emptyList())
-        coEvery { api.getRooms(any()) } returns SyncResponse(data = sampleRooms.map { RoomOut(it.id, it.nama) })
+        coEvery { api.getRooms(any()) } returns SyncResponse(data = sampleRooms.map {
+            RoomOut(
+                it.id,
+                it.nama
+            )
+        })
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -204,10 +208,12 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncRoomItems clears then inserts mapped items`() = runTest {
-        val apiResult = SyncResponse(data = listOf(
-            RoomItemDto(id = 1, roomId = 10, itemId = 100, createdAt = "2026-01-01T00:00:00Z"),
-            RoomItemDto(id = 2, roomId = 10, itemId = 200),
-        ))
+        val apiResult = SyncResponse(
+            data = listOf(
+                RoomItemDto(id = 1, roomId = 10, itemId = 100, createdAt = "2026-01-01T00:00:00Z"),
+                RoomItemDto(id = 2, roomId = 10, itemId = 200),
+            )
+        )
         coEvery { api.getRoomItems(any()) } returns apiResult
         coEvery { dao.clearRoomItems() } returns Unit
         coEvery { dao.insertRoomItems(any()) } returns Unit
@@ -219,16 +225,59 @@ class MasterDataRepositoryTest {
         coVerify {
             dao.insertRoomItems(match { items ->
                 items.size == 2 &&
-                    items[0].id == 1L &&
-                    items[0].roomId == 10L &&
-                    items[0].itemId == 100L &&
-                    items[0].createdAt == "2026-01-01T00:00:00Z" &&
-                    items[1].id == 2L &&
-                    items[1].roomId == 10L &&
-                    items[1].itemId == 200L &&
-                    items[1].createdAt == null
+                        items[0].id == 1L &&
+                        items[0].roomId == 10L &&
+                        items[0].itemId == 100L &&
+                        items[0].createdAt == "2026-01-01T00:00:00Z" &&
+                        items[1].id == 2L &&
+                        items[1].roomId == 10L &&
+                        items[1].itemId == 200L &&
+                        items[1].createdAt == null
             })
         }
+    }
+
+    @Test
+    fun `syncRoomItems skips tombstone rows with is_active false`() = runTest {
+        // Kontrak §2.2: is_active=false = relasi SUDAH dilepas — TIDAK boleh masuk mapping lokal.
+        val apiResult = SyncResponse(
+            data = listOf(
+                RoomItemDto(id = 1, roomId = 10, itemId = 100, isActive = true),
+                RoomItemDto(id = 4, roomId = 10, itemId = 300, isActive = false),
+            )
+        )
+        coEvery { api.getRoomItems(any()) } returns apiResult
+        coEvery { dao.clearRoomItems() } returns Unit
+        coEvery { dao.insertRoomItems(any()) } returns Unit
+
+        repository.syncRoomItems()
+
+        coVerify(exactly = 1) { dao.clearRoomItems() }
+        coVerify {
+            dao.insertRoomItems(match { items ->
+                items.size == 1 &&
+                        items[0].id == 1L &&
+                        items[0].itemId == 100L
+            })
+        }
+    }
+
+    @Test
+    fun `syncRoomItems inserts nothing when all rows are tombstones`() = runTest {
+        // Semua response adalah tombstone → clear tetap jalan (replace-all), insert tidak perlu.
+        val apiResult = SyncResponse(
+            data = listOf(
+                RoomItemDto(id = 4, roomId = 10, itemId = 300, isActive = false),
+                RoomItemDto(id = 5, roomId = 20, itemId = 400, isActive = false),
+            )
+        )
+        coEvery { api.getRoomItems(any()) } returns apiResult
+        coEvery { dao.clearRoomItems() } returns Unit
+
+        repository.syncRoomItems()
+
+        coVerify(exactly = 1) { dao.clearRoomItems() }
+        coVerify(exactly = 0) { dao.insertRoomItems(any()) }
     }
 
     @Test
@@ -255,10 +304,12 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncUsers clears then inserts mapped users`() = runTest {
-        val apiUsers = PaginatedResponse(items = listOf(
-            UserOut(id = 1, username = "petugas01", role = "inspector", isActive = true),
-            UserOut(id = 2, username = "supervisor01", role = "supervisor", isActive = true),
-        ))
+        val apiUsers = PaginatedResponse(
+            items = listOf(
+                UserOut(id = 1, username = "petugas01", role = "inspector", isActive = true),
+                UserOut(id = 2, username = "supervisor01", role = "supervisor", isActive = true),
+            )
+        )
         coEvery { authApi.getUsers(any(), any()) } returns apiUsers
         coEvery { dao.clearUsers() } returns Unit
         coEvery { dao.insertUsers(any()) } returns Unit
@@ -269,13 +320,13 @@ class MasterDataRepositoryTest {
         coVerify {
             dao.insertUsers(match { users ->
                 users.size == 2 &&
-                    users[0].id == 1 &&
-                    users[0].username == "petugas01" &&
-                    users[0].role == "inspector" &&
-                    users[0].isActive &&
-                    users[1].id == 2 &&
-                    users[1].username == "supervisor01" &&
-                    users[1].role == "supervisor"
+                        users[0].id == 1 &&
+                        users[0].username == "petugas01" &&
+                        users[0].role == "inspector" &&
+                        users[0].isActive &&
+                        users[1].id == 2 &&
+                        users[1].username == "supervisor01" &&
+                        users[1].role == "supervisor"
             })
         }
     }
@@ -330,10 +381,12 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncMyRooms fetches and inserts rooms`() = runTest {
-        val apiResult = SyncResponse(data = listOf(
-            RoomOut(id = 1, name = "Ruang A", isActive = true),
-            RoomOut(id = 2, name = "Ruang B", isActive = false),
-        ))
+        val apiResult = SyncResponse(
+            data = listOf(
+                RoomOut(id = 1, name = "Ruang A", isActive = true),
+                RoomOut(id = 2, name = "Ruang B", isActive = false),
+            )
+        )
         coEvery { authApi.getMyRooms(any()) } returns apiResult
         coEvery { dao.resetMyRooms() } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
@@ -345,28 +398,49 @@ class MasterDataRepositoryTest {
         coVerify {
             dao.insertRooms(match { rooms ->
                 rooms.size == 2 &&
-                    rooms[0].id == 1L &&
-                    rooms[0].nama == "Ruang A" &&
-                    rooms[0].isActive &&
-                    rooms[0].isMyRoom &&
-                    rooms[1].id == 2L &&
-                    rooms[1].nama == "Ruang B" &&
-                    !rooms[1].isActive &&
-                    rooms[1].isMyRoom
+                        rooms[0].id == 1L &&
+                        rooms[0].nama == "Ruang A" &&
+                        rooms[0].isActive &&
+                        rooms[0].isMyRoom &&
+                        rooms[1].id == 2L &&
+                        rooms[1].nama == "Ruang B" &&
+                        !rooms[1].isActive &&
+                        rooms[1].isMyRoom
             })
         }
     }
 
     @Test
-    fun `syncMyRooms does not insert when API returns empty`() = runTest {
+    fun `syncMyRooms does not reset flags when API returns empty`() = runTest {
+        // HARDENING: response kosong TIDAK boleh menghapus penanda isMyRoom — jika server
+        // bermasalah (mis. filter since mengecualikan baris updated_at NULL), reset penanda
+        // akan membuat daftar room input inspeksi kosong permanen untuk role non-admin.
         coEvery { authApi.getMyRooms(any()) } returns SyncResponse(data = emptyList())
         coEvery { dao.resetMyRooms() } returns Unit
 
         repository.syncMyRooms()
 
-        // Reset tetap dijalankan meski response kosong → semua penanda assignment hilang
-        coVerify(exactly = 1) { dao.resetMyRooms() }
+        coVerify(exactly = 0) { dao.resetMyRooms() }
         coVerify(exactly = 0) { dao.insertRooms(any()) }
+    }
+
+    @Test
+    fun `syncMyRooms resets then re-flags only when data present`() = runTest {
+        // Saat data ada → reset penanda lama, lalu tandai ulang hanya room yang di-assign
+        // (replace-all semantics — assignment yang dicabut admin tidak lagi tampil).
+        val apiResult = SyncResponse(
+            data = listOf(
+                RoomOut(id = 7, name = "Ruang Baru", isActive = true),
+            )
+        )
+        coEvery { authApi.getMyRooms(any()) } returns apiResult
+        coEvery { dao.resetMyRooms() } returns Unit
+        coEvery { dao.insertRooms(any()) } returns Unit
+
+        repository.syncMyRooms()
+
+        coVerify(exactly = 1) { dao.resetMyRooms() }
+        coVerify(exactly = 1) { dao.insertRooms(any()) }
     }
 
     @Test(expected = RuntimeException::class)
@@ -381,10 +455,12 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncUserRooms clears then inserts mapped items`() = runTest {
-        val apiResult = SyncResponse(data = listOf(
-            UserRoomDto(id = 1, userId = 5, roomId = 10, createdAt = "2026-01-01T00:00:00Z"),
-            UserRoomDto(id = 2, userId = 5, roomId = 20),
-        ))
+        val apiResult = SyncResponse(
+            data = listOf(
+                UserRoomDto(id = 1, userId = 5, roomId = 10, createdAt = "2026-01-01T00:00:00Z"),
+                UserRoomDto(id = 2, userId = 5, roomId = 20),
+            )
+        )
         coEvery { authApi.getUserRooms(any()) } returns apiResult
         coEvery { dao.clearUserRooms() } returns Unit
         coEvery { dao.insertUserRooms(any()) } returns Unit
@@ -396,16 +472,57 @@ class MasterDataRepositoryTest {
         coVerify {
             dao.insertUserRooms(match { items ->
                 items.size == 2 &&
-                    items[0].id == 1L &&
-                    items[0].userId == 5 &&
-                    items[0].roomId == 10L &&
-                    items[0].createdAt == "2026-01-01T00:00:00Z" &&
-                    items[1].id == 2L &&
-                    items[1].userId == 5 &&
-                    items[1].roomId == 20L &&
-                    items[1].createdAt == null
+                        items[0].id == 1L &&
+                        items[0].userId == 5 &&
+                        items[0].roomId == 10L &&
+                        items[0].createdAt == "2026-01-01T00:00:00Z" &&
+                        items[1].id == 2L &&
+                        items[1].userId == 5 &&
+                        items[1].roomId == 20L &&
+                        items[1].createdAt == null
             })
         }
+    }
+
+    @Test
+    fun `syncUserRooms skips tombstone rows with is_active false`() = runTest {
+        // Kontrak §2.3: is_active=false = assignment dilepas admin — TIDAK boleh masuk daftar lokal.
+        val apiResult = SyncResponse(
+            data = listOf(
+                UserRoomDto(id = 1, userId = 5, roomId = 10, isActive = true),
+                UserRoomDto(id = 4, userId = 5, roomId = 20, isActive = false),
+            )
+        )
+        coEvery { authApi.getUserRooms(any()) } returns apiResult
+        coEvery { dao.clearUserRooms() } returns Unit
+        coEvery { dao.insertUserRooms(any()) } returns Unit
+
+        repository.syncUserRooms()
+
+        coVerify(exactly = 1) { dao.clearUserRooms() }
+        coVerify {
+            dao.insertUserRooms(match { items ->
+                items.size == 1 &&
+                        items[0].id == 1L &&
+                        items[0].roomId == 10L
+            })
+        }
+    }
+
+    @Test
+    fun `syncUserRooms inserts nothing when all rows are tombstones`() = runTest {
+        val apiResult = SyncResponse(
+            data = listOf(
+                UserRoomDto(id = 4, userId = 5, roomId = 20, isActive = false),
+            )
+        )
+        coEvery { authApi.getUserRooms(any()) } returns apiResult
+        coEvery { dao.clearUserRooms() } returns Unit
+
+        repository.syncUserRooms()
+
+        coVerify(exactly = 1) { dao.clearUserRooms() }
+        coVerify(exactly = 0) { dao.insertUserRooms(any()) }
     }
 
     @Test
@@ -450,7 +567,25 @@ class MasterDataRepositoryTest {
     }
 
     @Test
-    fun `syncItems persists response synced_at`() = runTest {
+    fun `syncItems persists response synced_at when data present`() = runTest {
+        coEvery { api.getItems(any()) } returns SyncResponse(
+            data = listOf(ItemOut(1, "Meja")),
+            syncedAt = "2026-07-29T08:30:00Z"
+        )
+        coEvery { dao.insertItems(any()) } returns Unit
+
+        repository.syncItems()
+
+        val transform = slot<(SyncState) -> SyncState>()
+        coVerify(exactly = 1) { syncStateStore.update(capture(transform)) }
+        assertEquals("2026-07-29T08:30:00Z", transform.captured(SyncState()).itemsSyncedAt)
+    }
+
+    @Test
+    fun `syncItems does not advance watermark when data empty`() = runTest {
+        // Response kosong TIDAK boleh memajukan watermark — kalau server bermasalah
+        // (filter since mengecualikan baris NULL), sync berikutnya harus tetap minta
+        // sejak timestamp lama agar data lama tetap ter-download.
         coEvery { api.getItems(any()) } returns SyncResponse(
             data = emptyList(),
             syncedAt = "2026-07-29T08:30:00Z"
@@ -458,9 +593,7 @@ class MasterDataRepositoryTest {
 
         repository.syncItems()
 
-        val transform = slot<(SyncState) -> SyncState>()
-        coVerify(exactly = 1) { syncStateStore.update(capture(transform)) }
-        assertEquals("2026-07-29T08:30:00Z", transform.captured(SyncState()).itemsSyncedAt)
+        coVerify(exactly = 0) { syncStateStore.update(any()) }
     }
 
     @Test
@@ -474,7 +607,23 @@ class MasterDataRepositoryTest {
     }
 
     @Test
-    fun `syncRooms persists response synced_at`() = runTest {
+    fun `syncRooms persists response synced_at when data present`() = runTest {
+        coEvery { api.getRooms(any()) } returns SyncResponse(
+            data = listOf(RoomOut(1, "Ruang 1")),
+            syncedAt = "2026-07-29T08:30:00Z"
+        )
+        coEvery { dao.insertRooms(any()) } returns Unit
+
+        repository.syncRooms()
+
+        val transform = slot<(SyncState) -> SyncState>()
+        coVerify(exactly = 1) { syncStateStore.update(capture(transform)) }
+        assertEquals("2026-07-29T08:30:00Z", transform.captured(SyncState()).roomsSyncedAt)
+    }
+
+    @Test
+    fun `syncRooms does not advance watermark when data empty`() = runTest {
+        // Response kosong TIDAK boleh memajukan watermark — lihat penjelasan di syncItems.
         coEvery { api.getRooms(any()) } returns SyncResponse(
             data = emptyList(),
             syncedAt = "2026-07-29T08:30:00Z"
@@ -482,9 +631,7 @@ class MasterDataRepositoryTest {
 
         repository.syncRooms()
 
-        val transform = slot<(SyncState) -> SyncState>()
-        coVerify(exactly = 1) { syncStateStore.update(capture(transform)) }
-        assertEquals("2026-07-29T08:30:00Z", transform.captured(SyncState()).roomsSyncedAt)
+        coVerify(exactly = 0) { syncStateStore.update(any()) }
     }
 
     @Test
@@ -580,7 +727,10 @@ class MasterDataRepositoryTest {
     fun `getInspectedRoomIdsForDate deduplicates overlapping IDs`() = runTest {
         // Same room has both a draft AND an inspection today
         coEvery { dao.getDraftRoomIdsForDate("2026-07-30") } returns listOf(1L, 2L, 3L)
-        coEvery { dao.getInspectedRoomIdsForDate("2026-07-30") } returns listOf(1L, 4L) // 1 is overlap
+        coEvery { dao.getInspectedRoomIdsForDate("2026-07-30") } returns listOf(
+            1L,
+            4L
+        ) // 1 is overlap
 
         val result = repository.getInspectedRoomIdsForDate("2026-07-30")
 

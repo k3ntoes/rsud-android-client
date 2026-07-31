@@ -1,13 +1,16 @@
 package my.id.kentoes.rsudajibarangapp.auth
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
+import my.id.kentoes.rsudajibarangapp.sync.SyncWorker
 import javax.inject.Inject
 
 data class LoginUiState(
@@ -20,6 +23,7 @@ data class LoginUiState(
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
@@ -32,6 +36,13 @@ class AuthViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             authRepository.init()
+            // Sesi di-restore (token masih valid saat app dibuka ulang) → enqueue sync
+            // master data + draf pending di background. Tanpa ini, dashboard saat app
+            // dibuka ulang dengan cache kosong (mis. setelah forceLogout akun lain)
+            // tetap kosong sampai user membuka daftar ruangan.
+            if (authState.value is AuthState.Authenticated) {
+                SyncWorker.enqueue(context)
+            }
         }
     }
 
@@ -53,6 +64,13 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             val success = authRepository.login(state.username, state.password)
+            // Login sukses → enqueue sync master data + draf pending di background.
+            // Tanpa ini, dashboard pertama kali login selalu kosong karena cache lokal
+            // belum terisi — SyncWorker men-download master data penuh (items, rooms,
+            // room-items, my-rooms, user-rooms, users) saat Network.CONNECTED.
+            if (success) {
+                SyncWorker.enqueue(context)
+            }
             // Baca error dari authState jika login gagal
             val authError = if (!success) {
                 val currentAuthState = authRepository.authState.value

@@ -9,10 +9,7 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.UserEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
-import my.id.kentoes.rsudajibarangapp.master.api.ItemOut
 import my.id.kentoes.rsudajibarangapp.master.api.MasterDataApi
-import my.id.kentoes.rsudajibarangapp.master.api.RoomItemDto
-import my.id.kentoes.rsudajibarangapp.master.api.RoomOut
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -78,9 +75,12 @@ class MasterDataRepository @Inject constructor(
                 )
             }
             masterDataDao.insertItems(items)
-        }
-        response.syncedAt?.let { syncedAt ->
-            syncStateStore.update { it.copy(itemsSyncedAt = syncedAt) }
+            // Watermark HANYA maju saat ada data — response kosong tidak boleh memajukan
+            // watermark: jika server bermasalah (mis. filter since mengecualikan baris NULL),
+            // sync berikutnya tetap minta sejak timestamp lama → data lama tetap ter-download.
+            response.syncedAt?.let { syncedAt ->
+                syncStateStore.update { it.copy(itemsSyncedAt = syncedAt) }
+            }
         }
     }
 
@@ -101,9 +101,12 @@ class MasterDataRepository @Inject constructor(
                 )
             }
             masterDataDao.insertRooms(rooms)
-        }
-        response.syncedAt?.let { syncedAt ->
-            syncStateStore.update { it.copy(roomsSyncedAt = syncedAt) }
+            // Watermark HANYA maju saat ada data — response kosong tidak boleh memajukan
+            // watermark: jika server bermasalah (mis. filter since mengecualikan baris NULL),
+            // sync berikutnya tetap minta sejak timestamp lama → data lama tetap ter-download.
+            response.syncedAt?.let { syncedAt ->
+                syncStateStore.update { it.copy(roomsSyncedAt = syncedAt) }
+            }
         }
     }
 
@@ -117,8 +120,11 @@ class MasterDataRepository @Inject constructor(
         // Clear SETELAH fetch sukses agar relasi yang dihapus server ikut terhapus lokal,
         // tanpa risiko kehilangan data jika sync gagal.
         masterDataDao.clearRoomItems()
-        if (apiItems.isNotEmpty()) {
-            masterDataDao.insertRoomItems(apiItems.map { dto ->
+        // TOMBSTONE (is_active=false, kontrak §2.2): relasi sudah dilepas server — jangan
+        // diinsert ke mapping lokal. Berlaku di full sync pertama DAN delta (?since=).
+        val activeItems = apiItems.filter { it.isActive }
+        if (activeItems.isNotEmpty()) {
+            masterDataDao.insertRoomItems(activeItems.map { dto ->
                 RoomItemEntity(
                     id = dto.id,
                     roomId = dto.roomId,
@@ -141,11 +147,13 @@ class MasterDataRepository @Inject constructor(
         // room yang masih di-assign.
         val response = authApi.getMyRooms(since = since ?: firstSyncSince)
         val apiRooms = response.data
-        // Reset penanda isMyRoom SEMUA room SETELAH fetch sukses, lalu tandai hanya room
-        // yang di-assign — assignment yang dicabut admin tidak lagi tampil di dropdown
-        // (replace-all semantics, sama seperti pivot room-items/user-rooms).
-        masterDataDao.resetMyRooms()
+        // HARDENING: reset penanda isMyRoom HANYA saat ada data. Response kosong tidak
+        // boleh menghapus penanda — jika server bermasalah (mis. filter since mengecualikan
+        // baris updated_at NULL, lihat bug /me/rooms di BE), reset akan membuat daftar room
+        // input inspeksi kosong permanen untuk role non-admin. Saat data ada, reset lalu
+        // tandai ulang (replace-all semantics: assignment yang dicabut admin tidak tampil).
         if (apiRooms.isNotEmpty()) {
+            masterDataDao.resetMyRooms()
             val rooms = apiRooms.map { api ->
                 RuangEntity(
                     id = api.id,
@@ -204,8 +212,11 @@ class MasterDataRepository @Inject constructor(
         // Clear SETELAH fetch sukses agar assignment yang dicabut admin ikut terhapus lokal,
         // tanpa risiko kehilangan data jika sync gagal.
         masterDataDao.clearUserRooms()
-        if (apiItems.isNotEmpty()) {
-            masterDataDao.insertUserRooms(apiItems.map { dto ->
+        // TOMBSTONE (is_active=false, kontrak §2.3): assignment sudah dilepas admin — jangan
+        // diinsert ke daftar lokal. Berlaku di full sync pertama DAN delta (?since=).
+        val activeItems = apiItems.filter { it.isActive }
+        if (activeItems.isNotEmpty()) {
+            masterDataDao.insertUserRooms(activeItems.map { dto ->
                 UserRoomEntity(
                     id = dto.id,
                     userId = dto.userId,
