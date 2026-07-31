@@ -124,6 +124,18 @@ interface MasterDataDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPhotos(photos: List<InspectionPhotoEntity>)
 
+    /** Update referensi + path lokal foto setelah re-upload (ADR-0016) — nama file server baru. */
+    @Query("UPDATE inspection_photo SET photoFileName = :fileName, thumbnailFileName = :thumbnailName, localPath = :localPath WHERE id = :photoId")
+    suspend fun updatePhotoAfterReplace(photoId: Long, fileName: String, thumbnailName: String?, localPath: String?)
+
+    /** Semua foto milik satu inspeksi (join via inspection_detail) — untuk tampilan lokal-first (ADR-0016). */
+    @Query("""
+        SELECT p.* FROM inspection_photo p
+        INNER JOIN inspection_detail d ON p.detailId = d.id
+        WHERE d.inspectionId = :inspectionId
+    """)
+    suspend fun getPhotosForInspection(inspectionId: Long): List<InspectionPhotoEntity>
+
     // ── User Cache ──
 
     @Query("SELECT * FROM user")

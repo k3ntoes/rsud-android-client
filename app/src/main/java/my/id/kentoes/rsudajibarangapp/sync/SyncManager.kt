@@ -6,6 +6,7 @@ import my.id.kentoes.rsudajibarangapp.inspection.InspectionHistoryRepository
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionRepository
 import my.id.kentoes.rsudajibarangapp.master.MasterDataRepository
 import my.id.kentoes.rsudajibarangapp.sync.api.DetailSubmit
+import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionSubmit
 import my.id.kentoes.rsudajibarangapp.sync.api.PhotoSubmit
 import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
@@ -32,7 +33,8 @@ class SyncManager @Inject constructor(
     private val masterDataRepository: MasterDataRepository,
     private val drafDao: DrafDao,
     private val syncApi: SyncApi,
-    private val imageCompressor: ImageCompressor
+    private val imageCompressor: ImageCompressor,
+    private val sentPhotoStorage: SentPhotoStorage
 ) {
 
     /** Sync master data sebelum sync inspeksi */
@@ -75,7 +77,14 @@ class SyncManager @Inject constructor(
                 ?: return SyncResult(draftId, false, "Draf tidak ditemukan")
 
             // 2. Kumpulkan semua foto dari semua item → kompres → upload
-            val fotoFileNames = mutableListOf<Pair<String, String>>() // (localPath → serverFileName)
+            // REVIEW-FIX: dua mapping terpisah:
+            //  - uploadedNames: original fotoPath → serverFileName — untuk membangun DetailSubmit
+            //  - compressedByServer: serverFileName → compressResultPath — untuk dipindah ke
+            //    photos_sent (ADR-0016). compress() mengembalikan path di cacheDir/compressed_photos
+            //    ATAU original path bila file sudah ≤300KB (tidak dikompres). JANGAN panggil
+            //    compress() ulang — setiap panggilan membuat file temp baru.
+            val uploadedNames = mutableMapOf<String, String>()
+            val compressedByServer = mutableMapOf<String, String>()
 
             for (item in payload.items) {
                 for (fotoPath in item.fotoPaths) {
@@ -84,14 +93,12 @@ class SyncManager @Inject constructor(
                     val requestBody = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
                     val multipart = MultipartBody.Part.createFormData("file", file.name, requestBody)
                     val uploadResponse = syncApi.uploadPhoto(multipart)
-                    fotoFileNames.add(fotoPath to uploadResponse.fileName)
+                    uploadedNames[fotoPath] = uploadResponse.fileName
+                    compressedByServer[uploadResponse.fileName] = compressedPath
                 }
             }
 
-            // 3. Buat serverFileName map dari hasil upload
-            val uploadedNames = fotoFileNames.associate { (local, server) -> local to server }
-
-            // 4. Kirim inspection JSON
+            // 3. Kirim inspection JSON
             val details = payload.items.map { item ->
                 val serverFileNames = item.fotoPaths.mapNotNull { uploadedNames[it] }
                 DetailSubmit(
@@ -113,10 +120,15 @@ class SyncManager @Inject constructor(
             // Submit returns InspectionOutDto now
             val response = syncApi.submitInspection(submitRequest)
 
-            // Simpan hasil submit ke history cache
-            runCatching { inspectionHistoryRepository.cacheInspection(response) }
+            // ADR-0016: pindahkan file terkompresi (byte-identik server) ke photos_sent,
+            // nama = nama file server. Linking key: server photo id ↔ localPath dikirim ke
+            // cacheInspection sebagai map — cacheInspection dipanggil SEBELUM deleteSyncedDraft.
+            val photoLocalPaths = buildPhotoLocalPaths(compressedByServer, response)
 
-            // 5. Sukses — atomic: update status + hapus draf + file foto lokal
+            // Simpan hasil submit ke history cache (dengan localPath backup)
+            runCatching { inspectionHistoryRepository.cacheInspection(response, photoLocalPaths) }
+
+            // 5. Sukses — atomic: update status + hapus draf + file foto lokal (asli 3-5MB)
             inspectionRepository.deleteSyncedDraft(draftId)
             SyncResult(draftId, true, "Inspeksi berhasil dikirim (ID: ${response.id})")
         } catch (e: Exception) {
@@ -130,4 +142,31 @@ class SyncManager @Inject constructor(
                 SyncResult(draftId, false, msg)
             }
         }
+
+    /**
+     * Pindahkan file terkompresi ke `photos_sent` dan bangun peta server photo id → localPath.
+     *
+     * REVIEW-FIX (linking key): cacheInspection hanya menerima InspectionOutDto (server photo
+     * ids, tanpa localPath). Koneksi server photo id ↔ file lokal dibuat DI SINI dengan
+     * mencocokkan photoFileName pada response (nama file server yang sama dengan hasil upload)
+     * terhadap file yang dipindah — lalu map serverPhotoId → localPath dikirim ke cacheInspection.
+     */
+    private fun buildPhotoLocalPaths(
+        compressedByServer: Map<String, String>, // serverFileName → compressResultPath
+        response: InspectionOutDto
+    ): Map<Long, String> {
+        if (compressedByServer.isEmpty()) return emptyMap()
+
+        // serverFileName → localPath setelah dipindah ke photos_sent
+        val serverToLocal = sentPhotoStorage.moveToSent(compressedByServer)
+
+        // server photo id → localPath, via photoFileName yang ada di response
+        return buildMap {
+            response.details.forEach { detail ->
+                detail.photos.forEach { photo ->
+                    serverToLocal[photo.photoFileName]?.let { put(photo.id, it) }
+                }
+            }
+        }
+    }
 }

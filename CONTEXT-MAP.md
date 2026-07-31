@@ -22,7 +22,7 @@ Aplikasi Android *offline-first* untuk inspeksi kebersihan rumah sakit oleh Petu
 - **Inspections → Auth**: Setiap request API inspeksi membutuhkan Access Token dari Auth
 - **Inspections → Core**: Menggunakan shared models, base types, dan database Core (`DrafDao`, `draf_inspeksi.inspectorId`)
 - **Inspections → Master**: Form inspeksi & dropdown pemilihan room memakai master data lokal; hanya room bertanda `isMyRoom` yang tampil (kecuali `admin_ppi`)
-- **Inspections → Sync**: Data inspeksi yang disimpan lokal akan diproses oleh Sync untuk dikirim ke server; `syncSingleDraft` memanggil `InspectionRepository.deleteSyncedDraft` (hapus baris + file foto)
+- **Inspections → Sync**: Data inspeksi yang disimpan lokal akan diproses oleh Sync untuk dikirim ke server; `syncSingleDraft` memanggil `InspectionRepository.deleteSyncedDraft` (hapus baris + pindahkan file foto terkompresi ke `photos_sent` — lihat ADR-0016)
 - **Master → Core**: `SyncStateStore` (SharedPreferences) menyimpan `synced_at` per endpoint; `RuangEntity.isMyRoom` dan `MasterDataDao` tinggal di database Core
 - **Sync → Auth**: WorkManager menggunakan Access Token milik sesi terakhir yang tersimpan; `syncUsers()` sync data user dari `GET /api/auth/users` ke `UserEntity`
 - **Sync → Master**: `syncMasterData()` memanggil `MasterDataRepository` (items, rooms, pivots, my-rooms, users); urutan `syncRooms` → `syncMyRooms` load-bearing agar penanda `isMyRoom` benar (REPLACE syncRooms me-reset flag)

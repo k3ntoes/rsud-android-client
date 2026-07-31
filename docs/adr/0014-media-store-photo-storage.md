@@ -1,6 +1,6 @@
 # ADR-0014: MediaStore Photo Storage & 30-Day Data Retention
 
-**Status**: Accepted
+**Status**: Accepted — bagian **lokasi penyimpanan** disupersede oleh [ADR-0016](./0016-dual-path-photo-storage.md) (folder privat `photos_sent` menggantikan MediaStore). **Retensi 30 hari tetap berlaku.**
 
 **Tanggal**: 2026-07-30
 

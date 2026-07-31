@@ -71,10 +71,13 @@ Dua metrik yang ditampilkan di dashboard untuk inspector: jumlah ruangan yang su
 _Avoid_: Daily stats, hari ini
 
 **Retensi Data**: 
-Kebijakan penyimpanan data lokal:
+Kebijakan penyimpanan data lokal (lihat ADR-0016 untuk keputusan detail):
 - Metadata inspeksi (`InspectionEntity`, `InspectionDetailEntity`): disimpan permanen (ukuran kecil).
-- Foto bukti: disimpan di `Pictures/rsud_ajibarang/` via MediaStore; dihapus otomatis setelah 30 hari via WorkManager; user bisa hapus manual dari galeri.
-- Draf aktif: foto tidak dihapus sampai draf berhasil dikirim.
+- Foto bukti disimpan di **dua path** sesuai siklus hidup (ADR-0016):
+  - **Draf aktif**: file asli di `files/photos/`, tidak dihapus sampai draf berhasil dikirim. Menghapus draf (manual/resume, sync sukses, ganti akun) ikut menghapus file **asli**-nya.
+  - **Terkirim**: saat sync sukses, file **terkompresi** (byte-identik server, ~300KB) dipindahkan ke `files/photos_sent/` dan `InspectionPhotoEntity.localPath` diisi. Disimpan **30 hari** (dihitung dari tanggal sync), lalu dihapus otomatis oleh `DraftPhotoCleanupWorker`. Tidak dihapus saat ganti akun — riwayat bersifat device-wide.
+- **Riwayat inspeksi menampilkan foto lokal-first**: jika `localPath` ada & file ada → tampilkan file lokal (instan, offline-ready); jika tidak → URL server.
 - **Draf bertag `inspector_id`** (diisi dari user yang sedang login saat draf disimpan). Draf TIDAK dihapus saat logout — user yang sama login ulang tidak kehilangan progress. Hanya draf milik akun LAIN (`inspector_id` berbeda) yang dihapus saat akun berbeda login. Draf legacy tanpa `inspector_id` dipertahankan (tidak dapat diatribusikan).
-- **Foto draf yatim** (file di `files/photos/` tanpa referensi `draf_foto` — sisa draf terhapus/capture kamera dibatalkan — atau baris `draf_foto` tanpa header draf valid) dibersihkan otomatis oleh `DraftPhotoCleanupWorker` (periodik harian via WorkManager). File berumur < 24 jam tidak disentuh agar foto yang baru diambil namun belum disimpan ke draf tetap aman. Menghapus draf (via `InspectionRepository.deleteDraft` — termasuk saat resume/simpan ulang) langsung menghapus file fotonya, jadi file yatim tidak menumpuk di sela worker cleanup.
+- **Foto draf yatim** (file di `files/photos/` tanpa referensi `draf_foto` — sisa draf terhapus/capture kamera dibatalkan — atau baris `draf_foto` tanpa header draf valid) dibersihkan otomatis oleh `DraftPhotoCleanupWorker` (periodik harian via WorkManager). File berumur < 24 jam tidak disentuh agar foto yang baru diambil namun belum disimpan ke draf tetap aman.
+- **Re-upload manual** (opsional, menunggu endpoint replace backend): foto terkirim yang rusak/hilang di server bisa di-re-upload dari `files/photos_sent`.
 _Avoid_: Cache, storage policy

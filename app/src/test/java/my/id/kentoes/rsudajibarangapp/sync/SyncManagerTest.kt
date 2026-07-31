@@ -14,6 +14,7 @@ import my.id.kentoes.rsudajibarangapp.inspection.PayloadItem
 import my.id.kentoes.rsudajibarangapp.master.MasterDataRepository
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionDetailOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
+import my.id.kentoes.rsudajibarangapp.sync.api.PhotoOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
 import my.id.kentoes.rsudajibarangapp.sync.api.UploadPhotoResponse
 import okhttp3.MultipartBody
@@ -32,6 +33,7 @@ class SyncManagerTest {
     private lateinit var drafDao: DrafDao
     private lateinit var syncApi: SyncApi
     private lateinit var imageCompressor: ImageCompressor
+    private lateinit var sentPhotoStorage: SentPhotoStorage
     private lateinit var syncManager: SyncManager
 
     private val sampleInspectionOut = InspectionOutDto(
@@ -77,18 +79,77 @@ class SyncManagerTest {
         inspectionRepository = mockk()
         inspectionHistoryRepository = mockk()
         masterDataRepository = mockk()
-        coEvery { inspectionHistoryRepository.cacheInspection(any()) } returns Unit
+        coEvery { inspectionHistoryRepository.cacheInspection(any(), any()) } returns Unit
         drafDao = mockk()
         syncApi = mockk()
         imageCompressor = mockk()
+        sentPhotoStorage = mockk()
+        coEvery { sentPhotoStorage.moveToSent(any()) } returns mapOf("server_file.jpg" to "/sent/server_file.jpg")
         syncManager = SyncManager(
             inspectionRepository,
             inspectionHistoryRepository,
             masterDataRepository,
             drafDao,
             syncApi,
-            imageCompressor
+            imageCompressor,
+            sentPhotoStorage
         )
+    }
+
+    // ── ADR-0016: photos_sent linking ──
+
+    @Test
+    fun `syncSingleDraft moves compressed files and links localPath to server photo id`() = runTest {
+        coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
+        coEvery { imageCompressor.compress("/photo/a.jpg") } returns "/compressed/a.jpg"
+        coEvery { imageCompressor.compress("/photo/b.jpg") } returns "/compressed/b.jpg"
+        coEvery { imageCompressor.compress("/photo/c.jpg") } returns "/compressed/c.jpg"
+        // REVIEW-FIX: nama server harus UNIK per upload — kalau sama, compressedByServer
+        // (keyed by server name) akan collapse jadi 1 entry.
+        coEvery { syncApi.uploadPhoto(any()) } returnsMany listOf(
+            UploadPhotoResponse("server_a.jpg"),
+            UploadPhotoResponse("server_b.jpg"),
+            UploadPhotoResponse("server_c.jpg")
+        )
+        coEvery { syncApi.submitInspection(any()) } returns InspectionOutDto(
+            id = 1, roomId = 10, inspectorId = 5, status = "PENDING",
+            businessDate = "2026-01-01", localTimestamp = "2026-01-01T00:00:00Z", createdAt = "2026-01-01T00:00:00Z",
+            details = listOf(
+                InspectionDetailOutDto(id = 100, itemId = 1, itemNameSnapshot = "Meja", score = 2,
+                    photos = listOf(PhotoOutDto(id = 500, photoFileName = "server_a.jpg", thumbnailFileName = null, sortOrder = 0)))
+            )
+        )
+        coEvery { sentPhotoStorage.moveToSent(any()) } returns mapOf("server_a.jpg" to "/sent/server_a.jpg")
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
+
+        val result = syncManager.syncSingleDraft(1L)
+
+        assertTrue(result.success)
+        coVerify {
+            sentPhotoStorage.moveToSent(match { map ->
+                map["server_a.jpg"] == "/compressed/a.jpg" && map.size == 3
+            })
+        }
+        // Linking key: server photo id 500 ↔ localPath /sent/server_a.jpg dikirim ke cacheInspection
+        coVerify {
+            inspectionHistoryRepository.cacheInspection(match { dto -> dto.id == 1L }, match { map ->
+                map[500L] == "/sent/server_a.jpg"
+            })
+        }
+    }
+
+    @Test
+    fun `syncSingleDraft does not move files when submit fails`() = runTest {
+        coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
+        coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_a.jpg")
+        coEvery { syncApi.submitInspection(any()) } throws RuntimeException("HTTP 422 Unprocessable Entity")
+
+        val result = syncManager.syncSingleDraft(1L)
+
+        assertFalse(result.success)
+        coVerify(exactly = 0) { sentPhotoStorage.moveToSent(any()) }
+        coVerify(exactly = 0) { inspectionHistoryRepository.cacheInspection(any(), any()) }
     }
 
     // ── syncAllPending ──

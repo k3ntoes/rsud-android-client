@@ -16,6 +16,7 @@ import my.id.kentoes.rsudajibarangapp.core.model.PaginatedResponse
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionDetailOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionListItemDto
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
+import my.id.kentoes.rsudajibarangapp.sync.SentPhotoStorage
 import my.id.kentoes.rsudajibarangapp.sync.api.PhotoOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
 import org.junit.Assert.assertEquals
@@ -23,12 +24,19 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.io.File
 
 class InspectionHistoryRepositoryTest {
 
+    @get:Rule
+    val tempFolder = TemporaryFolder()
+
     private lateinit var syncApi: SyncApi
     private lateinit var masterDataDao: MasterDataDao
+    private lateinit var sentPhotoStorage: SentPhotoStorage
     private lateinit var repository: InspectionHistoryRepository
 
     private val sampleRoom = RuangEntity(id = 1, nama = "Ruang A", lantai = "Lantai 1")
@@ -43,9 +51,10 @@ class InspectionHistoryRepositoryTest {
     fun setup() {
         syncApi = mockk()
         masterDataDao = mockk()
+        sentPhotoStorage = mockk()
         every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
         coEvery { masterDataDao.getAllRoomsOnce() } returns sampleRooms
-        repository = InspectionHistoryRepository(syncApi, masterDataDao)
+        repository = InspectionHistoryRepository(syncApi, masterDataDao, sentPhotoStorage)
     }
 
     // ── observeLocalInspections ──
@@ -308,6 +317,83 @@ class InspectionHistoryRepositoryTest {
 
         // Only detail with photos triggers insertPhotos
         coVerify(exactly = 1) { masterDataDao.insertPhotos(match { it.size == 1 }) }
+    }
+
+    @Test
+    fun `cacheInspection saves photoLocalPaths into entities`() = runTest {
+        val dto = InspectionOutDto(
+            id = 1, roomId = 1, inspectorId = 5, status = "APPROVED",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T10:00:00Z", createdAt = "2026-07-28T10:00:00Z",
+            details = listOf(
+                InspectionDetailOutDto(id = 10, itemId = 1, itemNameSnapshot = "Meja", score = 2,
+                    photos = listOf(PhotoOutDto(id = 100, photoFileName = "foto1.jpg", thumbnailFileName = null, sortOrder = 0))
+                )
+            )
+        )
+        coEvery { masterDataDao.insertInspection(any()) } returns Unit
+        coEvery { masterDataDao.insertDetails(any()) } returns Unit
+        coEvery { masterDataDao.insertPhotos(any()) } returns Unit
+
+        repository.cacheInspection(dto, photoLocalPaths = mapOf(100L to "/sent/foto1.jpg"))
+
+        coVerify {
+            masterDataDao.insertPhotos(match {
+                it.size == 1 && it[0].localPath == "/sent/foto1.jpg"
+            })
+        }
+    }
+
+    @Test
+    fun `cacheInspection leaves localPath null when map missing`() = runTest {
+        val dto = InspectionOutDto(
+            id = 1, roomId = 1, inspectorId = 5, status = "APPROVED",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T10:00:00Z", createdAt = "2026-07-28T10:00:00Z",
+            details = listOf(
+                InspectionDetailOutDto(id = 10, itemId = 1, itemNameSnapshot = "Meja", score = 2,
+                    photos = listOf(PhotoOutDto(id = 100, photoFileName = "foto1.jpg", thumbnailFileName = null, sortOrder = 0))
+                )
+            )
+        )
+        coEvery { masterDataDao.insertInspection(any()) } returns Unit
+        coEvery { masterDataDao.insertDetails(any()) } returns Unit
+        coEvery { masterDataDao.insertPhotos(any()) } returns Unit
+
+        repository.cacheInspection(dto)
+
+        coVerify {
+            masterDataDao.insertPhotos(match { it.size == 1 && it[0].localPath == null })
+        }
+    }
+
+    // ── replacePhoto (ADR-0016 re-upload) ──
+
+    @Test
+    fun `replacePhoto uploads local file and updates photo row`() = runTest {
+        val updated = PhotoOutDto(id = 100, photoFileName = "new_foto.jpg", thumbnailFileName = "new_thumb.jpg", sortOrder = 0)
+        coEvery { syncApi.replacePhoto(1L, 100L, any()) } returns updated
+        coEvery { sentPhotoStorage.moveToSent(any()) } returns mapOf("new_foto.jpg" to "/sent/new_foto.jpg")
+        coEvery { masterDataDao.updatePhotoAfterReplace(any(), any(), any(), any()) } returns Unit
+        val photo = tempFolder.newFile("backup.jpg").apply { writeBytes(byteArrayOf(1, 2, 3)) }
+
+        val result = repository.replacePhoto(1L, 100L, photo.absolutePath)
+
+        assertEquals("new_foto.jpg", result.photoFileName)
+        coVerify { syncApi.replacePhoto(1L, 100L, any()) }
+        coVerify { sentPhotoStorage.moveToSent(any()) }
+        coVerify { masterDataDao.updatePhotoAfterReplace(100L, "new_foto.jpg", "new_thumb.jpg", any()) }
+    }
+
+    @Test
+    fun `replacePhoto throws when local backup missing`() = runTest {
+        val missing = File(tempFolder.root, "tidak_ada.jpg")
+
+        try {
+            repository.replacePhoto(1L, 100L, missing.absolutePath)
+            throw AssertionError("Harusnya throw IllegalStateException")
+        } catch (e: IllegalStateException) {
+            assertEquals("File backup lokal tidak ditemukan", e.message)
+        }
+        coVerify(exactly = 0) { syncApi.replacePhoto(any(), any(), any()) }
     }
 
     // ── PaginatedResult ──

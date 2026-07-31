@@ -7,6 +7,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -143,4 +144,17 @@ interface SyncApi {
     suspend fun getInspectionDetail(
         @Path("id") id: Long
     ): InspectionOutDto
+
+    /**
+     * Replace foto inspeksi (re-upload foto rusak/hilang) — ADR-0016.
+     * Endpoint belum ada di backend (kontrak §4.6); method siap dipakai begitu tersedia.
+     * Response berisi PhotoOutDto dengan nama file server baru.
+     */
+    @Multipart
+    @PUT("inspections/{id}/photos/{photoId}")
+    suspend fun replacePhoto(
+        @Path("id") id: Long,
+        @Path("photoId") photoId: Long,
+        @Part file: MultipartBody.Part
+    ): PhotoOutDto
 }

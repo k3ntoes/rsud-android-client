@@ -23,5 +23,7 @@ data class InspectionPhotoEntity(
     val detailId: Long,
     val photoFileName: String,
     val thumbnailFileName: String? = null,
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+    /** Path file foto lokal di folder photos_sent (ADR-0016) — diisi saat sync sukses. */
+    val localPath: String? = null
 )

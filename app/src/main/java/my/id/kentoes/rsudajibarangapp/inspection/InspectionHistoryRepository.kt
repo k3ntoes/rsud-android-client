@@ -7,8 +7,14 @@ import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionDetailEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionPhotoEntity
+import my.id.kentoes.rsudajibarangapp.sync.SentPhotoStorage
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
+import my.id.kentoes.rsudajibarangapp.sync.api.PhotoOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -47,7 +53,8 @@ data class PaginatedResult(
 @Singleton
 class InspectionHistoryRepository @Inject constructor(
     private val syncApi: SyncApi,
-    private val masterDataDao: MasterDataDao
+    private val masterDataDao: MasterDataDao,
+    private val sentPhotoStorage: SentPhotoStorage
 ) {
 
     /** Flow dari cache lokal — tampilkan instant sebelum refresh server */
@@ -120,8 +127,14 @@ class InspectionHistoryRepository @Inject constructor(
         }
     }
 
-    /** Simpan hasil submit ke cache lokal */
-    suspend fun cacheInspection(dto: InspectionOutDto) {
+    /**
+     * Simpan hasil submit ke cache lokal.
+     *
+     * @param photoLocalPaths peta server photo id → path file lokal di photos_sent (ADR-0016),
+     *   diisi oleh SyncManager setelah memindahkan file terkompresi. Kolom `localPath` dipakai
+     *   untuk tampilan lokal-first di detail riwayat.
+     */
+    suspend fun cacheInspection(dto: InspectionOutDto, photoLocalPaths: Map<Long, String> = emptyMap()) {
         val entity = InspectionEntity(
             id = dto.id,
             roomId = dto.roomId,
@@ -152,11 +165,40 @@ class InspectionHistoryRepository @Inject constructor(
                     detailId = detail.id,
                     photoFileName = photo.photoFileName,
                     thumbnailFileName = photo.thumbnailFileName,
-                    sortOrder = photo.sortOrder
+                    sortOrder = photo.sortOrder,
+                    localPath = photoLocalPaths[photo.id]
                 )
             }
             if (photos.isNotEmpty()) masterDataDao.insertPhotos(photos)
         }
+    }
+
+    /**
+     * Re-upload foto dari backup lokal (photos_sent) ke server (ADR-0016).
+     *
+     * Endpoint replace (`PUT inspections/{id}/photos/{photoId}`) belum ada di backend
+     * (kontrak §4.6) — method ini siap dipanggil begitu endpoint tersedia. File lokal
+     * dipindahkan ke nama file server baru agar nama tetap = nama server (lookup trivial).
+     */
+    suspend fun replacePhoto(inspectionId: Long, photoId: Long, localPath: String): PhotoOutDto {
+        val file = File(localPath)
+        if (!file.exists()) throw IllegalStateException("File backup lokal tidak ditemukan")
+
+        val requestBody = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+        val multipart = MultipartBody.Part.createFormData("file", file.name, requestBody)
+        val updated = syncApi.replacePhoto(inspectionId, photoId, multipart)
+
+        // Pertahankan invariant nama file lokal = nama file server (ADR-0016)
+        val newLocalPath = sentPhotoStorage
+            .moveToSent(mapOf(updated.photoFileName to localPath))[updated.photoFileName]
+            ?: localPath
+        masterDataDao.updatePhotoAfterReplace(
+            photoId = photoId,
+            fileName = updated.photoFileName,
+            thumbnailName = updated.thumbnailFileName,
+            localPath = newLocalPath
+        )
+        return updated
     }
 
 }

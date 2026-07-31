@@ -13,6 +13,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
+import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionPhotoEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.UserEntity
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionDetailOutDto
@@ -25,9 +26,14 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 
 class InspectionHistoryViewModelTest {
+
+    @get:Rule
+    val tempFolder = TemporaryFolder()
 
     private lateinit var repository: InspectionHistoryRepository
     private lateinit var masterDataDao: MasterDataDao
@@ -43,6 +49,7 @@ class InspectionHistoryViewModelTest {
         every { masterDataDao.getInspectionsByStatus(any()) } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         coEvery { masterDataDao.getUserById(any()) } returns null
+        coEvery { masterDataDao.getPhotosForInspection(any()) } returns emptyList()
         coEvery { repository.observeLocalInspections(any(), any()) } returns MutableStateFlow(emptyList())
     }
 
@@ -347,6 +354,92 @@ class InspectionHistoryViewModelTest {
     }
 
     // ── clearDetail ──
+
+    // ── reuploadPhoto (ADR-0016) ──
+
+    @Test
+    fun `reuploadPhoto calls repository with local backup path`() = runTest(testDispatcher) {
+        // localPath harus menunjuk file yang BENAR-BENAR ada — ViewModel memfilter
+        // detailPhotoLocalPaths dengan File.exists() (ADR-0016 lokal-first).
+        val backupFile = tempFolder.newFile("foto.jpg").apply { writeBytes(byteArrayOf(1, 2, 3)) }
+        val detail = InspectionOutDto(
+            id = 1, roomId = 1, inspectorId = 5, status = "APPROVED",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T10:00:00Z", createdAt = "2026-07-28T10:00:00Z",
+            details = listOf(
+                InspectionDetailOutDto(id = 10, itemId = 1, itemNameSnapshot = "Meja", score = 2,
+                    photos = listOf(PhotoOutDto(id = 100, photoFileName = "foto.jpg", thumbnailFileName = null, sortOrder = 0)))
+            )
+        )
+        coEvery { repository.fetchDetail(1L) } returns detail
+        coEvery { masterDataDao.getRoomById(1L) } returns null
+        coEvery { masterDataDao.getPhotosForInspection(1L) } returns listOf(
+            InspectionPhotoEntity(
+                id = 100, detailId = 10, photoFileName = "foto.jpg",
+                thumbnailFileName = null, sortOrder = 0, localPath = backupFile.absolutePath
+            )
+        )
+        val viewModel = createViewModel()
+        viewModel.loadDetail(1L)
+        advanceUntilIdle()
+
+        coEvery { repository.replacePhoto(1L, 100L, backupFile.absolutePath) } returns PhotoOutDto(
+            id = 100, photoFileName = "new_foto.jpg", thumbnailFileName = null, sortOrder = 0
+        )
+        coEvery { repository.fetchDetail(1L) } returns detail // refresh setelah re-upload
+
+        viewModel.reuploadPhoto(1L, 100L)
+        advanceUntilIdle()
+
+        coVerify { repository.replacePhoto(1L, 100L, backupFile.absolutePath) }
+        assertFalse(viewModel.uiState.value.isReuploading)
+    }
+
+    @Test
+    fun `reuploadPhoto sets error when repository fails`() = runTest(testDispatcher) {
+        val backupFile = tempFolder.newFile("foto2.jpg").apply { writeBytes(byteArrayOf(1, 2, 3)) }
+        val detail = InspectionOutDto(
+            id = 1, roomId = 1, inspectorId = 5, status = "APPROVED",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T10:00:00Z", createdAt = "2026-07-28T10:00:00Z",
+            details = emptyList()
+        )
+        coEvery { repository.fetchDetail(1L) } returns detail
+        coEvery { masterDataDao.getRoomById(1L) } returns null
+        coEvery { masterDataDao.getPhotosForInspection(1L) } returns listOf(
+            InspectionPhotoEntity(id = 100, detailId = 10, photoFileName = "foto.jpg", sortOrder = 0, localPath = backupFile.absolutePath)
+        )
+        val viewModel = createViewModel()
+        viewModel.loadDetail(1L)
+        advanceUntilIdle()
+
+        coEvery { repository.replacePhoto(1L, 100L, backupFile.absolutePath) } throws RuntimeException("Endpoint belum tersedia")
+
+        viewModel.reuploadPhoto(1L, 100L)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isReuploading)
+        assertEquals("Endpoint belum tersedia", viewModel.uiState.value.error)
+    }
+
+    @Test
+    fun `reuploadPhoto without local backup sets error`() = runTest(testDispatcher) {
+        val detail = InspectionOutDto(
+            id = 1, roomId = 1, inspectorId = 5, status = "APPROVED",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T10:00:00Z", createdAt = "2026-07-28T10:00:00Z",
+            details = emptyList()
+        )
+        coEvery { repository.fetchDetail(1L) } returns detail
+        coEvery { masterDataDao.getRoomById(1L) } returns null
+        coEvery { masterDataDao.getPhotosForInspection(1L) } returns emptyList()
+        val viewModel = createViewModel()
+        viewModel.loadDetail(1L)
+        advanceUntilIdle()
+
+        viewModel.reuploadPhoto(1L, 100L)
+        advanceUntilIdle()
+
+        assertEquals("Backup foto lokal tidak ditemukan", viewModel.uiState.value.error)
+        coVerify(exactly = 0) { repository.replacePhoto(any(), any(), any()) }
+    }
 
     @Test
     fun `clearDetail resets selectedDetail`() = runTest(testDispatcher) {

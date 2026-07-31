@@ -32,7 +32,7 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
         InspectionDetailEntity::class,
         InspectionPhotoEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
+import java.io.File
 import javax.inject.Inject
 
 data class InspectionHistoryUiState(
@@ -27,7 +28,10 @@ data class InspectionHistoryUiState(
     val hasMorePages: Boolean = true,
     val isRefreshing: Boolean = false,
     val inspectorName: String = "Petugas",
-    val detailRoomName: String = ""
+    val detailRoomName: String = "",
+    /** Peta server photo id → path file backup lokal di photos_sent (ADR-0016) — tampilan lokal-first. */
+    val detailPhotoLocalPaths: Map<Long, String> = emptyMap(),
+    val isReuploading: Boolean = false
 )
 
 @HiltViewModel
@@ -150,11 +154,20 @@ class InspectionHistoryViewModel @Inject constructor(
                     masterDataDao.getUserById(it)?.let { u -> "${u.username} (${u.role})" }
                         ?: "Petugas #$it"
                 } ?: "Petugas"
+                // ADR-0016: lokal-first — hanya path backup yang file-nya masih ada di disk
+                val localPaths = detail?.let { dto ->
+                    masterDataDao.getPhotosForInspection(dto.id)
+                        .mapNotNull { photo ->
+                            photo.localPath?.takeIf { File(it).exists() }?.let { photo.id to it }
+                        }
+                        .toMap()
+                } ?: emptyMap()
                 _uiState.value = _uiState.value.copy(
                     isLoadingDetail = false,
                     selectedDetail = detail,
                     inspectorName = inspectorText,
-                    detailRoomName = roomName
+                    detailRoomName = roomName,
+                    detailPhotoLocalPaths = localPaths
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -175,6 +188,31 @@ class InspectionHistoryViewModel @Inject constructor(
     }
 
     fun clearDetail() {
-        _uiState.value = _uiState.value.copy(selectedDetail = null)
+        _uiState.value = _uiState.value.copy(selectedDetail = null, detailPhotoLocalPaths = emptyMap())
+    }
+
+    /**
+     * Re-upload foto dari backup lokal (photos_sent) ke server (ADR-0016).
+     * Menunggu endpoint replace backend (kontrak §4.6) — jika gagal, error ditampilkan.
+     */
+    fun reuploadPhoto(inspectionId: Long, photoId: Long) {
+        val localPath = _uiState.value.detailPhotoLocalPaths[photoId]
+            ?: run {
+                _uiState.value = _uiState.value.copy(error = "Backup foto lokal tidak ditemukan")
+                return
+            }
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isReuploading = true, error = null)
+            try {
+                repository.replacePhoto(inspectionId, photoId, localPath)
+                _uiState.value = _uiState.value.copy(isReuploading = false)
+                loadDetail(inspectionId) // refresh nama file server baru
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isReuploading = false,
+                    error = e.message ?: "Gagal re-upload foto"
+                )
+            }
+        }
     }
 }

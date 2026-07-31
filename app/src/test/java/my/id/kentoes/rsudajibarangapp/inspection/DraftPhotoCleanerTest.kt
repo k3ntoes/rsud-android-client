@@ -8,6 +8,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafFoto
+import my.id.kentoes.rsudajibarangapp.sync.SentPhotoStorage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -24,9 +25,17 @@ class DraftPhotoCleanerTest {
     private val context = mockk<Context>()
     private val drafDao = mockk<DrafDao>(relaxed = true)
 
+    /**
+     * SentPhotoStorage REAL (bukan mock) — test photos_sent butuh perilaku file aktual:
+     * deleteOlderThan harus benar-benar menghapus file. context.getExternalFilesDir
+     * di-stub ke tempFolder.root, jadi sentDir() = tempFolder.root/photos_sent — folder
+     * yang sama dengan yang dibuat test.
+     */
+    private val sentPhotoStorage = SentPhotoStorage(context)
+
     private fun createCleaner(): DraftPhotoCleaner {
         every { context.getExternalFilesDir(null) } returns tempFolder.root
-        return DraftPhotoCleaner(context, drafDao)
+        return DraftPhotoCleaner(context, drafDao, sentPhotoStorage)
     }
 
     /** Foto draf hidup di subfolder "photos" dari externalFilesDir. */
@@ -95,6 +104,41 @@ class DraftPhotoCleanerTest {
         coEvery { drafDao.getOrphanedDraftPhotos() } returns emptyList()
         coEvery { drafDao.getAllReferencedPhotoPaths() } returns emptyList()
 
-        DraftPhotoCleaner(context, drafDao).cleanup() // tidak boleh crash
+        DraftPhotoCleaner(context, drafDao, sentPhotoStorage).cleanup() // tidak boleh crash
+    }
+
+    // ── photos_sent (ADR-0016) ──
+
+    @Test
+    fun `cleanup deletes photos_sent files older than 30 days`() = runTest {
+        val sentDir = tempFolder.newFolder("photos_sent")
+        val oldFile = File(sentDir, "server_old.jpg").apply {
+            createNewFile()
+            setLastModified(System.currentTimeMillis() - 31L * 24 * 60 * 60 * 1000)
+        }
+        val recentFile = File(sentDir, "server_recent.jpg").apply {
+            createNewFile()
+            setLastModified(System.currentTimeMillis() - 1L * 24 * 60 * 60 * 1000)
+        }
+        coEvery { drafDao.getOrphanedDraftPhotos() } returns emptyList()
+        coEvery { drafDao.getAllReferencedPhotoPaths() } returns emptyList()
+
+        val removed = createCleaner().cleanup()
+
+        assertFalse(oldFile.exists()) // lewat 30 hari → dihapus
+        assertTrue(recentFile.exists()) // masih dalam retensi → dipertahankan
+        assertEquals(1, removed)
+    }
+
+    @Test
+    fun `cleanup keeps photos_sent files within 30 days`() = runTest {
+        val sentDir = tempFolder.newFolder("photos_sent")
+        val freshFile = File(sentDir, "server_fresh.jpg").apply { createNewFile() }
+        coEvery { drafDao.getOrphanedDraftPhotos() } returns emptyList()
+        coEvery { drafDao.getAllReferencedPhotoPaths() } returns emptyList()
+
+        createCleaner().cleanup()
+
+        assertTrue(freshFile.exists())
     }
 }

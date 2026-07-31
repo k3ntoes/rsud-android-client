@@ -16,10 +16,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.HourglassEmpty
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -48,6 +51,7 @@ import coil.compose.AsyncImage
 import my.id.kentoes.rsudajibarangapp.BuildConfig
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionHistoryViewModel
 import my.id.kentoes.rsudajibarangapp.sync.api.PhotoOutDto
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -185,14 +189,19 @@ fun InspectionDetailScreen(
                                         }
                                     )
                                 }
-                                // Photo thumbnails
+                                // Photo thumbnails — ADR-0016: lokal-first, fallback URL server
                                 if (itemDetail.photos.isNotEmpty()) {
                                     Spacer(modifier = Modifier.height(8.dp))
                                     LazyRow(
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
                                         items(itemDetail.photos, key = { it.id }) { photo ->
-                                            PhotoThumbnailCard(photo = photo)
+                                            PhotoThumbnailCard(
+                                                photo = photo,
+                                                localPath = uiState.detailPhotoLocalPaths[photo.id],
+                                                isReuploading = uiState.isReuploading,
+                                                onReupload = { viewModel.reuploadPhoto(inspectionId, photo.id) }
+                                            )
                                         }
                                     }
                                 }
@@ -206,9 +215,17 @@ fun InspectionDetailScreen(
 }
 
 @Composable
-private fun PhotoThumbnailCard(photo: PhotoOutDto) {
+private fun PhotoThumbnailCard(
+    photo: PhotoOutDto,
+    localPath: String?,
+    isReuploading: Boolean,
+    onReupload: () -> Unit
+) {
+    // ADR-0016: lokal-first — tampilkan file backup di photos_sent jika ada, fallback URL server.
+    // Menjawab masalah "foto tidak muncul di riwayat" (file lokal sudah dihapus sistem dulu).
+    val localFile = localPath?.let { File(it) }?.takeIf { it.exists() }
     // ponytail: URL path assumes BE serves uploads at <BASE_URL>/uploads/ — adjust if BE uses CDN/signed URL
-    val imageUrl = "${BuildConfig.BASE_URL}uploads/${photo.photoFileName}"
+    val imageModel: Any = localFile ?: "${BuildConfig.BASE_URL}uploads/${photo.photoFileName}"
     Card(
         modifier = Modifier.size(96.dp),
         shape = RoundedCornerShape(8.dp),
@@ -226,13 +243,40 @@ private fun PhotoThumbnailCard(photo: PhotoOutDto) {
                     .size(32.dp)
             )
             AsyncImage(
-                model = imageUrl,
+                model = imageModel,
                 contentDescription = "Foto inspeksi",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(8.dp))
             )
+            // Re-upload dari backup lokal (ADR-0016) — hanya jika backup masih ada
+            if (localFile != null) {
+                IconButton(
+                    onClick = onReupload,
+                    enabled = !isReuploading,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(28.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.45f))
+                ) {
+                    if (isReuploading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Re-upload foto dari backup lokal",
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+            }
         }
     }
 }
