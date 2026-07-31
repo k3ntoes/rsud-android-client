@@ -1,7 +1,7 @@
 # 📋 Implementation Claim Order — RSUD Ajibarang Android Client
 
-> **Status Project:** ✅ **MVP SELESAI** — EPIC-0 s.d. EPIC-10 completed ✅ | RM Phase 2 completed ✅  
-> **Phase 3 (current):** 🆕 **EPIC-11** — API Alignment & New Sync Endpoints — Lihat [Phase 3](./IMPLEMENTATION-CLAIM-ORDER-PHASE3.md)
+> **Status Project:** ✅ **MVP SELESAI** — EPIC-0 s.d. EPIC-12 completed ✅ | RM Phase 2 ✅ | Phase 3 (EPIC-11) ✅ | Phase 4 (EPIC-12) ✅  
+> **Sesi terakhir:** 🔧 Hardening — sync inkremental (ADR-0012), pagination server-driven (ADR-0013), kepemilikan draf per akun (ADR-0015), cleanup foto draf (ADR-0014), `isMyRoom` — lihat [Phase 3](./IMPLEMENTATION-CLAIM-ORDER-PHASE3.md) & [Phase 4](./IMPLEMENTATION-CLAIM-ORDER-PHASE4.md)
 > **Stack:** Jetpack Compose · Hilt · Room 3.0+ · Retrofit · Proto DataStore · WorkManager · Coil
 > **ADR Compliance:** ADR-0001 (multi-module) ✅ **Superseded by ADR-0011**. ADR-0002 (Tink encryption) ✅ **Full Compliance** — `datastore-tink` native (`AeadSerializer`) + Android Keystore via `AndroidKeysetManager`. Enkripsi transparan di layer DataStore.
 
@@ -51,6 +51,11 @@ Ringkasan kepatuhan implementasi terhadap Architectural Decision Records.
 | `ADR-0002` | Proto DataStore + Tink Token Storage | ✅ **Full Compliance** | `DataStoreModule` menggunakan `datastore-tink` native (`AeadSerializer` + `DataStoreFactory`) untuk enkripsi transparan di layer DataStore. Tink AEAD (`AES256_GCM`) + Android Keystore via `AndroidKeysetManager`. `TokenManager` membaca/menulis `TokenData` biasa — enkripsi otomatis oleh `AeadSerializer`. |
 | `ADR-0003` | Offline-First Inspection Submission | ✅ **Diikuti** | Room local storage + WorkManager sync dua langkah (upload foto → submit JSON) sesuai ADR. |
 | `ADR-0004` | Jetpack Compose Modern Stack | ✅ **Diikuti** | Compose, Hilt, kotlinx.serialization, Coil, Compose Navigation — semua sesuai. |
+| `ADR-0011` | Single Module Architecture | ✅ **Diikuti** | Migrasi multi-module → `:app`. Lihat [Phase 2](./IMPLEMENTATION-CLAIM-ORDER-PHASE2.md). |
+| `ADR-0012` | Dual-Mode Response / Sync Inkremental | ✅ **Diikuti** | `?since=` per endpoint + `SyncStateStore` (persist `synced_at`); pivot pakai replace-all full-snapshot. |
+| `ADR-0013` | Hybrid Inspection History | ✅ **Diikuti** | Cache lokal + fetch server; pagination server-driven via `totalPages` (tanpa ceiling 10). |
+| `ADR-0014` | MediaStore Photo Storage | ✅ **Diikuti** | Foto ke MediaStore + `DraftPhotoCleanupWorker` membersihkan foto draf yatim. |
+| `ADR-0015` | Draft Ownership per Akun | ✅ **Diikuti** | `DrafInspeksi.inspectorId` + `clearForeignDrafts` saat ganti akun; logout tidak menghapus draf. |
 
 > **Catatan:** ADR compliance diperiksa otomatis saat commit ([lihat CODING-RULES.md > Checklist Sebelum Commit](../CODING-RULES.md)).
 
@@ -71,7 +76,8 @@ Ringkasan kepatuhan implementasi terhadap Architectural Decision Records.
 | **4: Sinkronisasi** | Upload Worker | `EPIC-8` | 🟠 TINGGI | EPIC-7,2,3 | ✅ **Selesai** | 1-2 session |
 | **5: Poles** | Refinement | `EPIC-9` | 🟢 NORMAL | EPIC-8 | ✅ **Selesai** | 1-2 session |
 | **6: Dashboard** | Dashboard & Statistics | `EPIC-10` | 🟢 NORMAL | EPIC-9 | ✅ **Selesai** | 1 session |
-| **7: API Alignment** | API Contract Align & Sync Endpoints | `EPIC-11` | 🔴 KRITIS | EPIC-10, RM-05 | 🆕 **Dimulai** — lihat [Phase 3](./IMPLEMENTATION-CLAIM-ORDER-PHASE3.md) | 5-6 session |
+| **7: API Alignment** | API Contract Align & Sync Endpoints | `EPIC-11` | 🔴 KRITIS | EPIC-10, RM-05 | ✅ **Selesai** — lihat [Phase 3](./IMPLEMENTATION-CLAIM-ORDER-PHASE3.md) | 5-6 session |
+| **8: Dashboard** | Dashboard Inspeksi Hari Ini | `EPIC-12` | 🟠 TINGGI | EPIC-11 | ✅ **Selesai** — lihat [Phase 4](./IMPLEMENTATION-CLAIM-ORDER-PHASE4.md) | 4 jam |
 
 ---
 

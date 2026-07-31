@@ -1,23 +1,30 @@
 # Context Map — RSUD Ajibarang App
 
-Aplikasi Android *offline-first* untuk inspeksi kebersihan rumah sakit oleh Petugas Kebersihan. Empat konteks domain yang saling berhubungan.
+Aplikasi Android *offline-first* untuk inspeksi kebersihan rumah sakit oleh Petugas Kebersihan. Lima konteks domain yang saling berhubungan.
 
 ## Contexts
 
 | Context | Location | Description |
 |---------|----------|-------------|
-| [Auth](./app/src/main/java/my/id/kentoes/rsudajibarangapp/auth/CONTEXT.md) | `auth/` | Token management, login/logout, session handling |
-| [Inspections](./app/src/main/java/my/id/kentoes/rsudajibarangapp/inspections/CONTEXT.md) | `inspections/` | Form inspeksi dinamis, skoring, validasi bukti foto |
-| [Sync](./app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/CONTEXT.md) | `sync/` | WorkManager, offline-first sync, upload dua langkah, hybrid inspection history, UserEntity sync |
-| [Core](./app/src/main/java/my/id/kentoes/rsudajibarangapp/core/CONTEXT.md) | `core/` | App foundation, DI, shared models, base types |
+| [Auth](./app/src/main/java/my/id/kentoes/rsudajibarangapp/auth/CONTEXT.md) | `auth/` | Token management, login/logout, session handling, pemilahan draf per akun |
+| [Inspections](./app/src/main/java/my/id/kentoes/rsudajibarangapp/inspections/CONTEXT.md) | `inspections/` | Form inspeksi dinamis, skoring, validasi bukti foto, siklus hidup draf & file foto |
+| [Master](./app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/CONTEXT.md) | `master/` | Master data download & incremental sync (`?since=`), `SyncStateStore` (synced_at per endpoint), penanda `isMyRoom` per user |
+| [Sync](./app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/CONTEXT.md) | `sync/` | WorkManager, offline-first sync, upload dua langkah, hybrid inspection history, UserEntity sync, cleanup foto draf yatim |
+| [Core](./app/src/main/java/my/id/kentoes/rsudajibarangapp/core/CONTEXT.md) | `core/` | App foundation, DI, shared models, base types, database & SharedPreferences |
+
+> Master tidak memiliki `CONTEXT.md` sendiri — semantiknya didokumentasikan di `sync/CONTEXT.md` (Sinkronisasi Master Data, Sinkronisasi Inkremental, Keadaan Sinkronisasi) dan `core/CONTEXT.md` (Entitas Database).
 
 ## Relationships
 
 - **Auth → Core**: Auth menyediakan `AuthState` yang dikonsumsi oleh Core (navigation, DI scope)
+- **Auth → Inspections**: `login()` memanggil `InspectionRepository.clearForeignDrafts(user.id)` — hapus draf akun LAMA saat akun berbeda login (ADR-0015). Logout/force logout TIDAK menghapus draf.
+- **Auth → Master**: `forceLogout()` memanggil `clearLocalCache()` + `SyncStateStore.clear()` agar akun berikutnya sync penuh dari epoch — mencegah room/assignment akun lama bocor ke akun baru
 - **Inspections → Auth**: Setiap request API inspeksi membutuhkan Access Token dari Auth
-- **Inspections → Core**: Menggunakan shared models dan base types dari Core
-- **Inspections → Sync**: Data inspeksi yang disimpan lokal akan diproses oleh Sync untuk dikirim ke server
-- **Inspections → Core**: Menggunakan InspectionHistoryRepository + InspectionHistoryViewModel untuk hybrid history
-- **Sync → Auth**: WorkManager menggunakan Access Token milik sesi terakhir yang tersimpan
+- **Inspections → Core**: Menggunakan shared models, base types, dan database Core (`DrafDao`, `draf_inspeksi.inspectorId`)
+- **Inspections → Master**: Form inspeksi & dropdown pemilihan room memakai master data lokal; hanya room bertanda `isMyRoom` yang tampil (kecuali `admin_ppi`)
+- **Inspections → Sync**: Data inspeksi yang disimpan lokal akan diproses oleh Sync untuk dikirim ke server; `syncSingleDraft` memanggil `InspectionRepository.deleteSyncedDraft` (hapus baris + file foto)
+- **Master → Core**: `SyncStateStore` (SharedPreferences) menyimpan `synced_at` per endpoint; `RuangEntity.isMyRoom` dan `MasterDataDao` tinggal di database Core
+- **Sync → Auth**: WorkManager menggunakan Access Token milik sesi terakhir yang tersimpan; `syncUsers()` sync data user dari `GET /api/auth/users` ke `UserEntity`
+- **Sync → Master**: `syncMasterData()` memanggil `MasterDataRepository` (items, rooms, pivots, my-rooms, users); urutan `syncRooms` → `syncMyRooms` load-bearing agar penanda `isMyRoom` benar (REPLACE syncRooms me-reset flag)
+- **Sync → Inspections**: `DraftPhotoCleanupWorker` memanggil `DraftPhotoCleaner` (package `inspection/`) untuk cleanup foto draf yatim periodik
 - **Sync → Core**: Menggunakan base networking dan dependency injection dari Core
-- **Sync → Auth**: `syncUsers()` sync data user dari `GET /api/auth/users` ke `UserEntity`

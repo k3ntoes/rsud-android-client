@@ -1,8 +1,8 @@
 # Panduan Implementasi Android — RSUD Ajibarang Server Stack
 
-> **Versi:** 1.0  
-> **Tanggal:** 29 Juli 2026  
-> **Tujuan:** Panduan untuk tim Android dalam mengimplementasikan API terbaru — Pagination, Relasi Room↔Item, dan Dashboard Endpoint
+> **Versi:** 1.1  
+> **Tanggal:** 31 Juli 2026  
+> **Tujuan:** Panduan untuk tim Android dalam mengimplementasikan API terbaru — Pagination (server-driven), Relasi Room↔Item, Dashboard Endpoint, dan Sync Inkremental (`since`/`SyncStateStore`)
 
 ---
 
@@ -101,6 +101,8 @@ Endpoint `/api/rooms` dan `/api/inspection-items` punya 2 mode:
    ```
 
 > **Untuk Android:** ANDA HANYA PERLU SYNC MODE (`?since=`). Pagination digunakan oleh Web Admin Dashboard. Android fetch semua data via `?since=`.
+>
+> **Catatan ADR-0012:** First-time case (`since` kosong) sudah ditangani otomatis di `MasterDataRepository` via `resolveSince()` — param eksplisit > `synced_at` tersimpan di `SyncStateStore` > fallback epoch `1970-01-01T00:00:00Z`. Lihat [Strategi Sync](#5-strategi-sync-untuk-offline-first).
 
 > ⚠️ **PENTING: First-time Sync (`since=null`)** — Saat `since` tidak dikirim (sync pertama kali), backend akan return `PaginatedResponse`, bukan `SyncResponse`! Untuk menghindari masalah parsing, **selalu kirim `since` dengan nilai epoch** untuk first-time sync:
 > ```
@@ -116,6 +118,66 @@ Endpoint `/api/rooms` dan `/api/inspection-items` punya 2 mode:
 | `InspectionItem` | `name`, `is_active`, `updated_at` |
 | `User` | `username`, `role`, `is_active`, `created_at` |
 | `Inspection` | `business_date`, `status`, `created_at`, `room_id` |
+
+---
+
+### 2.6. Pagination di Android — Riwayat Inspeksi (ADR-0013)
+
+`GET /api/inspections` memakai pagination **server-driven**: Android tidak menebak batas halaman, tapi mengikuti `total_pages` dari server.
+
+**Request:**
+```
+GET /api/inspections?page=1&per_page=20&status=PENDING&show_all=true
+```
+
+| Parameter | Tipe | Default | Deskripsi |
+|-----------|------|---------|-----------|
+| `page` | int | 1 | Halaman (1-indexed) |
+| `per_page` | int | 20 | Jumlah per halaman (max 100) |
+| `status` | string | null | Filter status: `PENDING` / `APPROVED` / `REJECTED` |
+| `show_all` | bool | `false` | Untuk supervisor — jika `true`, tampilkan **semua room** (tidak hanya yang di-assign) |
+
+**Alur di Android** (`InspectionHistoryRepository` + `InspectionHistoryViewModel`):
+
+```kotlin
+data class PaginatedResult(
+    val items: List<InspectionHistoryItem>,
+    val totalPages: Int,
+    val currentPage: Int
+)
+
+// Repository — terjemahkan response server apa adanya (tanpa tebak-tebakan)
+suspend fun fetchInspections(page: Int, perPage: Int, status: String?, showAll: Boolean?): PaginatedResult {
+    val response = syncApi.getInspections(page, perPage, status, showAll)
+    return PaginatedResult(
+        items = mapItems(response.items),
+        totalPages = response.totalPages,
+        currentPage = response.page
+    )
+}
+
+// ViewModel — hasMorePages dari totalPages server (TANPA ceiling hardcoded)
+hasMorePages = result.currentPage < result.totalPages
+```
+
+- **Infinite scroll**: `loadNextPage()` memuat `currentPage + 1` selama `hasMorePages == true` dan tidak sedang `isLoadingMore`.
+- **Race protection `loadEpoch`**: setiap refresh / ganti filter menaikkan counter `loadEpoch`; hasil fetch dari epoch lama dibuang agar tidak menimpa state baru (mis. refresh yang tiba saat `loadNextPage` berjalan).
+- **`show_all`**: supervisor melihat semua room; inspector biasa tanpa flag hanya melihat room yang di-assign.
+
+**Pagination juga dipakai untuk `GET /api/auth/users`** (admin-only, `per_page` max 100): loop semua halaman, lalu clear+insert **sekali** setelah semua halaman terkumpul (hindari partial wipe).
+
+```kotlin
+var page = 1
+var totalPages = 1
+do {
+    val response = authApi.getUsers(page = page, perPage = 100)
+    allUsers += response.items
+    totalPages = response.totalPages
+    page++
+} while (page <= totalPages)
+masterDataDao.clearUsers()
+masterDataDao.insertUsers(allUsers)
+```
 
 ---
 
@@ -490,55 +552,76 @@ fun getDetailCount(inspection: InspectionOutDto): Int {
 
 ```
 Step 1: Auth → Login, dapatkan access_token + refresh_token
-Step 2: Sync Rooms       → GET /api/rooms?since=<last_sync>
-Step 3: Sync Items       → GET /api/inspection-items?since=<last_sync>
-Step 4: Sync RoomItems   → GET /api/room-items?since=<last_sync>
-Step 5: Sync UserRooms   → GET /api/auth/user-rooms?since=<last_sync>
-Step 6: Sync MyRooms     → GET /api/auth/me/rooms?since=<last_sync>
-Step 7: Simpan synced_at → untuk sync selanjutnya
+Step 2: Sync Rooms       → GET /api/rooms?since=<last_sync>                (inkremental)
+Step 3: Sync Items       → GET /api/inspection-items?since=<last_sync>     (inkremental)
+Step 4: Sync RoomItems   → GET /api/room-items?since=1970-01-01T00:00:00Z   (replace-all)
+Step 5: Sync UserRooms   → GET /api/auth/user-rooms?since=1970-01-01T00:00:00Z (replace-all)
+Step 6: Sync MyRooms     → GET /api/auth/me/rooms?since=1970-01-01T00:00:00Z   (replace-all)
+Step 7: Simpan synced_at → via SyncStateStore, untuk sync berikutnya
 ```
 
-### 5.2. Cache Lokal
+> **Dua mode sync:**
+>
+> 1. **Inkremental** (`rooms`, `inspection-items`) — kirim `since=<synced_at tersimpan>`; server hanya mengembalikan data yang berubah sejak timestamp tersebut.
+> 2. **Replace-all snapshot** (pivot: `room-items`, `user-rooms`, `my-rooms`) — endpoint mengembalikan **snapshot penuh** semua asosiasi, jadi **selalu minta `since=epoch`**. Setelah fetch **sukses**: clear tabel + insert ulang. Konsekuensinya relasi yang dihapus server ikut terhapus lokal (tidak butuh tombstone/deleted-flag). Jika fetch gagal, tabel lama tetap utuh — clear hanya dieksekusi setelah sukses.
 
-Setiap endpoint sync menyimpan `synced_at` dari response.  
-Gunakan `synced_at` sebagai parameter `since=` di sync berikutnya.
+### 5.2. SyncStateStore — Persistensi synced_at (ADR-0012)
+
+`SyncStateStore` (SharedPreferences — timestamp non-sensitif, cukup prefs biasa, tidak butuh enkripsi Tink seperti token) menyimpan `synced_at` per endpoint.
+
+**API `SyncStateStore`:**
+- `load(): SyncState` — baca semua timestamp
+- `save(state)` — tulis semua timestamp
+- `update { }` — **atomic** read-modify-write; hindari lost-update kalau dua sync berjalan bersamaan
+- `clear()` — dipanggil saat **logout / ganti akun** agar akun berikutnya sync penuh dari epoch
 
 ```kotlin
+@Singleton
+class SyncStateStore @Inject constructor(@ApplicationContext context: Context) {
+    fun load(): SyncState
+    fun save(state: SyncState)
+    fun update(transform: (SyncState) -> SyncState)
+    fun clear()
+}
+
 data class SyncState(
-    val roomsSyncedAt: String?,
-    val itemsSyncedAt: String?,
-    val roomItemsSyncedAt: String?,
-    val userRoomsSyncedAt: String?,
-    val myRoomsSyncedAt: String?
+    val roomsSyncedAt: String? = null,
+    val itemsSyncedAt: String? = null,
+    val roomItemsSyncedAt: String? = null,
+    val userRoomsSyncedAt: String? = null,
+    val myRoomsSyncedAt: String? = null
 )
 ```
 
-**Algoritma:**
+**Resolusi `since`** di `MasterDataRepository` — param eksplisit > timestamp tersimpan > fallback epoch (first-time):
+
 ```kotlin
-suspend fun syncAll() {
-    val syncState = getSyncState()  // dari SharedPreferences / DataStore
-    
-    val roomsResponse = api.getRooms(since = syncState.roomsSyncedAt)
-    saveRooms(roomsResponse.data)
-    syncState.roomsSyncedAt = roomsResponse.syncedAt
-    
-    val itemsResponse = api.getItems(since = syncState.itemsSyncedAt)
-    saveItems(itemsResponse.data)
-    syncState.itemsSyncedAt = itemsResponse.syncedAt
-    
-    val roomItemsResponse = api.getRoomItems(since = syncState.roomItemsSyncedAt)
-    saveRoomItems(roomItemsResponse.data)
-    syncState.roomItemsSyncedAt = roomItemsResponse.syncedAt
-    
-    val userRoomsResponse = api.getUserRooms(since = syncState.userRoomsSyncedAt)
-    saveUserRooms(userRoomsResponse.data)
-    syncState.userRoomsSyncedAt = userRoomsResponse.syncedAt
-    
-    val myRoomsResponse = api.getMyRooms(since = syncState.myRoomsSyncedAt)
-    saveMyRooms(myRoomsResponse.data)
-    syncState.myRoomsSyncedAt = myRoomsResponse.syncedAt
-    
-    saveSyncState(syncState)
+private val firstSyncSince = "1970-01-01T00:00:00Z"
+
+private fun resolveSince(explicit: String?, stored: String?): String =
+    explicit ?: stored ?: firstSyncSince
+
+suspend fun syncItems(since: String? = null) {
+    val effectiveSince = resolveSince(since, syncStateStore.load().itemsSyncedAt)
+    val response = masterDataApi.getItems(since = effectiveSince)
+    if (response.data.isNotEmpty()) masterDataDao.insertItems(response.data)
+    response.syncedAt?.let { syncedAt ->
+        syncStateStore.update { it.copy(itemsSyncedAt = syncedAt) }
+    }
+}
+```
+
+**Pivot tables** (`room-items`, `user-rooms`, `my-rooms`) **tidak memakai** `since` tersimpan — selalu `since=epoch` (snapshot penuh, lihat 5.1). `synced_at` tetap disimpan untuk **forward-compat** jika backend kelak menambah delta `updated_at`:
+
+```kotlin
+suspend fun syncRoomItems() {
+    val response = masterDataApi.getRoomItems(since = firstSyncSince)
+    // Clear SETELAH fetch sukses — relasi yang dihapus server ikut terhapus lokal
+    masterDataDao.clearRoomItems()
+    if (response.data.isNotEmpty()) masterDataDao.insertRoomItems(response.data)
+    response.syncedAt?.let { syncedAt ->
+        syncStateStore.update { it.copy(roomItemsSyncedAt = syncedAt) }
+    }
 }
 ```
 
@@ -564,6 +647,13 @@ interface ApiService {
     
     @POST("api/auth/refresh")
     suspend fun refreshToken(@Body request: RefreshRequest): TokenResponse
+    
+    // Users (admin-only, pagination — per_page max 100)
+    @GET("api/auth/users")
+    suspend fun getUsers(
+        @Query("page") page: Int = 1,
+        @Query("per_page") perPage: Int = 100
+    ): PaginatedResponse<UserDto>
     
     // ── Master Data (Sync) ──
     @GET("api/rooms")
@@ -594,9 +684,10 @@ interface ApiService {
     // ── Inspections ──
     @GET("api/inspections")
     suspend fun getInspections(
-        @Query("status") status: String? = null,
         @Query("page") page: Int = 1,
         @Query("per_page") perPage: Int = 20,
+        @Query("status") status: String? = null,
+        @Query("show_all") showAll: Boolean? = null,   // supervisor: semua room
         @Query("sort_by") sortBy: String? = null,
         @Query("sort_order") sortOrder: String? = null
     ): PaginatedResponse<InspectionListItemDto>
@@ -815,9 +906,11 @@ data class InspectorPerformanceDto(
 ### Catatan Tambahan
 
 1. **Gunakan `?since=` untuk sync** — bukan pagination. Pagination hanya untuk Web Admin.
-2. **Simpan `synced_at`** dari setiap response SyncResponse untuk digunakan di sync berikutnya.
-3. **Token refresh**: Kirim `refresh_token` di body `{ "refresh_token": "..." }`, bukan di cookie.
-4. **Error codes**: Semua error punya field `code` — gunakan untuk logika interceptor.
+2. **Simpan `synced_at`** dari setiap response SyncResponse via `SyncStateStore` — dipakai sebagai `since` di sync berikutnya (ADR-0012).
+3. **Pivot tables** (`room-items`, `user-rooms`, `my-rooms`) selalu minta `since=epoch` dan clear+insert (replace-all snapshot) — bukan inkremental.
+4. **Pagination riwayat server-driven**: `hasMorePages = currentPage < totalPages` — tanpa ceiling hardcoded (ADR-0013).
+5. **Token refresh**: Kirim `refresh_token` di body `{ "refresh_token": "..." }`, bukan di cookie.
+6. **Error codes**: Semua error punya field `code` — gunakan untuk logika interceptor.
 
 ---
 

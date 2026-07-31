@@ -2,9 +2,10 @@
 
 > **Status Project:** ✅ **MVP SELESAI** — EPIC-0 s.d. EPIC-10 ✅ | RM Phase 2 ✅ | Phase 3 ✅  
 > **Status Phase 4:** ✅ **SELESAI** — Epic-12: Dashboard Inspeksi Hari Ini  
+> **Refinements sesi:** date picker UI + snackbar error + pagination server-driven + kepemilikan draf (ADR-0015) + cleanup foto (ADR-0014)
 > **Spec:** [`docs/dashboard-inspection-status-cards-spec.md`](./dashboard-inspection-status-cards-spec.md)  
 > **ADR Baru:** `ADR-0014` — MediaStore Photo Storage & 30-Day Retention  
-> **Glossary:** [`app/.../inspections/CONTEXT.md`](../app/src/main/java/my/id/kentoes/rsudajibarangapp/inspections/CONTEXT.md)
+> **Glossary:** [`app/.../core/CONTEXT.md`](../app/src/main/java/my/id/kentoes/rsudajibarangapp/core/CONTEXT.md) · [`auth/CONTEXT.md`](../app/src/main/java/my/id/kentoes/rsudajibarangapp/auth/CONTEXT.md) · [`sync/CONTEXT.md`](../app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/CONTEXT.md)
 
 ---
 
@@ -74,7 +75,7 @@ flowchart LR
 
 #### Task List
 
-- [ ] Tambah query di `MasterDataDao`:
+- [x] Tambah query di `MasterDataDao`:
   ```kotlin
   @Query("SELECT DISTINCT roomId FROM draf_inspeksi WHERE businessDate = :date")
   suspend fun getDraftRoomIdsForDate(date: String): List<Long>
@@ -83,7 +84,7 @@ flowchart LR
   @Query("SELECT DISTINCT roomId FROM inspection WHERE businessDate = :date")
   suspend fun getInspectedRoomIdsForDate(date: String): List<Long>
   ```
-- [ ] Tambah method di `MasterDataRepository`:
+- [x] Tambah method di `MasterDataRepository`:
   ```kotlin
   suspend fun getInspectedRoomIdsForDate(date: String): Set<Long> {
       val draftIds = masterDataDao.getDraftRoomIdsForDate(date)
@@ -91,7 +92,7 @@ flowchart LR
       return (draftIds + inspectionIds).toSet()
   }
   ```
-- [ ] **Verifikasi:** `./gradlew :app:assembleDebug`
+- [x] **Verifikasi:** `./gradlew :app:assembleDebug`
 
 #### Files Changed
 
@@ -109,12 +110,12 @@ flowchart LR
 
 #### Task List
 
-- [ ] Tambah field ke `DashboardUiState`:
+- [x] Tambah field ke `DashboardUiState`:
   ```kotlin
   val inspectedRoomCount: Int = 0,
   val uninspectedRoomCount: Int = 0,
   ```
-- [ ] Tambah method `computeInspectionStatus(date: String)` di ViewModel:
+- [x] Tambah method `computeInspectionStatus(date: String)` di ViewModel:
   ```kotlin
   private suspend fun computeInspectionStatus(date: String) {
       val allRooms = masterDataDao.getAllRooms().first()
@@ -125,8 +126,8 @@ flowchart LR
       )
   }
   ```
-- [ ] Panggil `computeInspectionStatus()` di `init` block
-- [ ] **Verifikasi:** `./gradlew :app:assembleDebug`
+- [x] Panggil `computeInspectionStatus()` di `init` block
+- [x] **Verifikasi:** `./gradlew :app:assembleDebug`
 
 #### Files Changed
 
@@ -144,24 +145,24 @@ flowchart LR
 
 #### Task List
 
-- [ ] **StatCard.kt**: Tambah parameter opsional `onClick: (() -> Unit)? = null`
+- [x] **StatCard.kt**: Tambah parameter opsional `onClick: (() -> Unit)? = null`
   - Jika `onClick != null`, gunakan `Card(onClick = onClick)` bukan `Card()` biasa
   - Tambah efek visual: elevation naik saat hover/click
-- [ ] **DashboardScreen.kt**: Tambah section baru "Status Inspeksi Hari Ini"
+- [x] **DashboardScreen.kt**: Tambah section baru "Status Inspeksi Hari Ini"
   - 2 card baru: "Belum Diinspeksi" dan "Sudah Diinspeksi"
   - Warna: merah/primary untuk "Belum", hijau untuk "Sudah"
   - Nilai: dari `uiState.uninspectedRoomCount` dan `uiState.inspectedRoomCount`
-- [ ] **DashboardScreen.kt**: Card Draf di Ringkasan → clickable → `onNavigateToDrafts`
-- [ ] **DashboardScreen.kt**: Hapus tombol "Inspeksi Baru" dan "Lihat Draf" dari Aksi Cepat
-- [ ] **DashboardScreen.kt**: Pertahankan tombol "Riwayat Inspeksi"
-- [ ] **DashboardScreen.kt**: Tambah callback:
+- [x] **DashboardScreen.kt**: Card Draf di Ringkasan → clickable → `onNavigateToDrafts`
+- [x] **DashboardScreen.kt**: Hapus tombol "Inspeksi Baru" dan "Lihat Draf" dari Aksi Cepat
+- [x] **DashboardScreen.kt**: Pertahankan tombol "Riwayat Inspeksi"
+- [x] **DashboardScreen.kt**: Tambah callback:
   - `onNavigateToUninspectedRooms: () -> Unit` (card Belum Diinspeksi)
   - `onNavigateToHistoryWithDate: () -> Unit` (card Sudah Diinspeksi)
-- [ ] **NavGraph.kt**: 
+- [x] **NavGraph.kt**: 
   - Tambah `filterDate` optional param ke `INSPECTION_HISTORY` route
   - Tambah `uninspectedOnly` + `date` optional param ke `INSPECTION_LIST` route
   - Update navigasi dari dashboard untuk pass params
-- [ ] **Verifikasi:** `./gradlew :app:assembleDebug`
+- [x] **Verifikasi:** `./gradlew :app:assembleDebug`
 
 #### Files Changed
 
@@ -180,11 +181,11 @@ flowchart LR
 
 #### Task List
 
-- [ ] **MasterDataViewModel**: Tambah state field
+- [x] **MasterDataViewModel**: Tambah state field
   ```kotlin
   val excludeRoomIds: Set<Long> = emptySet()
   ```
-- [ ] **MasterDataViewModel**: Tambah method
+- [x] **MasterDataViewModel**: Tambah method
   ```kotlin
   fun setUninspectedFilter(date: String) {
       viewModelScope.launch {
@@ -193,19 +194,19 @@ flowchart LR
       }
   }
   ```
-- [ ] **MasterDataViewModel**: Update combine block — filter rooms jika `excludeRoomIds` tidak kosong
+- [x] **MasterDataViewModel**: Update combine block — filter rooms jika `excludeRoomIds` tidak kosong
   ```kotlin
   // Di dalam combine(repository.items, repository.rooms)
   val currentState = _uiState.value
   val filteredRooms = if (currentState.excludeRoomIds.isEmpty()) rooms
       else rooms.filter { it.id !in currentState.excludeRoomIds }
   ```
-- [ ] **MasterDataListScreen**: Baca param `uninspectedOnly` dan `date` dari route
+- [x] **MasterDataListScreen**: Baca param `uninspectedOnly` dan `date` dari route
   - Jika `uninspectedOnly == true`, panggil `viewModel.setUninspectedFilter(date)`
-- [ ] **MasterDataListScreen**: Ubah judul sesuai mode
+- [x] **MasterDataListScreen**: Ubah judul sesuai mode
   - Normal: "Pilih Ruangan"
   - Uninspected-only: "Pilih Ruangan (Belum Diinspeksi)"
-- [ ] **Verifikasi:** `./gradlew :app:assembleDebug`
+- [x] **Verifikasi:** `./gradlew :app:assembleDebug`
 
 #### Files Changed
 
@@ -223,11 +224,11 @@ flowchart LR
 
 #### Task List
 
-- [ ] **InspectionHistoryUiState**: Tambah field
+- [x] **InspectionHistoryUiState**: Tambah field
   ```kotlin
   val filterDate: String? = null
   ```
-- [ ] **InspectionHistoryViewModel**: Tambah method
+- [x] **InspectionHistoryViewModel**: Tambah method
   ```kotlin
   fun setFilterDate(date: String) {
       _uiState.value = _uiState.value.copy(filterDate = date)
@@ -235,7 +236,7 @@ flowchart LR
       collectCache(status = _uiState.value.filterStatus, date = date)
   }
   ```
-- [ ] **InspectionHistoryViewModel**: Update `collectCache()` signature:
+- [x] **InspectionHistoryViewModel**: Update `collectCache()` signature:
   ```kotlin
   private fun collectCache(status: String? = null, date: String? = null) {
       cacheJob?.cancel()
@@ -246,14 +247,14 @@ flowchart LR
       }
   }
   ```
-- [ ] **InspectionHistoryRepository**: Tambah overload `observeLocalInspections(status, date)`:
+- [x] **InspectionHistoryRepository**: Tambah overload `observeLocalInspections(status, date)`:
   - Jika `date != null`, filter hasil dari Room dengan `businessDate = date`
   - Atau tambah query baru di `MasterDataDao`:
     ```kotlin
     @Query("SELECT * FROM inspection WHERE businessDate = :date ORDER BY createdAt DESC")
     fun getInspectionsByDate(date: String): Flow<List<InspectionEntity>>
     ```
-- [ ] **InspectionHistoryViewModel**: Update `init` — baca dari NavArgs
+- [x] **InspectionHistoryViewModel**: Update `init` — baca dari NavArgs
   ```kotlin
   init {
       collectCache()
@@ -261,10 +262,10 @@ flowchart LR
       // Jika ada filterDate dari NavArgs, set setelah init
   }
   ```
-- [ ] **InspectionListScreen**: Tampilkan indikator filter date (chip atau subtitle)
+- [x] **InspectionListScreen**: Tampilkan indikator filter date (chip atau subtitle)
   - Jika `filterDate != null`, tampilkan "Hari ini, {date}" di subtitle
-- [ ] **NavGraph**: Pass `filterDate` dari route param ke ViewModel
-- [ ] **Verifikasi:** `./gradlew :app:assembleDebug`
+- [x] **NavGraph**: Pass `filterDate` dari route param ke ViewModel
+- [x] **Verifikasi:** `./gradlew :app:assembleDebug`
 
 #### Files Changed
 
@@ -274,6 +275,8 @@ flowchart LR
 | `inspection/InspectionHistoryRepository.kt` | ✏️ +observe with date |
 | `inspection/ui/InspectionListScreen.kt` | ✏️ +date indicator |
 | `core/database/dao/MasterDataDao.kt` | ✏️ +getInspectionsByDate (opsional) |
+
+> **🔧 Refinement sesi:** filter tanggal diimplementasi penuh dengan `Material3 DatePickerDialog` (`InspectionDatePickerDialog`), bar filter (`InspectionDateFilterBar`), dan snackbar error terpusat (`ErrorSnackbarEffect`) — diekstrak dari `InspectionListScreen` sehingga screen < 300 baris. Helper tanggal (`parseDateToMillis`/`formatMillisToDate`) di `inspection/ui/dateUtils.kt` (+ unit test `DateUtilsTest`, `DateUtilsTimezoneTest`). Pagination riwayat kini server-driven (`totalPages` → `hasMorePages`) dengan race protection `loadEpoch`.
 
 ---
 

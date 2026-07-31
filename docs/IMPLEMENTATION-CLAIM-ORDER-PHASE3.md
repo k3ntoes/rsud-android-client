@@ -2,7 +2,7 @@
 
 > **Status Project:** ✅ **MVP SELESAI** — EPIC-0 s.d. EPIC-10 ✅ | RM Phase 2 ✅  
 > **Status Phase 3:** ✅ **SELESAI** — Semua task API-01 s.d. API-06 completed  
-> **Test Coverage:** 211 unit tests passing (56 baru + 155 existing)
+> **Test Coverage:** 289 unit tests passing (21 test files)
 >
 > **BE Docs:** [`docs/android-to-be-api-contract.md`](./android-to-be-api-contract.md) · [`docs/android-implementation-guide.md`](./android-implementation-guide.md)  
 > **Git Diff Contract:** Lihat perubahan API contract di commit history
@@ -206,11 +206,11 @@ flowchart LR
       val myRoomsSyncedAt: String? = null
   )
   ```
-- [ ] Persist `SyncState` ke DataStore/SharedPreferences (model defined, persistence TBD)
+- [x] Persist `SyncState` ke SharedPreferences via `SyncStateStore` (ADR-0012) — `since` dipakai di sync berikutnya, bukan selalu epoch
 - [x] Update `SyncWorker` — sync master data sebelum sync inspeksi
 - [x] Update `InspectionFormViewModel` — filter items berdasarkan room yang dipilih (via getRoomItemMap)
-- [ ] Update `MasterDataListScreen` — filter rooms berdasarkan MyRooms untuk inspector
-- [ ] Handle first-time sync: `since=1970-01-01T00:00:00Z`
+- [x] Update `MasterDataListScreen` — filter rooms berdasarkan MyRooms untuk inspector (`RuangEntity.isMyRoom`; `admin_ppi` melihat semua)
+- [x] Handle first-time sync: `since=1970-01-01T00:00:00Z` (fallback saat `SyncStateStore` kosong)
 - [x] **Verifikasi:** `./gradlew :app:assembleDebug`
 
 ### File yang Diubah/Dibuat
@@ -219,7 +219,9 @@ flowchart LR
 |------|----------|
 | `master/MasterDataRepository.kt` | ✏️ Refactor sync methods |
 | `master/SyncState.kt` | 🆕 Baru |
+| `master/SyncStateStore.kt` | 🆕 Baru — persist synced_at (ADR-0012) |
 | `sync/SyncManager.kt` | ✏️ Tambah sync master data |
+| `master/ui/MasterDataListScreen.kt` | ✏️ Filter MyRooms (`isMyRoom`) |
 | `sync/SyncWorker.kt` | ✏️ Sync master data dulu |
 | `inspection/InspectionFormViewModel.kt` | ✏️ Filter items by room |
 
@@ -252,7 +254,7 @@ flowchart LR
   - [x] Rejection reason (jika ada)
 - [x] Buat `InspectionHistoryViewModel`:
   - [x] `StateFlow<InspectionHistoryUiState>` — list + detail
-  - [x] Pagination tracking (current page, loading more, page ceiling 10)
+  - [x] Pagination tracking (current page, loading more, `hasMorePages` dari `totalPages` server — tanpa ceiling 10)
   - [x] Filter status
 - [x] Lookup `room_name` dari `RoomEntity` lokal
 - [x] Lookup `inspector_name` dari `UserEntity` lokal (via `GET /api/auth/users` sync + `getUserById()`)
@@ -373,9 +375,11 @@ flowchart LR
 | File-file DTO baru (~8 files) | 🆕 Baru | API-02 |
 | `master/MasterDataRepository.kt` | ✏️ Refactor sync | API-03 |
 | `master/SyncState.kt` | 🆕 Baru | API-03 |
+| `master/SyncStateStore.kt` | 🆕 Baru | API-03 |
 | `sync/SyncManager.kt` | ✏️ Sync master data | API-03 |
 | `sync/SyncWorker.kt` | ✏️ Sync order | API-03 |
 | `inspection/InspectionFormViewModel.kt` | ✏️ Filter items by room | API-03 |
+| `master/ui/MasterDataListScreen.kt` | ✏️ Filter MyRooms (`isMyRoom`) | API-03 |
 | `inspection/InspectionHistoryRepository.kt` | 🆕 Baru | API-04 |
 | `inspection/InspectionHistoryViewModel.kt` | 🆕 Baru | API-04 |
 | `inspection/ui/InspectionListScreen.kt` | 🆕 Baru | API-04 |
@@ -386,6 +390,36 @@ flowchart LR
 | `core/network/AuthInterceptor.kt` | ✏️ Parse error codes | API-06 |
 | `core/network/TokenAuthenticator.kt` | ✏️ Code-based check | API-06 |
 | `core/network/ApiErrorUtil.kt` | 🆕 Baru | API-06 |
+
+---
+
+## 🔧 Sesi Lanjutan — Hardening & Penyempurnaan (pasca Phase 3)
+
+Fitur tambahan yang dikerjakan setelah Phase 3 ditutup — terdokumentasi di ADR-0012, ADR-0013, ADR-0014, ADR-0015.
+
+### Fitur Baru
+
+| Fitur | Detail | ADR |
+|-------|--------|-----|
+| **Sync inkremental** | `SyncStateStore` persist `synced_at` per endpoint; `since` diteruskan di sync berikutnya; first-time fallback ke epoch | ADR-0012 |
+| **Pagination server-driven** | `PaginatedResponse.totalPages` → `hasMorePages` (hapus ceiling 10 halaman) + race protection `loadEpoch` | ADR-0013 |
+| **Kepemilikan draf per akun** | `DrafInspeksi.inspectorId` di-stamp saat simpan; `clearForeignDrafts` saat ganti akun; logout tidak menghapus draf | ADR-0015 |
+| **Cleanup foto draf yatim** | `DraftPhotoCleaner` + `DraftPhotoCleanupWorker` (periodik harian); semua jalur hapus draf ikut hapus file foto | ADR-0014 |
+| **`isMyRoom` filter** | Room milik user ditandai saat sync; dropdown room hanya menampilkan `isMyRoom` (kecuali `admin_ppi`) | — |
+| **Date filter riwayat** | `InspectionDateFilterBar` + `InspectionDatePickerDialog` + `dateUtils` + `ErrorSnackbarEffect` (ekstraksi agar `InspectionListScreen` < 300 baris) | ADR-0013 |
+
+### File Baru
+
+| File | ADR |
+|------|-----|
+| `master/SyncStateStore.kt` | ADR-0012 |
+| `inspection/DraftPhotoCleaner.kt` | ADR-0014 |
+| `sync/DraftPhotoCleanupWorker.kt` | ADR-0014 (dibuat via `SyncAwareWorkerFactory` yang sudah ada) |
+| `inspection/ui/dateUtils.kt` | ADR-0013 |
+| `inspection/ui/ErrorSnackbarEffect.kt` | ADR-0013 |
+| `inspection/ui/InspectionDateFilterBar.kt` | ADR-0013 |
+| `inspection/ui/InspectionDatePickerDialog.kt` | ADR-0013 |
+| Test: `DraftPhotoCleanerTest`, `DraftPhotoCleanupWorkerTest`, `DateUtilsTest`, `DateUtilsTimezoneTest`, `DrafDaoTest` | — |
 
 ---
 
