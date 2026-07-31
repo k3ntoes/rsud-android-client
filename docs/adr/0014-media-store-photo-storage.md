@@ -98,6 +98,14 @@ Camera capture tetap butuh `FileProvider` untuk `TakePicture` contract. Foto sem
 </provider>
 ```
 
+## Pelengkap: Cleanup Foto Draf Yatim (update 2026-07-31)
+
+ADR ini mengatur foto inspeksi tersubmit (MediaStore, retensi 30 hari). Untuk **foto draf** (disimpan di app-specific `files/photos/`, belum terkirim), ditambahkan:
+
+1. **Hapus-on-hapus**: `InspectionRepository.deleteDraft` (hapus manual / resume) dan `deleteSyncedDraft` (sukses sync & `DUPLICATE_INSPECTION`) menghapus file foto lokal bersama baris DB — foto sudah terupload ke server, file lokal tidak diperlukan lagi. Mencegah file yatim menumpuk di sela cleanup periodik.
+2. **`DraftPhotoCleanupWorker`** (periodik harian via WorkManager, dibuat manual oleh `SyncAwareWorkerFactory`) — memanggil `DraftPhotoCleaner.cleanup()` yang membersihkan dua kategori "yatim": baris `draf_foto` tanpa header valid (parent draf_item hilang) dan file di `files/photos/` yang tidak direferensikan `draf_foto` manapun. File berumur < 24 jam dipertahankan (grace period) agar foto yang baru diambil tapi belum disimpan ke draf tetap aman.
+3. **`clearForeignDrafts`** — saat akun berbeda login, draf akun lama + file fotonya dihapus (lihat ADR-0015).
+
 ## Consequences
 
 ### Positif
@@ -107,6 +115,7 @@ Camera capture tetap butuh `FileProvider` untuk `TakePicture` contract. Foto sem
 - ✅ Metadata riwayat tetap bisa dilihat offline (tanpa foto)
 - ✅ Tidak perlu `MANAGE_EXTERNAL_STORAGE` — tidak masalah review Play Store
 - ✅ Draf aktif aman — fotonya tidak ikut dihapus
+- ✅ Semua jalur hapus draf (manual, resume, sync sukses, ganti akun) ikut menghapus file foto — storage bersih tanpa menunggu worker periodik
 
 ### Negatif
 
@@ -114,6 +123,7 @@ Camera capture tetap butuh `FileProvider` untuk `TakePicture` contract. Foto sem
 - ⚠️ Untuk API 24-28, perlu deklarasi `WRITE_EXTERNAL_STORAGE` di manifest (tapi target SDK 36 berarti sebagian besar pengguna di API 29+)
 - ⚠️ WorkManager periodic task minimal interval 12 jam (Android 12+) — tidak bisa real-time
 - ⚠️ User salah hapus foto dari galeri → foto tidak bisa ditampilkan di detail inspeksi offline — perlu fallback ke placeholder "Foto telah dihapus"
+- ⚠️ `DraftPhotoCleaner` memakai `context.getExternalFilesDir(null)/photos` — foto draf TIDAK muncul di galeri (by design: file internal aplikasi)
 
 ## Referensi
 

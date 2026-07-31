@@ -2,7 +2,6 @@ package my.id.kentoes.rsudajibarangapp.master.api
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import my.id.kentoes.rsudajibarangapp.core.model.PaginatedResponse
 import my.id.kentoes.rsudajibarangapp.core.model.SyncResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -43,12 +42,12 @@ interface MasterDataApi {
     @GET("inspection-items")
     suspend fun getItems(
         @Query("since") since: String? = null
-    ): PaginatedResponse<ItemOut>
+    ): SyncResponse<ItemOut>
 
     @GET("rooms")
     suspend fun getRooms(
         @Query("since") since: String? = null
-    ): PaginatedResponse<RoomOut>
+    ): SyncResponse<RoomOut>
 
     @GET("room-items")
     suspend fun getRoomItems(

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import my.id.kentoes.rsudajibarangapp.auth.AuthRepository
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
 import javax.inject.Inject
@@ -24,7 +25,8 @@ data class MasterDataUiState(
 
 @HiltViewModel
 class MasterDataViewModel @Inject constructor(
-    private val repository: MasterDataRepository
+    private val repository: MasterDataRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MasterDataUiState())
@@ -39,10 +41,15 @@ class MasterDataViewModel @Inject constructor(
             combine(
                 repository.items,
                 repository.rooms,
-                _excludeRoomIds
-            ) { items, rooms, excludeIds ->
-                val filteredRooms = if (excludeIds.isEmpty()) rooms
-                    else rooms.filter { it.id !in excludeIds }
+                _excludeRoomIds,
+                authRepository.currentUser
+            ) { items, allRooms, excludeIds, user ->
+                // Inspector/supervisor: hanya room yang di-assign (isMyRoom).
+                // Admin (admin_ppi): semua room — /me/rooms kosong untuk admin.
+                val baseRooms = if (user?.role == ROLE_ADMIN) allRooms
+                    else allRooms.filter { it.isMyRoom }
+                val filteredRooms = if (excludeIds.isEmpty()) baseRooms
+                    else baseRooms.filter { it.id !in excludeIds }
                 _uiState.value.copy(
                     items = items,
                     groupedItems = items.groupBy { it.kategori },
@@ -95,5 +102,10 @@ class MasterDataViewModel @Inject constructor(
 
     fun clearSyncMessage() {
         _uiState.value = _uiState.value.copy(syncMessage = null)
+    }
+
+    companion object {
+        /** Role admin melihat SEMUA room; role lain hanya room yang di-assign. */
+        private const val ROLE_ADMIN = "admin_ppi"
     }
 }

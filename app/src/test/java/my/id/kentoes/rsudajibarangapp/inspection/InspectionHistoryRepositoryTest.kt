@@ -12,6 +12,7 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionDetailEntit
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionPhotoEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
+import my.id.kentoes.rsudajibarangapp.core.model.PaginatedResponse
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionDetailOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionListItemDto
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
@@ -107,8 +108,14 @@ class InspectionHistoryRepositoryTest {
 
     @Test
     fun `fetchInspections fetches from API and maps to items`() = runTest {
-        val apiResponse = listOf(
-            InspectionListItemDto(id = 1, roomId = 1, inspectorId = 5, status = "PENDING", businessDate = "2026-07-28", createdAt = "2026-07-28T10:00:00Z", detailCount = 3)
+        val apiResponse = PaginatedResponse(
+            items = listOf(
+                InspectionListItemDto(id = 1, roomId = 1, inspectorId = 5, status = "PENDING", businessDate = "2026-07-28", createdAt = "2026-07-28T10:00:00Z", detailCount = 3)
+            ),
+            total = 1,
+            page = 1,
+            perPage = 20,
+            totalPages = 1
         )
         coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns apiResponse
         every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
@@ -127,7 +134,7 @@ class InspectionHistoryRepositoryTest {
 
     @Test
     fun `fetchInspections passes status filter to API`() = runTest {
-        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns emptyList()
+        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns PaginatedResponse(items = emptyList())
         every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
 
         repository.fetchInspections(page = 1, perPage = 10, status = "APPROVED")
@@ -137,7 +144,7 @@ class InspectionHistoryRepositoryTest {
 
     @Test
     fun `fetchInspections returns empty result when API returns empty`() = runTest {
-        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns emptyList()
+        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns PaginatedResponse(items = emptyList())
         every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
 
         val result = repository.fetchInspections()
@@ -148,8 +155,14 @@ class InspectionHistoryRepositoryTest {
 
     @Test
     fun `fetchInspections uses empty string fallback for null room name`() = runTest {
-        val apiItems = listOf(
-            InspectionListItemDto(id = 2, roomId = 99, inspectorId = 1, status = "PENDING", businessDate = "2026-07-28", createdAt = null, detailCount = 0)
+        val apiItems = PaginatedResponse(
+            items = listOf(
+                InspectionListItemDto(id = 2, roomId = 99, inspectorId = 1, status = "PENDING", businessDate = "2026-07-28", createdAt = null, detailCount = 0)
+            ),
+            total = 1,
+            page = 1,
+            perPage = 20,
+            totalPages = 1
         )
         coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns apiItems
         every { masterDataDao.getAllRooms() } returns flowOf(emptyList())
@@ -301,13 +314,13 @@ class InspectionHistoryRepositoryTest {
 
     @Test
     fun `fetchInspections returns PaginatedResult with correct page`() = runTest {
-        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns emptyList()
+        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns PaginatedResponse(items = emptyList(), page = 3, totalPages = 5)
         every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
 
         val result = repository.fetchInspections(page = 3, perPage = 10)
 
         assertEquals(3, result.currentPage)
-        assertEquals(1, result.totalPages)
+        assertEquals(5, result.totalPages)
         assertTrue(result.items.isEmpty())
     }
 }

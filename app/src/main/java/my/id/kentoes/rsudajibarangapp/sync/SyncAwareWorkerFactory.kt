@@ -5,6 +5,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
+import my.id.kentoes.rsudajibarangapp.inspection.DraftPhotoCleaner
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -20,7 +21,8 @@ import javax.inject.Singleton
 @Singleton
 class SyncAwareWorkerFactory @Inject constructor(
     private val hiltWorkerFactory: HiltWorkerFactory,
-    private val syncManager: SyncManager
+    private val syncManager: SyncManager,
+    private val draftPhotoCleaner: DraftPhotoCleaner
 ) : WorkerFactory() {
 
     override fun createWorker(
@@ -28,12 +30,15 @@ class SyncAwareWorkerFactory @Inject constructor(
         workerClassName: String,
         workParameters: WorkerParameters
     ): ListenableWorker? {
-        // SyncWorker dibuat manual karena @HiltWorker tidak diproses oleh KSP
-        return if (workerClassName == SyncWorker::class.java.name) {
-            SyncWorker(appContext, workParameters, syncManager)
-        } else {
-            // Untuk worker lain, delegasikan ke HiltWorkerFactory
-            hiltWorkerFactory.createWorker(appContext, workerClassName, workParameters)
+        // Worker dibuat manual karena @HiltWorker tidak diproses oleh KSP
+        return when (workerClassName) {
+            SyncWorker::class.java.name ->
+                SyncWorker(appContext, workParameters, syncManager)
+            DraftPhotoCleanupWorker::class.java.name ->
+                DraftPhotoCleanupWorker(appContext, workParameters, draftPhotoCleaner)
+            else ->
+                // Untuk worker lain, delegasikan ke HiltWorkerFactory
+                hiltWorkerFactory.createWorker(appContext, workerClassName, workParameters)
         }
     }
 }

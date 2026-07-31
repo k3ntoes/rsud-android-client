@@ -3,6 +3,7 @@ package my.id.kentoes.rsudajibarangapp.inspection
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,6 +41,12 @@ class InspectionHistoryViewModel @Inject constructor(
 
     private var refreshJob: Job? = null
     private var cacheJob: Job? = null
+    private var loadMoreJob: Job? = null
+
+    // Naik setiap daftar diganti (refresh selesai / filter berubah). loadNextPage
+    // menangkap nilai ini saat mulai dan membuang hasil fetch jika sudah berubah —
+    // menutup race dua arah antara refresh dan load-more.
+    private var loadEpoch = 0
 
     /** Collect cache dari Room — cancel job sebelumnya jika ada (cegah conflict) */
     private fun collectCache(status: String? = null, date: String? = null) {
@@ -55,6 +62,8 @@ class InspectionHistoryViewModel @Inject constructor(
     }
 
     fun setFilterDate(date: String?) {
+        loadMoreJob?.cancel() // load halaman lama untuk filter lain tidak boleh menimpa state baru
+        loadEpoch++
         _uiState.value = _uiState.value.copy(filterDate = date, currentPage = 1, hasMorePages = true)
         collectCache(status = _uiState.value.filterStatus, date = date)
         if (date != null) refreshFromServer()
@@ -68,17 +77,20 @@ class InspectionHistoryViewModel @Inject constructor(
     /** Refresh dari server — update cache, Flow akan otomatis emit ulang */
     fun refreshFromServer() {
         refreshJob?.cancel()
+        loadMoreJob?.cancel() // hasil loadMore yang basi tidak boleh menimpa state refresh
         refreshJob = viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isRefreshing = true, error = null)
             try {
-                repository.fetchInspections(
+                val result = repository.fetchInspections(
                     page = 1,
                     status = _uiState.value.filterStatus
                 )
+                // Invalidasi loadMore yang mungkin mulai saat refresh berjalan
+                loadEpoch++
                 _uiState.value = _uiState.value.copy(
-                    currentPage = 1,
+                    currentPage = result.currentPage,
                     isRefreshing = false,
-                    hasMorePages = true
+                    hasMorePages = result.currentPage < result.totalPages
                 )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
@@ -89,28 +101,35 @@ class InspectionHistoryViewModel @Inject constructor(
         }
     }
 
-    /** Load halaman berikutnya (infinite scroll) — pagination via list slicing */
+    /** Load halaman berikutnya (infinite scroll) — pagination server-driven via totalPages */
     fun loadNextPage() {
         val state = _uiState.value
         if (state.isLoadingMore || !state.hasMorePages) return
 
-        viewModelScope.launch {
-            _uiState.value = state.copy(isLoadingMore = true)
+        val epoch = loadEpoch
+        loadMoreJob?.cancel()
+        loadMoreJob = viewModelScope.launch {
+            _uiState.value = state.copy(isLoadingMore = true, error = null)
             try {
                 val nextPage = state.currentPage + 1
-                repository.fetchInspections(
+                val result = repository.fetchInspections(
                     page = nextPage,
                     status = state.filterStatus
                 )
-                _uiState.value = _uiState.value.copy(
-                    currentPage = nextPage,
-                    isLoadingMore = false
-                )
-                // ponytail: server returns flat list; pagination by page number,
-                // stop at 10 pages as safety ceiling
-                if (nextPage >= 10) {
-                    _uiState.value = _uiState.value.copy(hasMorePages = false)
+                if (epoch != loadEpoch) {
+                    // State sudah diganti oleh refresh/filter saat fetch berjalan — buang hasil basi.
+                    _uiState.value = _uiState.value.copy(isLoadingMore = false)
+                    return@launch
                 }
+                _uiState.value = _uiState.value.copy(
+                    currentPage = result.currentPage,
+                    isLoadingMore = false,
+                    hasMorePages = result.currentPage < result.totalPages
+                )
+            } catch (e: CancellationException) {
+                // Load dibatalkan karena refresh/filter — bersihkan flag, jangan timpa state baru.
+                _uiState.value = _uiState.value.copy(isLoadingMore = false)
+                throw e
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoadingMore = false,
@@ -148,6 +167,8 @@ class InspectionHistoryViewModel @Inject constructor(
 
     fun setFilter(status: String?) {
         val date = _uiState.value.filterDate
+        loadMoreJob?.cancel() // load halaman lama untuk filter lain tidak boleh menimpa state baru
+        loadEpoch++
         _uiState.value = _uiState.value.copy(filterStatus = status, currentPage = 1, hasMorePages = true)
         collectCache(status, date) // cancel previous + collect filtered
         refreshFromServer()

@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.MeetingRoom
-
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,6 +33,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -43,14 +44,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionHistoryItem
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionHistoryViewModel
 
@@ -66,6 +69,8 @@ fun InspectionListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     // Trigger date filter when navigated from dashboard
     LaunchedEffect(initialFilterDate) {
@@ -89,7 +94,10 @@ fun InspectionListScreen(
         }
     }
 
+    ErrorSnackbarEffect(error = uiState.error, snackbarHostState = snackbarHostState)
+
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -122,7 +130,7 @@ fun InspectionListScreen(
                 .padding(padding)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Filter chips
+                // Filter chips — status
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -140,6 +148,12 @@ fun InspectionListScreen(
                         )
                     }
                 }
+
+                InspectionDateFilterBar(
+                    filterDate = uiState.filterDate,
+                    onPickDate = { showDatePicker = true },
+                    onClearDate = { viewModel.setFilterDate(null) }
+                )
 
                 when {
                     uiState.isInitialLoading && uiState.inspections.isEmpty() -> {
@@ -203,6 +217,15 @@ fun InspectionListScreen(
                 }
             }
         }
+    }
+
+    // Date picker dialog
+    if (showDatePicker) {
+        InspectionDatePickerDialog(
+            filterDate = uiState.filterDate,
+            onDateSelected = { viewModel.setFilterDate(it) },
+            onDismiss = { showDatePicker = false }
+        )
     }
 }
 

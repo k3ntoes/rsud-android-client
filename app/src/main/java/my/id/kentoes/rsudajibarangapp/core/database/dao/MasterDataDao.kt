@@ -28,6 +28,9 @@ interface MasterDataDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItems(items: List<MasterDataItem>)
 
+    @Query("DELETE FROM master_data_item")
+    suspend fun clearItems()
+
     // ── Ruangan ──
 
     @Query("SELECT * FROM ruang WHERE isActive = 1 ORDER BY nama")
@@ -41,6 +44,13 @@ interface MasterDataDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRooms(rooms: List<RuangEntity>)
+
+    @Query("DELETE FROM ruang")
+    suspend fun clearRooms()
+
+    /** Hapus penanda isMyRoom semua room — dipanggil syncMyRooms sebelum menandai ulang (replace-all). */
+    @Query("UPDATE ruang SET isMyRoom = 0")
+    suspend fun resetMyRooms()
 
     // ── Room Items (pivot) ──
 

@@ -8,6 +8,7 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafFoto
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -84,10 +85,45 @@ class InspectionRepository @Inject constructor(
         return DraftWithItems(draft = draft, items = items, photos = photos)
     }
 
-    /** Hapus draf beserta item & foto (via CASCADE FK). */
+    /**
+     * Hapus draf beserta item & foto (via CASCADE FK) DAN file foto di disk —
+     * mencegah file yatim menumpuk di sela worker cleanup periodik.
+     */
     suspend fun deleteDraft(draftId: Long) {
         val draft = drafDao.getDraftById(draftId) ?: return
+        val photoPaths = drafDao.getPhotoPathsForDraft(draftId)
         drafDao.deleteDraftCascade(draft)
+        deleteFilesBestEffort(photoPaths)
+    }
+
+    /** Hapus file foto lokal best-effort — jangan tinggalkan file yatim. */
+    private fun deleteFilesBestEffort(paths: List<String>) {
+        paths.forEach { path ->
+            runCatching { File(path).delete() }
+        }
+    }
+
+    /**
+     * Hapus draf yang sudah berhasil dikirim (baris via markSyncedAndDelete + file foto lokal).
+     * Foto sudah terupload ke server — file lokal tidak diperlukan lagi, jadi ikut dihapus
+     * agar tidak menumpuk sebagai file yatim di sela worker cleanup periodik.
+     */
+    suspend fun deleteSyncedDraft(draftId: Long) {
+        val photoPaths = drafDao.getPhotoPathsForDraft(draftId)
+        drafDao.markSyncedAndDelete(draftId)
+        deleteFilesBestEffort(photoPaths)
+    }
+
+    /**
+     * Hapus draf milik akun LAIN — dipanggil saat akun berbeda login (bukan saat logout,
+     * supaya user yang sama login ulang tidak kehilangan draf). Draf diidentifikasi via
+     * inspectorId yang distempel saat disimpan. File foto draf yang terhapus ikut
+     * dibersihkan (best-effort) agar tidak ada file yatim.
+     */
+    suspend fun clearForeignDrafts(inspectorId: String) {
+        val photoPaths = drafDao.getForeignDraftPhotoPaths(inspectorId)
+        drafDao.clearForeignDrafts(inspectorId) // CASCADE hapus item & foto
+        deleteFilesBestEffort(photoPaths)
     }
 
     /** Update status draf (misal: DRAFT → PENDING_SYNC → SYNCED). */

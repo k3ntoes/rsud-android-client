@@ -109,7 +109,7 @@ class SyncManagerTest {
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_a.jpg")
         coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
-        coEvery { drafDao.markSyncedAndDelete(any()) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(any()) } returns Unit
 
         val results = syncManager.syncAllPending()
 
@@ -128,7 +128,7 @@ class SyncManagerTest {
         coEvery { imageCompressor.compress("/photo/c.jpg") } returns "/compressed/c.jpg"
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_file.jpg")
         coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
-        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
 
@@ -145,7 +145,7 @@ class SyncManagerTest {
                     request.details[0].itemId == 1L
             })
         }
-        coVerify(exactly = 1) { drafDao.markSyncedAndDelete(1L) }
+        coVerify(exactly = 1) { inspectionRepository.deleteSyncedDraft(1L) }
     }
 
     @Test
@@ -183,7 +183,22 @@ class SyncManagerTest {
 
         assertFalse(result.success)
         assertEquals("HTTP 422 Unprocessable Entity", result.message)
-        coVerify(exactly = 0) { drafDao.markSyncedAndDelete(any()) }
+        coVerify(exactly = 0) { inspectionRepository.deleteSyncedDraft(any()) }
+    }
+
+    @Test
+    fun `syncSingleDraft treats DUPLICATE_INSPECTION as success and deletes draft files`() = runTest {
+        coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
+        coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server.jpg")
+        coEvery { syncApi.submitInspection(any()) } throws RuntimeException("409: DUPLICATE_INSPECTION")
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
+
+        val result = syncManager.syncSingleDraft(1L)
+
+        assertTrue(result.success)
+        assertEquals("Inspeksi sudah terkirim (duplicate)", result.message)
+        coVerify(exactly = 1) { inspectionRepository.deleteSyncedDraft(1L) }
     }
 
     @Test
@@ -239,7 +254,7 @@ class SyncManagerTest {
         val emptyPayload = samplePayload.copy(items = emptyList())
         coEvery { inspectionRepository.preparePayload(1L) } returns emptyPayload
         coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
-        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
 
@@ -261,7 +276,7 @@ class SyncManagerTest {
         )
         coEvery { inspectionRepository.preparePayload(1L) } returns payloadWithoutPhotos
         coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
-        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
 
@@ -281,7 +296,7 @@ class SyncManagerTest {
             UploadPhotoResponse("server_file.jpg")
         }
         coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
-        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
 
         syncManager.syncSingleDraft(1L)
 
@@ -321,7 +336,7 @@ class SyncManagerTest {
 
         assertFalse(result.success)
         assertEquals("Upload gagal pada foto kedua", result.message)
-        coVerify(exactly = 0) { drafDao.markSyncedAndDelete(any()) }
+        coVerify(exactly = 0) { inspectionRepository.deleteSyncedDraft(any()) }
         coVerify(exactly = 0) { syncApi.submitInspection(any()) }
     }
 
@@ -351,7 +366,7 @@ class SyncManagerTest {
 
         assertFalse(result.success)
         assertEquals("Gagal upload foto item 2", result.message)
-        coVerify(exactly = 0) { drafDao.markSyncedAndDelete(any()) }
+        coVerify(exactly = 0) { inspectionRepository.deleteSyncedDraft(any()) }
         coVerify(exactly = 0) { syncApi.submitInspection(any()) }
     }
 
@@ -371,7 +386,7 @@ class SyncManagerTest {
         coEvery { imageCompressor.compress("/photo/small.jpg") } returns "/photo/small.jpg"
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_small.jpg")
         coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
-        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
 
@@ -399,7 +414,7 @@ class SyncManagerTest {
         assertEquals("Gagal kompres: bitmap null", result.message)
         coVerify(exactly = 0) { syncApi.uploadPhoto(any()) }
         coVerify(exactly = 0) { syncApi.submitInspection(any()) }
-        coVerify(exactly = 0) { drafDao.markSyncedAndDelete(any()) }
+        coVerify(exactly = 0) { inspectionRepository.deleteSyncedDraft(any()) }
     }
 
     @Test
@@ -446,7 +461,7 @@ class SyncManagerTest {
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse(fileName = "")
         coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
-        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
 
@@ -473,7 +488,7 @@ class SyncManagerTest {
         coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse(fileName = "server.jpg", thumbnailName = null)
         coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
-        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
 
@@ -496,7 +511,7 @@ class SyncManagerTest {
         coEvery { inspectionRepository.preparePayload(2L) } returns null
 
         coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
-        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
 
         val results = syncManager.syncAllPending()
 
@@ -527,7 +542,7 @@ class SyncManagerTest {
         coEvery { syncApi.uploadPhoto(any()) } throws RuntimeException("Upload error")
 
         coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
-        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
 
         val results = syncManager.syncAllPending()
 
@@ -561,7 +576,7 @@ class SyncManagerTest {
             UploadPhotoResponse("server_foto3.jpg")
         )
         coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
-        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
 
@@ -596,7 +611,7 @@ class SyncManagerTest {
         )
         coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_foto.jpg")
         coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
-        coEvery { drafDao.markSyncedAndDelete(1L) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
 
         val result = syncManager.syncSingleDraft(1L)
 

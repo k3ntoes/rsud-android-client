@@ -33,8 +33,12 @@ Periode antara login berhasil hingga logout (manual atau force). Sesi tetap akti
 _Avoid_: Session, login state
 
 **Force Logout**: 
-Penghapusan paksa semua token dan data sesi karena Refresh Token ditolak server (expired/direvoke admin). Mengembalikan Petugas ke layar Login.
+Penghapusan paksa semua token dan data sesi karena Refresh Token ditolak server (expired/direvoke admin). Mengembalikan Petugas ke layar Login. **Hanya dipicu saat server benar-benar menolak token** — `TOKEN_INVALID` (dari error code) atau `HttpException` 401/403 di `refreshToken()`. Kegagalan jaringan (`IOException`) TIDAK memicu logout paksa — sesi tetap valid, user offline tidak kehilangan draf saat refresh gagal sementara.
 _Avoid_: Logout paksa, session kill
+
+**Kepemilikan Draf**: 
+Draf inspeksi lokal bertag `inspector_id` dari user yang login saat disimpan. Saat login akun BERBEDA, draf akun lama (inspector_id != user baru) dihapus termasuk file fotonya (`clearForeignDrafts`). Draf TIDAK dihapus saat logout — user yang sama login ulang tidak kehilangan progress. Draf legacy tanpa `inspector_id` dipertahankan (tidak dapat diatribusikan).
+_Avoid_: Draft ownership, draft per akun
 
 **AuthState**: 
 Representasi reaktif status sesi yang menentukan apakah Petugas dapat mengakses layanan aplikasi atau harus login ulang.

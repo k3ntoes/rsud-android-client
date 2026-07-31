@@ -6,12 +6,19 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import kotlinx.coroutines.test.runTest
+import okhttp3.ResponseBody.Companion.toResponseBody
+import retrofit2.HttpException
+import retrofit2.Response
+import java.io.IOException
 import my.id.kentoes.rsudajibarangapp.auth.api.AuthApi
 import my.id.kentoes.rsudajibarangapp.auth.api.LogoutRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.RefreshRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.TokenResponse
 import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
+import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.datastore.TokenManager
+import my.id.kentoes.rsudajibarangapp.inspection.InspectionRepository
+import my.id.kentoes.rsudajibarangapp.master.SyncStateStore
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -22,11 +29,14 @@ class AuthRepositoryTest {
 
     private val authApi = mockk<AuthApi>(relaxed = true)
     private val tokenManager = mockk<TokenManager>(relaxed = true)
+    private val masterDataDao = mockk<MasterDataDao>(relaxed = true)
+    private val syncStateStore = mockk<SyncStateStore>(relaxed = true)
+    private val inspectionRepository = mockk<InspectionRepository>(relaxed = true)
     private lateinit var repository: AuthRepository
 
     @Before
     fun setup() {
-        repository = AuthRepository(authApi, tokenManager)
+        repository = AuthRepository(authApi, tokenManager, masterDataDao, syncStateStore, inspectionRepository)
     }
 
     // ── init() ──
@@ -113,6 +123,31 @@ class AuthRepositoryTest {
         }
     }
 
+    @Test
+    fun `login clears drafts of a different previous account`() = runTest {
+        val response = TokenResponse(accessToken = "at1", refreshToken = "rt1", user = sampleUser)
+        coEvery { authApi.login(any()) } returns response
+        coEvery { tokenManager.saveTokens(any(), any()) } just runs
+        coEvery { tokenManager.saveUser(any()) } just runs
+
+        val result = repository.login("user", "pass")
+
+        assertTrue(result)
+        // Akun baru (id=1) → draf milik akun lama (inspectorId lain) dibersihkan
+        coVerify(exactly = 1) { inspectionRepository.clearForeignDrafts("1") }
+        assertTrue(repository.authState.value is AuthState.Authenticated)
+    }
+
+    @Test
+    fun `login failure does not clear drafts`() = runTest {
+        coEvery { authApi.login(any()) } throws RuntimeException("Login gagal")
+
+        val result = repository.login("user", "wrong")
+
+        assertFalse(result)
+        coVerify(exactly = 0) { inspectionRepository.clearForeignDrafts(any()) }
+    }
+
     // ── refreshToken() ──
 
     @Test
@@ -153,9 +188,61 @@ class AuthRepositoryTest {
     }
 
     @Test
-    fun `refreshToken exception calls forceLogout`() = runTest {
+    fun `refreshToken network error does not force logout`() = runTest {
         coEvery { tokenManager.getRefreshToken() } returns "old-refresh"
-        coEvery { authApi.refresh(any()) } throws RuntimeException("Network error")
+        coEvery { authApi.refresh(any()) } throws IOException("Network timeout")
+
+        val result = repository.refreshToken()
+
+        assertFalse(result)
+        // Jaringan putus — sesi tetap valid, jangan logout (user tidak kehilangan draf)
+        coVerify(exactly = 0) { tokenManager.clearTokens() }
+        assertFalse(repository.authState.value is AuthState.Unauthenticated)
+    }
+
+    @Test
+    fun `refreshToken http 401 calls forceLogout`() = runTest {
+        coEvery { tokenManager.getRefreshToken() } returns "old-refresh"
+        coEvery { authApi.refresh(any()) } throws HttpException(Response.error<Any>(401, "".toResponseBody()))
+        coEvery { tokenManager.clearTokens() } just runs
+
+        val result = repository.refreshToken()
+
+        assertFalse(result)
+        coVerify { tokenManager.clearTokens() }
+        assertTrue(repository.authState.value is AuthState.Unauthenticated)
+    }
+
+    @Test
+    fun `refreshToken http 403 calls forceLogout`() = runTest {
+        coEvery { tokenManager.getRefreshToken() } returns "old-refresh"
+        coEvery { authApi.refresh(any()) } throws HttpException(Response.error<Any>(403, "".toResponseBody()))
+        coEvery { tokenManager.clearTokens() } just runs
+
+        val result = repository.refreshToken()
+
+        assertFalse(result)
+        coVerify { tokenManager.clearTokens() }
+        assertTrue(repository.authState.value is AuthState.Unauthenticated)
+    }
+
+    @Test
+    fun `refreshToken http 5xx does not force logout`() = runTest {
+        coEvery { tokenManager.getRefreshToken() } returns "old-refresh"
+        coEvery { authApi.refresh(any()) } throws HttpException(Response.error<Any>(500, "".toResponseBody()))
+
+        val result = repository.refreshToken()
+
+        assertFalse(result)
+        // Error server 5xx bukan penolakan token — jangan logout paksa
+        coVerify(exactly = 0) { tokenManager.clearTokens() }
+        assertFalse(repository.authState.value is AuthState.Unauthenticated)
+    }
+
+    @Test
+    fun `refreshToken unexpected exception calls forceLogout`() = runTest {
+        coEvery { tokenManager.getRefreshToken() } returns "old-refresh"
+        coEvery { authApi.refresh(any()) } throws RuntimeException("Serialization error")
         coEvery { tokenManager.clearTokens() } just runs
 
         val result = repository.refreshToken()
@@ -214,6 +301,42 @@ class AuthRepositoryTest {
         repository.forceLogout()
 
         coVerify { tokenManager.clearTokens() }
+        assertTrue(repository.authState.value is AuthState.Unauthenticated)
+    }
+
+    @Test
+    fun `forceLogout still completes when cache clear fails`() = runTest {
+        coEvery { tokenManager.clearTokens() } just runs
+        coEvery { masterDataDao.clearItems() } throws RuntimeException("DB error")
+
+        repository.forceLogout()
+
+        // Kegagalan clear cache tidak boleh membuat session macet di Authenticated
+        assertTrue(repository.authState.value is AuthState.Unauthenticated)
+        coVerify { tokenManager.clearTokens() }
+    }
+
+    @Test
+    fun `forceLogout clears local master data cache and sync state`() = runTest {
+        coEvery { tokenManager.clearTokens() } just runs
+        coEvery { masterDataDao.clearItems() } just runs
+        coEvery { masterDataDao.clearRooms() } just runs
+        coEvery { masterDataDao.clearRoomItems() } just runs
+        coEvery { masterDataDao.clearUserRooms() } just runs
+        coEvery { masterDataDao.clearUsers() } just runs
+        coEvery { syncStateStore.clear() } just runs
+
+        repository.forceLogout()
+
+        // Mencegah data akun lama (room/assignment) tertampil di akun berikutnya
+        coVerify(exactly = 1) { masterDataDao.clearItems() }
+        coVerify(exactly = 1) { masterDataDao.clearRooms() }
+        coVerify(exactly = 1) { masterDataDao.clearRoomItems() }
+        coVerify(exactly = 1) { masterDataDao.clearUserRooms() }
+        coVerify(exactly = 1) { masterDataDao.clearUsers() }
+        // Draf TIDAK dihapus saat logout — hanya saat akun BERBEDA login
+        coVerify(exactly = 0) { inspectionRepository.clearForeignDrafts(any()) }
+        coVerify(exactly = 1) { syncStateStore.clear() }
         assertTrue(repository.authState.value is AuthState.Unauthenticated)
     }
 

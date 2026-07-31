@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import my.id.kentoes.rsudajibarangapp.auth.api.AuthApi
@@ -32,6 +33,7 @@ class MasterDataRepositoryTest {
     private lateinit var api: MasterDataApi
     private lateinit var authApi: AuthApi
     private lateinit var dao: MasterDataDao
+    private lateinit var syncStateStore: SyncStateStore
     private lateinit var repository: MasterDataRepository
 
     private val sampleItems = listOf(
@@ -48,9 +50,12 @@ class MasterDataRepositoryTest {
         api = mockk()
         authApi = mockk()
         dao = mockk()
+        syncStateStore = mockk()
+        every { syncStateStore.load() } returns SyncState()
+        every { syncStateStore.update(any()) } returns Unit
         every { dao.getAllItems() } returns flowOf(sampleItems)
         every { dao.getAllRooms() } returns flowOf(sampleRooms)
-        repository = MasterDataRepository(api, authApi, dao)
+        repository = MasterDataRepository(api, authApi, dao, syncStateStore)
     }
 
     // ── Cache availability ──
@@ -70,10 +75,10 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncFromApi inserts mapped items and rooms on full success`() = runTest {
-        val apiItems = PaginatedResponse(items = listOf(ItemOut(1, "Meja"), ItemOut(2, "Kursi")))
-        val apiRooms = PaginatedResponse(items = listOf(RoomOut(1, "Ruang 1")))
-        coEvery { api.getItems() } returns apiItems
-        coEvery { api.getRooms() } returns apiRooms
+        val apiItems = SyncResponse(data = listOf(ItemOut(1, "Meja"), ItemOut(2, "Kursi")))
+        val apiRooms = SyncResponse(data = listOf(RoomOut(1, "Ruang 1")))
+        coEvery { api.getItems(any()) } returns apiItems
+        coEvery { api.getRooms(any()) } returns apiRooms
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -86,10 +91,10 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncFromApi maps API response fields correctly to entities`() = runTest {
-        val apiItems = PaginatedResponse(items = listOf(ItemOut(id = 10, name = "AC", isActive = true)))
-        val apiRooms = PaginatedResponse(items = listOf(RoomOut(id = 5, name = "IGD", isActive = true)))
-        coEvery { api.getItems() } returns apiItems
-        coEvery { api.getRooms() } returns apiRooms
+        val apiItems = SyncResponse(data = listOf(ItemOut(id = 10, name = "AC", isActive = true)))
+        val apiRooms = SyncResponse(data = listOf(RoomOut(id = 5, name = "IGD", isActive = true)))
+        coEvery { api.getItems(any()) } returns apiItems
+        coEvery { api.getRooms(any()) } returns apiRooms
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -109,7 +114,8 @@ class MasterDataRepositoryTest {
                     rooms[0].id == 5L &&
                     rooms[0].nama == "IGD" &&
                     rooms[0].lantai == null &&
-                    rooms[0].isActive
+                    rooms[0].isActive &&
+                    !rooms[0].isMyRoom // room umum dari /rooms tidak ditandai
             })
         }
     }
@@ -118,8 +124,8 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncFromApi does not insert items when items list is empty`() = runTest {
-        coEvery { api.getItems() } returns PaginatedResponse(items = emptyList())
-        coEvery { api.getRooms() } returns PaginatedResponse(items = emptyList())
+        coEvery { api.getItems(any()) } returns SyncResponse(data = emptyList())
+        coEvery { api.getRooms(any()) } returns SyncResponse(data = emptyList())
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -131,9 +137,9 @@ class MasterDataRepositoryTest {
     }
 
     @Test
-    fun `syncFromApi does not insert rooms when rooms list is empty`() = runTest {
-        coEvery { api.getItems() } returns PaginatedResponse(items = listOf(ItemOut(1, "Meja")))
-        coEvery { api.getRooms() } returns PaginatedResponse(items = emptyList())
+    fun `syncFromApi does not insert rooms when rooms list is empty`() = runTest {        coEvery { api.getItems(any()) } returns SyncResponse(data = listOf(ItemOut(1, "Meja")))
+        coEvery { api.getRooms(any()) } returns SyncResponse(data = emptyList())
+
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -145,8 +151,8 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncFromApi does not insert when both lists are empty`() = runTest {
-        coEvery { api.getItems() } returns PaginatedResponse(items = emptyList())
-        coEvery { api.getRooms() } returns PaginatedResponse(items = emptyList())
+        coEvery { api.getItems(any()) } returns SyncResponse(data = emptyList())
+        coEvery { api.getRooms(any()) } returns SyncResponse(data = emptyList())
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -159,8 +165,8 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncFromApi inserts rooms even when items list is empty`() = runTest {
-        coEvery { api.getItems() } returns PaginatedResponse(items = emptyList())
-        coEvery { api.getRooms() } returns PaginatedResponse(items = sampleRooms.map { RoomOut(it.id, it.nama) })
+        coEvery { api.getItems(any()) } returns SyncResponse(data = emptyList())
+        coEvery { api.getRooms(any()) } returns SyncResponse(data = sampleRooms.map { RoomOut(it.id, it.nama) })
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -175,20 +181,20 @@ class MasterDataRepositoryTest {
 
     @Test(expected = RuntimeException::class)
     fun `syncFromApi throws when items API call fails`() = runTest {
-        coEvery { api.getItems() } throws RuntimeException("Connection timeout")
+        coEvery { api.getItems(any()) } throws RuntimeException("Connection timeout")
         repository.syncFromApi()
     }
 
     @Test(expected = RuntimeException::class)
     fun `syncFromApi throws when rooms API call fails`() = runTest {
-        coEvery { api.getItems() } returns PaginatedResponse(items = listOf(ItemOut(1, "Meja")))
-        coEvery { api.getRooms() } throws RuntimeException("Rooms server error")
+        coEvery { api.getItems(any()) } returns SyncResponse(data = listOf(ItemOut(1, "Meja")))
+        coEvery { api.getRooms(any()) } throws RuntimeException("Rooms server error")
         repository.syncFromApi()
     }
 
     @Test(expected = RuntimeException::class)
     fun `syncFromApi throws when both API calls fail`() = runTest {
-        coEvery { api.getItems() } throws RuntimeException("Network down")
+        coEvery { api.getItems(any()) } throws RuntimeException("Network down")
         repository.syncFromApi()
     }
 
@@ -202,12 +208,13 @@ class MasterDataRepositoryTest {
             RoomItemDto(id = 1, roomId = 10, itemId = 100, createdAt = "2026-01-01T00:00:00Z"),
             RoomItemDto(id = 2, roomId = 10, itemId = 200),
         ))
-        coEvery { api.getRoomItems() } returns apiResult
+        coEvery { api.getRoomItems(any()) } returns apiResult
         coEvery { dao.clearRoomItems() } returns Unit
         coEvery { dao.insertRoomItems(any()) } returns Unit
 
         repository.syncRoomItems()
 
+        // Pivot = replace-all — relasi yang dihapus server ikut terhapus lokal
         coVerify(exactly = 1) { dao.clearRoomItems() }
         coVerify {
             dao.insertRoomItems(match { items ->
@@ -225,19 +232,20 @@ class MasterDataRepositoryTest {
     }
 
     @Test
-    fun `syncRoomItems clears but does not insert when API returns empty`() = runTest {
-        coEvery { api.getRoomItems() } returns SyncResponse(data = emptyList())
+    fun `syncRoomItems clears even when API returns empty`() = runTest {
+        coEvery { api.getRoomItems(any()) } returns SyncResponse(data = emptyList())
         coEvery { dao.clearRoomItems() } returns Unit
 
         repository.syncRoomItems()
 
+        // Replace-all tetap clear meski response kosong → semua relasi lokal ikut terhapus
         coVerify(exactly = 1) { dao.clearRoomItems() }
         coVerify(exactly = 0) { dao.insertRoomItems(any()) }
     }
 
     @Test(expected = RuntimeException::class)
     fun `syncRoomItems throws when API fails`() = runTest {
-        coEvery { api.getRoomItems() } throws RuntimeException("Room items timeout")
+        coEvery { api.getRoomItems(any()) } throws RuntimeException("Room items timeout")
         repository.syncRoomItems()
     }
 
@@ -247,11 +255,11 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncUsers clears then inserts mapped users`() = runTest {
-        val apiUsers = listOf(
+        val apiUsers = PaginatedResponse(items = listOf(
             UserOut(id = 1, username = "petugas01", role = "inspector", isActive = true),
             UserOut(id = 2, username = "supervisor01", role = "supervisor", isActive = true),
-        )
-        coEvery { authApi.getUsers() } returns apiUsers
+        ))
+        coEvery { authApi.getUsers(any(), any()) } returns apiUsers
         coEvery { dao.clearUsers() } returns Unit
         coEvery { dao.insertUsers(any()) } returns Unit
 
@@ -274,7 +282,7 @@ class MasterDataRepositoryTest {
 
     @Test
     fun `syncUsers clears but does not insert when API returns empty`() = runTest {
-        coEvery { authApi.getUsers() } returns emptyList()
+        coEvery { authApi.getUsers(any(), any()) } returns PaginatedResponse(items = emptyList())
         coEvery { dao.clearUsers() } returns Unit
 
         repository.syncUsers()
@@ -285,8 +293,35 @@ class MasterDataRepositoryTest {
 
     @Test(expected = RuntimeException::class)
     fun `syncUsers throws when API fails`() = runTest {
-        coEvery { authApi.getUsers() } throws RuntimeException("Users timeout")
+        coEvery { authApi.getUsers(any(), any()) } throws RuntimeException("Users timeout")
         repository.syncUsers()
+    }
+
+    @Test
+    fun `syncUsers fetches all pages when paginated`() = runTest {
+        // Server returns 30 users split across 2 pages
+        val page1 = PaginatedResponse(
+            items = (1..20).map { UserOut(it, "user$it", "inspector", true) },
+            total = 30, page = 1, perPage = 100, totalPages = 2
+        )
+        val page2 = PaginatedResponse(
+            items = (21..30).map { UserOut(it, "user$it", "inspector", true) },
+            total = 30, page = 2, perPage = 100, totalPages = 2
+        )
+        coEvery { authApi.getUsers(page = 1, perPage = any()) } returns page1
+        coEvery { authApi.getUsers(page = 2, perPage = any()) } returns page2
+        coEvery { dao.clearUsers() } returns Unit
+        coEvery { dao.insertUsers(any()) } returns Unit
+
+        repository.syncUsers()
+
+        // Semua halaman harus di-fetch — bukan hanya page 1
+        coVerify(exactly = 1) { authApi.getUsers(page = 1, perPage = any()) }
+        coVerify(exactly = 1) { authApi.getUsers(page = 2, perPage = any()) }
+        // Semua 30 user masuk dalam SATU insert batch (clear+insert setelah semua halaman)
+        coVerify(exactly = 1) {
+            dao.insertUsers(match { it.size == 30 })
+        }
     }
 
     // ═══════════════════════════════════════════════
@@ -299,36 +334,44 @@ class MasterDataRepositoryTest {
             RoomOut(id = 1, name = "Ruang A", isActive = true),
             RoomOut(id = 2, name = "Ruang B", isActive = false),
         ))
-        coEvery { authApi.getMyRooms() } returns apiResult
+        coEvery { authApi.getMyRooms(any()) } returns apiResult
+        coEvery { dao.resetMyRooms() } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
         repository.syncMyRooms()
 
+        // Pivot = replace-all — reset penanda dulu, lalu tandai hanya room yang di-assign
+        coVerify(exactly = 1) { dao.resetMyRooms() }
         coVerify {
             dao.insertRooms(match { rooms ->
                 rooms.size == 2 &&
                     rooms[0].id == 1L &&
                     rooms[0].nama == "Ruang A" &&
                     rooms[0].isActive &&
+                    rooms[0].isMyRoom &&
                     rooms[1].id == 2L &&
                     rooms[1].nama == "Ruang B" &&
-                    !rooms[1].isActive
+                    !rooms[1].isActive &&
+                    rooms[1].isMyRoom
             })
         }
     }
 
     @Test
     fun `syncMyRooms does not insert when API returns empty`() = runTest {
-        coEvery { authApi.getMyRooms() } returns SyncResponse(data = emptyList())
+        coEvery { authApi.getMyRooms(any()) } returns SyncResponse(data = emptyList())
+        coEvery { dao.resetMyRooms() } returns Unit
 
         repository.syncMyRooms()
 
+        // Reset tetap dijalankan meski response kosong → semua penanda assignment hilang
+        coVerify(exactly = 1) { dao.resetMyRooms() }
         coVerify(exactly = 0) { dao.insertRooms(any()) }
     }
 
     @Test(expected = RuntimeException::class)
     fun `syncMyRooms throws when API fails`() = runTest {
-        coEvery { authApi.getMyRooms() } throws RuntimeException("My rooms timeout")
+        coEvery { authApi.getMyRooms(any()) } throws RuntimeException("My rooms timeout")
         repository.syncMyRooms()
     }
 
@@ -342,12 +385,13 @@ class MasterDataRepositoryTest {
             UserRoomDto(id = 1, userId = 5, roomId = 10, createdAt = "2026-01-01T00:00:00Z"),
             UserRoomDto(id = 2, userId = 5, roomId = 20),
         ))
-        coEvery { authApi.getUserRooms() } returns apiResult
+        coEvery { authApi.getUserRooms(any()) } returns apiResult
         coEvery { dao.clearUserRooms() } returns Unit
         coEvery { dao.insertUserRooms(any()) } returns Unit
 
         repository.syncUserRooms()
 
+        // Pivot = replace-all — assignment yang dicabut admin ikut terhapus lokal
         coVerify(exactly = 1) { dao.clearUserRooms() }
         coVerify {
             dao.insertUserRooms(match { items ->
@@ -365,20 +409,118 @@ class MasterDataRepositoryTest {
     }
 
     @Test
-    fun `syncUserRooms clears but does not insert when API returns empty`() = runTest {
-        coEvery { authApi.getUserRooms() } returns SyncResponse(data = emptyList())
+    fun `syncUserRooms clears even when API returns empty`() = runTest {
+        coEvery { authApi.getUserRooms(any()) } returns SyncResponse(data = emptyList())
         coEvery { dao.clearUserRooms() } returns Unit
 
         repository.syncUserRooms()
 
+        // Replace-all tetap clear meski response kosong → semua asosiasi lokal ikut terhapus
         coVerify(exactly = 1) { dao.clearUserRooms() }
         coVerify(exactly = 0) { dao.insertUserRooms(any()) }
     }
 
     @Test(expected = RuntimeException::class)
     fun `syncUserRooms throws when API fails`() = runTest {
-        coEvery { authApi.getUserRooms() } throws RuntimeException("User rooms timeout")
+        coEvery { authApi.getUserRooms(any()) } throws RuntimeException("User rooms timeout")
         repository.syncUserRooms()
+    }
+
+    // ═══════════════════════════════════════════════
+    // Incremental sync (ADR-0012) — since from stored synced_at
+    // ═══════════════════════════════════════════════
+
+    @Test
+    fun `syncItems falls back to epoch since on first-time sync`() = runTest {
+        coEvery { api.getItems(any()) } returns SyncResponse(data = emptyList())
+
+        repository.syncItems()
+
+        coVerify(exactly = 1) { api.getItems(since = "1970-01-01T00:00:00Z") }
+    }
+
+    @Test
+    fun `syncItems uses stored synced_at as since on next sync`() = runTest {
+        every { syncStateStore.load() } returns SyncState(itemsSyncedAt = "2026-07-28T10:00:00Z")
+        coEvery { api.getItems(any()) } returns SyncResponse(data = emptyList())
+
+        repository.syncItems()
+
+        coVerify(exactly = 1) { api.getItems(since = "2026-07-28T10:00:00Z") }
+    }
+
+    @Test
+    fun `syncItems persists response synced_at`() = runTest {
+        coEvery { api.getItems(any()) } returns SyncResponse(
+            data = emptyList(),
+            syncedAt = "2026-07-29T08:30:00Z"
+        )
+
+        repository.syncItems()
+
+        val transform = slot<(SyncState) -> SyncState>()
+        coVerify(exactly = 1) { syncStateStore.update(capture(transform)) }
+        assertEquals("2026-07-29T08:30:00Z", transform.captured(SyncState()).itemsSyncedAt)
+    }
+
+    @Test
+    fun `syncItems explicit since wins over stored synced_at`() = runTest {
+        every { syncStateStore.load() } returns SyncState(itemsSyncedAt = "2026-07-28T10:00:00Z")
+        coEvery { api.getItems(any()) } returns SyncResponse(data = emptyList())
+
+        repository.syncItems(since = "2026-01-01T00:00:00Z")
+
+        coVerify(exactly = 1) { api.getItems(since = "2026-01-01T00:00:00Z") }
+    }
+
+    @Test
+    fun `syncRooms persists response synced_at`() = runTest {
+        coEvery { api.getRooms(any()) } returns SyncResponse(
+            data = emptyList(),
+            syncedAt = "2026-07-29T08:30:00Z"
+        )
+
+        repository.syncRooms()
+
+        val transform = slot<(SyncState) -> SyncState>()
+        coVerify(exactly = 1) { syncStateStore.update(capture(transform)) }
+        assertEquals("2026-07-29T08:30:00Z", transform.captured(SyncState()).roomsSyncedAt)
+    }
+
+    @Test
+    fun `syncRoomItems always requests full snapshot from epoch`() = runTest {
+        // Stored synced_at diabaikan — replace-all butuh snapshot penuh, bukan delta
+        every { syncStateStore.load() } returns SyncState(roomItemsSyncedAt = "2026-07-28T10:00:00Z")
+        coEvery { api.getRoomItems(any()) } returns SyncResponse(data = emptyList())
+        coEvery { dao.clearRoomItems() } returns Unit
+
+        repository.syncRoomItems()
+
+        coVerify(exactly = 1) { api.getRoomItems(since = "1970-01-01T00:00:00Z") }
+    }
+
+    @Test
+    fun `syncMyRooms always requests full snapshot from epoch`() = runTest {
+        // Stored synced_at diabaikan — replace-all butuh snapshot penuh, bukan delta
+        every { syncStateStore.load() } returns SyncState(myRoomsSyncedAt = "2026-07-28T10:00:00Z")
+        coEvery { authApi.getMyRooms(any()) } returns SyncResponse(data = emptyList())
+        coEvery { dao.resetMyRooms() } returns Unit
+
+        repository.syncMyRooms()
+
+        coVerify(exactly = 1) { authApi.getMyRooms(since = "1970-01-01T00:00:00Z") }
+    }
+
+    @Test
+    fun `syncUserRooms always requests full snapshot from epoch`() = runTest {
+        // Stored synced_at diabaikan — replace-all butuh snapshot penuh, bukan delta
+        every { syncStateStore.load() } returns SyncState(userRoomsSyncedAt = "2026-07-28T10:00:00Z")
+        coEvery { authApi.getUserRooms(any()) } returns SyncResponse(data = emptyList())
+        coEvery { dao.clearUserRooms() } returns Unit
+
+        repository.syncUserRooms()
+
+        coVerify(exactly = 1) { authApi.getUserRooms(since = "1970-01-01T00:00:00Z") }
     }
 
     // ═══════════════════════════════════════════════

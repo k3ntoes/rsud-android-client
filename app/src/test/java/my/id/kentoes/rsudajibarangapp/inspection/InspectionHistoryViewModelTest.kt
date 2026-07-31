@@ -4,6 +4,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -142,8 +143,8 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `loadNextPage does nothing when already loading`() = runTest(testDispatcher) {
-        // Stub for init — simple, completes immediately
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(emptyList(), 1, 1)
+        // Stub for init — page 1 of 2, sehingga hasMorePages tetap true setelah init
+        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(emptyList(), totalPages = 2, currentPage = 1)
         val viewModel = createViewModel()
         advanceUntilIdle() // init completes
 
@@ -152,7 +153,7 @@ class InspectionHistoryViewModelTest {
         coEvery { repository.fetchInspections(any(), any(), any(), any()) } coAnswers {
             callCount++
             kotlinx.coroutines.delay(100000)
-            PaginatedResult(items = emptyList(), totalPages = 1, currentPage = firstArg())
+            PaginatedResult(items = emptyList(), totalPages = 2, currentPage = firstArg())
         }
 
         viewModel.loadNextPage()
@@ -164,7 +165,7 @@ class InspectionHistoryViewModelTest {
     @Test
     fun `loadNextPage sets error on failure`() = runTest(testDispatcher) {
         coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
-            items = emptyList(), totalPages = 1, currentPage = 1
+            items = emptyList(), totalPages = 2, currentPage = 1
         )
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -176,21 +177,107 @@ class InspectionHistoryViewModelTest {
     }
 
     @Test
-    fun `loadNextPage stops at 10 pages`() = runTest(testDispatcher) {
+    fun `refresh landing mid loadNextPage does not clobber pagination state`() = runTest(testDispatcher) {
+        // Init: page 1 of 2 → hasMorePages tetap true
         coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
-            items = emptyList(), totalPages = 1, currentPage = 1
+            items = emptyList(), totalPages = 2, currentPage = 1
         )
         val viewModel = createViewModel()
         advanceUntilIdle()
-        for (i in 2..10) {
-            viewModel.loadNextPage()
-            advanceUntilIdle()
+
+        // Gate: fetch halaman 2 (loadMore) memblok sampai dilepaskan
+        val gate = CompletableDeferred<Unit>()
+        coEvery { repository.fetchInspections(page = 2, any(), any(), any()) } coAnswers {
+            gate.await()
+            PaginatedResult(items = emptyList(), totalPages = 2, currentPage = 2)
         }
-        assertFalse(viewModel.uiState.value.hasMorePages)
-        assertEquals(10, viewModel.uiState.value.currentPage)
+
+        viewModel.loadNextPage()
+        testDispatcher.scheduler.runCurrent() // loadMore mulai, blok di gate
+        assertTrue(viewModel.uiState.value.isLoadingMore)
+
+        viewModel.refreshFromServer() // refresh harus membatalkan loadMore yang basi
+        testDispatcher.scheduler.runCurrent()
+
+        gate.complete(Unit) // lepaskan gate — hasil loadMore basi TIDAK boleh menimpa state refresh
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.value.currentPage)
+        assertTrue(viewModel.uiState.value.hasMorePages)
+        assertFalse(viewModel.uiState.value.isLoadingMore)
+    }
+
+    @Test
+    fun `loadNextPage landing after refresh result does not clobber pagination state`() = runTest(testDispatcher) {
+        // Init: page 1 of 2 → hasMorePages tetap true
+        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+            items = emptyList(), totalPages = 2, currentPage = 1
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Refresh dan loadMore sama-sama ditahan sampai dilepas bergantian
+        val refreshGate = CompletableDeferred<Unit>()
+        coEvery { repository.fetchInspections(page = 1, any(), any(), any()) } coAnswers {
+            refreshGate.await()
+            PaginatedResult(items = emptyList(), totalPages = 2, currentPage = 1)
+        }
+        val loadGate = CompletableDeferred<Unit>()
+        coEvery { repository.fetchInspections(page = 2, any(), any(), any()) } coAnswers {
+            loadGate.await()
+            PaginatedResult(items = emptyList(), totalPages = 2, currentPage = 2)
+        }
+
+        viewModel.refreshFromServer()
+        testDispatcher.scheduler.runCurrent() // refresh mulai, blok di refreshGate
+        assertTrue(viewModel.uiState.value.isRefreshing)
+
+        viewModel.loadNextPage() // scroll saat refresh masih berjalan
+        testDispatcher.scheduler.runCurrent() // loadMore mulai, blok di loadGate
+        assertTrue(viewModel.uiState.value.isLoadingMore)
+
+        // Refresh selesai lebih dulu — state menjadi page 1
+        refreshGate.complete(Unit)
+        testDispatcher.scheduler.runCurrent()
+        assertEquals(1, viewModel.uiState.value.currentPage)
+
+        // Hasil loadMore yang basi selesai belakangan — TIDAK boleh menimpa
+        loadGate.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.value.currentPage)
+        assertTrue(viewModel.uiState.value.hasMorePages)
+        assertFalse(viewModel.uiState.value.isLoadingMore)
+    }
+
+    @Test
+    fun `loadNextPage stops at last page from server totalPages`() = runTest(testDispatcher) {
+        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+            items = emptyList(), totalPages = 3, currentPage = 1
+        )
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.hasMorePages)
+
+        coEvery { repository.fetchInspections(page = 2, any(), any(), any()) } returns PaginatedResult(
+            items = emptyList(), totalPages = 3, currentPage = 2
+        )
         viewModel.loadNextPage()
         advanceUntilIdle()
-        assertEquals(10, viewModel.uiState.value.currentPage)
+        assertTrue(viewModel.uiState.value.hasMorePages)
+        assertEquals(2, viewModel.uiState.value.currentPage)
+
+        coEvery { repository.fetchInspections(page = 3, any(), any(), any()) } returns PaginatedResult(
+            items = emptyList(), totalPages = 3, currentPage = 3
+        )
+        viewModel.loadNextPage()
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.hasMorePages)
+        assertEquals(3, viewModel.uiState.value.currentPage)
+
+        viewModel.loadNextPage()
+        advanceUntilIdle()
+        assertEquals(3, viewModel.uiState.value.currentPage)
     }
 
     // ── loadDetail ──
@@ -324,7 +411,7 @@ class InspectionHistoryViewModelTest {
     @Test
     fun `setFilterDate resets to page 1`() = runTest(testDispatcher) {
         coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
-            items = emptyList(), totalPages = 1, currentPage = 1
+            items = emptyList(), totalPages = 2, currentPage = 1
         )
         coEvery { repository.observeLocalInspections(any(), any()) } returns MutableStateFlow(emptyList())
         val viewModel = createViewModel()

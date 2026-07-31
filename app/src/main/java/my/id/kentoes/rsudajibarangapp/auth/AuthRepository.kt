@@ -10,7 +10,13 @@ import my.id.kentoes.rsudajibarangapp.auth.api.LogoutRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.RefreshRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.TokenResponse
 import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
+import kotlinx.coroutines.CancellationException
+import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.datastore.TokenManager
+import my.id.kentoes.rsudajibarangapp.inspection.InspectionRepository
+import my.id.kentoes.rsudajibarangapp.master.SyncStateStore
+import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -25,7 +31,10 @@ sealed class AuthState {
 @Singleton
 class AuthRepository @Inject constructor(
     private val authApi: AuthApi,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val masterDataDao: MasterDataDao,
+    private val syncStateStore: SyncStateStore,
+    private val inspectionRepository: InspectionRepository
 ) {
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
@@ -68,8 +77,19 @@ class AuthRepository @Inject constructor(
             )
             tokenManager.saveUser(response.user)
             _currentUser.value = response.user
+            // Akun berbeda dari pemilik draf lokal? Bersihkan draf akun lama.
+            // Draf user yang sama (login ulang) dipertahankan — inspectorId cocok.
+            try {
+                inspectionRepository.clearForeignDrafts(response.user.id.toString())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                // Kegagalan membersihkan draf tidak boleh menggagalkan login
+            }
             _authState.value = AuthState.Authenticated()
             true
+        } catch (e: CancellationException) {
+            throw e // jangan telan pembatalan coroutine (konsisten dengan forceLogout)
         } catch (e: Exception) {
             _authState.value = AuthState.Error(e.message ?: "Login gagal")
             false
@@ -86,7 +106,18 @@ class AuthRepository @Inject constructor(
                 refreshToken = refreshToken // refresh token tetap sama
             )
             true
-        } catch (e: Exception) {
+        } catch (e: HttpException) {
+            // Server merespons — logout paksa HANYA jika token benar-benar ditolak (401/403).
+            // Error lain (mis. 5xx) bukan penolakan token — jangan hapus data user.
+            if (e.code() == 401 || e.code() == 403) {
+                forceLogout()
+            }
+            false
+        } catch (e: IOException) {
+            // Gangguan jaringan sementara — JANGAN logout paksa, sesi masih valid.
+            // Menghindari user offline kehilangan draf saat refresh gagal sesaat.
+            false
+        } catch (_: Exception) {
             forceLogout()
             false
         }
@@ -112,10 +143,33 @@ class AuthRepository @Inject constructor(
     /** Ambil Access Token yang tersimpan */
     suspend fun getAccessToken(): String? = tokenManager.getAccessToken()
 
-    /** Force Logout — hapus token & user + redirect ke login */
+    /** Force Logout — hapus token & user + clear cache lokal + redirect ke login */
     suspend fun forceLogout() {
         tokenManager.clearTokens()
+        try {
+            clearLocalCache()
+        } catch (e: CancellationException) {
+            throw e // jangan telan pembatalan coroutine
+        } catch (_: Exception) {
+            // Kegagalan membersihkan cache tidak boleh menghalangi logout selesai
+        }
         _currentUser.value = null
         _authState.value = AuthState.Unauthenticated
+    }
+
+    /**
+     * Bersihkan seluruh cache master data + SyncState agar akun berikutnya sync penuh
+     * dari epoch — mencegah room/assignment akun lama bocor ke akun baru.
+     * Draf TIDAK dihapus di sini: draf bertag inspectorId dan dibersihkan hanya saat
+     * akun yang berbeda login (lihat login()) — user yang sama login ulang tidak
+     * kehilangan draf.
+     */
+    private suspend fun clearLocalCache() {
+        masterDataDao.clearItems()
+        masterDataDao.clearRooms()
+        masterDataDao.clearRoomItems()
+        masterDataDao.clearUserRooms()
+        masterDataDao.clearUsers()
+        syncStateStore.clear()
     }
 }

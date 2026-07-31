@@ -84,7 +84,7 @@ class InspectionHistoryRepository @Inject constructor(
     ): PaginatedResult {
         val response = syncApi.getInspections(page, perPage, status, showAll)
         val roomMap = masterDataDao.getAllRoomsOnce().associateBy { it.id }
-        val items = response.map { item ->
+        val items = response.items.map { item ->
             InspectionHistoryItem(
                 id = item.id,
                 roomId = item.roomId,
@@ -108,7 +108,7 @@ class InspectionHistoryRepository @Inject constructor(
             )
             masterDataDao.insertInspection(entity)
         }
-        return PaginatedResult(items = items, totalPages = 1, currentPage = page)
+        return PaginatedResult(items = items, totalPages = response.totalPages, currentPage = response.page)
     }
 
     /** Fetch detail dari API */

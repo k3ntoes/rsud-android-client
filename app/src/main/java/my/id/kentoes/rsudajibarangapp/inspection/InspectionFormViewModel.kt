@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import my.id.kentoes.rsudajibarangapp.auth.AuthRepository
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafFoto
@@ -40,7 +41,8 @@ class InspectionFormViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val masterDataDao: MasterDataDao,
     private val drafDao: DrafDao,
-    private val inspectionRepository: InspectionRepository
+    private val inspectionRepository: InspectionRepository,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InspectionFormUiState())
@@ -152,9 +154,9 @@ class InspectionFormViewModel @Inject constructor(
                 val now = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
                     .format(Date())
 
-                // Jika resume dari draft lama, hapus draft lama dulu (CASCADE hapus item & foto)
+                // Jika resume dari draft lama, hapus draft lama (baris + file foto) dulu
                 resumeDraftId?.let { oldId ->
-                    drafDao.getDraftById(oldId)?.let { drafDao.deleteDraftCascade(it) }
+                    inspectionRepository.deleteDraft(oldId)
                     resumeDraftId = null
                 }
 
@@ -162,6 +164,8 @@ class InspectionFormViewModel @Inject constructor(
                     DrafInspeksi(
                         roomId = _uiState.value.roomId,
                         localTimestamp = now,
+                        // Stempel pemilik draf — dasar pemilahan per akun saat ganti akun
+                        inspectorId = authRepository.currentUser.value?.id?.toString(),
                         status = status,
                         businessDate = now.take(10)
                     )

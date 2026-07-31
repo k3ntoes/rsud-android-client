@@ -10,6 +10,7 @@ import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
+import my.id.kentoes.rsudajibarangapp.core.model.PaginatedResponse
 
 @Serializable
 data class UploadPhotoResponse(
@@ -135,7 +136,7 @@ interface SyncApi {
         @Query("per_page") perPage: Int = 20,
         @Query("status") status: String? = null,
         @Query("show_all") showAll: Boolean? = null
-    ): List<InspectionListItemDto>
+    ): PaginatedResponse<InspectionListItemDto>
 
     /** Detail inspeksi */
     @GET("inspections/{id}")

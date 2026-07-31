@@ -10,5 +10,7 @@ data class RuangEntity(
     val nama: String,
     val lantai: String? = null,
     val isActive: Boolean = true,
+    /** true = di-assign ke user yang sedang login — dipakai filter dropdown pemilihan room. */
+    val isMyRoom: Boolean = false,
     val updatedAt: String? = null
 )

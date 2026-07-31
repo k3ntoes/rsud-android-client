@@ -2,6 +2,7 @@ package my.id.kentoes.rsudajibarangapp.auth.api
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import my.id.kentoes.rsudajibarangapp.core.model.PaginatedResponse
 import my.id.kentoes.rsudajibarangapp.core.model.SyncResponse
 import my.id.kentoes.rsudajibarangapp.master.api.RoomOut
 
@@ -95,5 +96,8 @@ interface AuthApi {
     ): SyncResponse<UserRoomDto>
 
     @GET("auth/users")
-    suspend fun getUsers(): List<UserOut>
+    suspend fun getUsers(
+        @Query("page") page: Int = 1,
+        @Query("per_page") perPage: Int = 100
+    ): PaginatedResponse<UserOut>
 }

@@ -50,6 +50,13 @@ GET /api/rooms?page=1&per_page=20
 3. `synced_at` adalah timestamp server saat query dijalankan (ISO 8601)
 4. Saat `since` dikirim, **abaikan parameter pagination** (`page`, `per_page`)
 
+## Implementasi di Android (update 2026-07-31)
+
+- **`SyncStateStore`** — persistence `synced_at` per endpoint (rooms, items, room-items, user-rooms, my-rooms) via SharedPreferences. `clear()` dipanggil saat logout agar akun berikutnya sync penuh dari epoch.
+- **Pivot tables (`room-items`, `user-rooms`, `my-rooms`) = replace-all full snapshot**: endpoint pivot selalu mengembalikan snapshot penuh SEMUA asosiasi, jadi Android SELALU minta `since=epoch` (bukan timestamp tersimpan) agar snapshot dijamin lengkap, lalu clear + insert setelah fetch sukses. Ini menangani **penghapusan server-side** (relasi yang dicabut admin ikut terhapus lokal) tanpa perlu kontrak tombstone. `synced_at` pivot tetap disimpan untuk forward-compat jika BE kelak menambah delta filter.
+- **Endpoint non-pivot** (`rooms`, `inspection-items`) tetap inkremental: simpan `synced_at` → kirim sebagai `since` di sync berikutnya, fallback epoch untuk first-time.
+- `users` sync via pagination loop (`totalPages` server-driven), clear + insert sekali setelah semua halaman terkumpul.
+
 ## Consequences
 
 ### Positif
@@ -58,6 +65,7 @@ GET /api/rooms?page=1&per_page=20
 - Android mendapat data lengkap untuk offline storage dalam 1 request
 - Web Admin mendapat pagination untuk UX dashboard
 - Backend tidak perlu menambahkan endpoint baru
+- Pivot replace-all full snapshot otomatis menghapus relasi yang dicabut admin (tanpa kontrak tombstone)
 
 ### Negatif
 
@@ -65,6 +73,7 @@ GET /api/rooms?page=1&per_page=20
 - `SyncResponse` bisa sangat besar jika data banyak (mitigasi: `updated_at` filter mengurangi volume)
 - Android perlu mengirim `since=1970-01-01` untuk first-time sync — sedikit hacky tapi efektif
 - Retrofit di Android perlu parameter opsional `@Query("since") since: String? = null`
+- Pivot replace-all full snapshot mengunduh semua baris setiap sync (trade-off: simpel & konsisten vs volume data)
 
 ## Referensi
 

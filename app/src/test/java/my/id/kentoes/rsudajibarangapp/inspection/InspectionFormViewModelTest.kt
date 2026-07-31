@@ -8,15 +8,17 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import my.id.kentoes.rsudajibarangapp.auth.AuthRepository
+import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
-import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.sync.SyncWorker
 import org.junit.After
@@ -33,6 +35,7 @@ class InspectionFormViewModelTest {
     private val masterDataDao = mockk<MasterDataDao>()
     private val drafDao = mockk<DrafDao>()
     private val inspectionRepository = mockk<InspectionRepository>()
+    private val authRepository = mockk<AuthRepository>()
     private lateinit var viewModel: InspectionFormViewModel
 
     private val testDispatcher = StandardTestDispatcher()
@@ -54,7 +57,10 @@ class InspectionFormViewModelTest {
         // Mock getAllRoomItems — return empty so fallback shows all items
         coEvery { masterDataDao.getAllRoomItems() } returns emptyList()
 
-        viewModel = InspectionFormViewModel(context, masterDataDao, drafDao, inspectionRepository)
+        // Default: belum ada user aktif (inspectorId akan null)
+        every { authRepository.currentUser } returns MutableStateFlow(null)
+
+        viewModel = InspectionFormViewModel(context, masterDataDao, drafDao, inspectionRepository, authRepository)
     }
 
     @After
@@ -267,6 +273,26 @@ class InspectionFormViewModelTest {
     }
 
     @Test
+    fun `saveDraft stamps inspectorId from the logged-in user`() = runTest(testDispatcher) {
+        coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        coEvery { drafDao.insertDraft(any()) } returns 100L
+        coEvery { drafDao.insertItem(any()) } returns 10L
+        coEvery { drafDao.insertPhoto(any()) } returns 1L
+        every { authRepository.currentUser } returns MutableStateFlow(
+            UserOut(id = 5, username = "petugas", role = "inspector", isActive = true)
+        )
+        viewModel.init(roomId = 1, roomName = "Test")
+        advanceUntilIdle()
+
+        viewModel.saveDraft()
+        advanceUntilIdle()
+
+        // inspectorId diambil dari user yang sedang login — dasar pemilahan draf per akun
+        coVerify { drafDao.insertDraft(withArg { assertEquals("5", it.inspectorId) }) }
+        assertTrue(viewModel.uiState.value.draftSaved)
+    }
+
+    @Test
     fun `saveDraft inserts items and photos for all itemStates`() = runTest(testDispatcher) {
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
         coEvery { drafDao.insertDraft(any()) } returns 100L
@@ -429,14 +455,12 @@ class InspectionFormViewModelTest {
 
     @Test
     fun `saveDraft after init with draftId deletes old draft first`() = runTest(testDispatcher) {
-        val oldDraft = DrafInspeksi(id = 5, roomId = 10, localTimestamp = "2025-01-01T00:00:00Z", status = "DRAFT")
         val draftStates = listOf(
             ItemState(itemId = 1, nama = "Meja", kategori = "Furnitur", skor = 2),
         )
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
         coEvery { inspectionRepository.draftToItemStates(5L, sampleItems) } returns (10L to draftStates)
-        coEvery { drafDao.getDraftById(5L) } returns oldDraft
-        coEvery { drafDao.deleteDraftCascade(oldDraft) } returns Unit
+        coEvery { inspectionRepository.deleteDraft(5L) } returns Unit
         coEvery { drafDao.insertDraft(any()) } returns 100L
         coEvery { drafDao.insertItem(any()) } returns 10L
         coEvery { drafDao.insertPhoto(any()) } returns 1L
@@ -447,10 +471,9 @@ class InspectionFormViewModelTest {
         viewModel.saveDraft()
         advanceUntilIdle()
 
-        // Old draft dihapus dulu, baru insert draft baru
+        // Draft lama dihapus (baris + file foto) dulu, baru insert draft baru
         coVerifyOrder {
-            drafDao.getDraftById(5L)
-            drafDao.deleteDraftCascade(oldDraft)
+            inspectionRepository.deleteDraft(5L)
             drafDao.insertDraft(match { it.status == "DRAFT" })
         }
         assertTrue(viewModel.uiState.value.draftSaved)
@@ -458,7 +481,6 @@ class InspectionFormViewModelTest {
 
     @Test
     fun `submit after init with draftId deletes old draft first`() = runTest(testDispatcher) {
-        val oldDraft = DrafInspeksi(id = 5, roomId = 10, localTimestamp = "2025-01-01T00:00:00Z", status = "DRAFT")
         val draftStates = listOf(
             ItemState(itemId = 1, nama = "Meja", kategori = "Furnitur", skor = 2, fotoPaths = listOf("/photo.jpg")),
             ItemState(itemId = 2, nama = "Kursi", kategori = "Furnitur", skor = 0, fotoPaths = listOf("/pic.jpg")),
@@ -466,8 +488,7 @@ class InspectionFormViewModelTest {
         )
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
         coEvery { inspectionRepository.draftToItemStates(5L, sampleItems) } returns (10L to draftStates)
-        coEvery { drafDao.getDraftById(5L) } returns oldDraft
-        coEvery { drafDao.deleteDraftCascade(oldDraft) } returns Unit
+        coEvery { inspectionRepository.deleteDraft(5L) } returns Unit
         coEvery { drafDao.insertDraft(any()) } returns 100L
         coEvery { drafDao.insertItem(any()) } returns 10L
         coEvery { drafDao.insertPhoto(any()) } returns 1L
@@ -481,9 +502,9 @@ class InspectionFormViewModelTest {
         viewModel.submit()
         advanceUntilIdle()
 
+        // Draft lama dihapus (baris + file foto) dulu, baru insert draft baru
         coVerifyOrder {
-            drafDao.getDraftById(5L)
-            drafDao.deleteDraftCascade(oldDraft)
+            inspectionRepository.deleteDraft(5L)
             drafDao.insertDraft(match { it.status == "PENDING_SYNC" })
         }
         assertTrue(viewModel.uiState.value.draftSaved)
@@ -491,14 +512,12 @@ class InspectionFormViewModelTest {
 
     @Test
     fun `second save after resume does not try to delete again`() = runTest(testDispatcher) {
-        val oldDraft = DrafInspeksi(id = 5, roomId = 10, localTimestamp = "2025-01-01T00:00:00Z", status = "DRAFT")
         val draftStates = listOf(
             ItemState(itemId = 1, nama = "Meja", kategori = "Furnitur", skor = 2),
         )
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
         coEvery { inspectionRepository.draftToItemStates(5L, sampleItems) } returns (10L to draftStates)
-        coEvery { drafDao.getDraftById(5L) } returns oldDraft
-        coEvery { drafDao.deleteDraftCascade(oldDraft) } returns Unit
+        coEvery { inspectionRepository.deleteDraft(5L) } returns Unit
         coEvery { drafDao.insertDraft(any()) } returns 100L
         coEvery { drafDao.insertItem(any()) } returns 10L
         coEvery { drafDao.insertPhoto(any()) } returns 1L
@@ -506,10 +525,10 @@ class InspectionFormViewModelTest {
         viewModel.init(roomId = 0, roomName = "", draftId = 5L)
         advanceUntilIdle()
 
-        // Save pertama — hapus draft lama + insert baru
+        // Save pertama — hapus draft lama (baris + file foto) + insert baru
         viewModel.saveDraft()
         advanceUntilIdle()
-        coVerify(exactly = 1) { drafDao.deleteDraftCascade(any()) }
+        coVerify(exactly = 1) { inspectionRepository.deleteDraft(5L) }
 
         // Clear flag
         viewModel.clearDraftSaved()
@@ -517,7 +536,7 @@ class InspectionFormViewModelTest {
         // Save kedua — TIDAK hapus lagi (resumeDraftId sudah null)
         viewModel.saveDraft()
         advanceUntilIdle()
-        coVerify(exactly = 1) { drafDao.deleteDraftCascade(any()) } // masih 1x, tidak bertambah
+        coVerify(exactly = 1) { inspectionRepository.deleteDraft(5L) } // masih 1x, tidak bertambah
         coVerify(exactly = 2) { drafDao.insertDraft(any()) } // 2 insert: 1 dari save pertama, 1 dari save kedua
     }
 
@@ -533,23 +552,20 @@ class InspectionFormViewModelTest {
         viewModel.saveDraft()
         advanceUntilIdle()
 
-        // Tidak ada resume — getDraftById dan deleteDraftCascade tidak boleh dipanggil
-        coVerify(exactly = 0) { drafDao.getDraftById(any()) }
-        coVerify(exactly = 0) { drafDao.deleteDraftCascade(any()) }
+        // Tidak ada resume — deleteDraft tidak boleh dipanggil
+        coVerify(exactly = 0) { inspectionRepository.deleteDraft(any()) }
         coVerify(exactly = 1) { drafDao.insertDraft(any()) }
     }
 
     @Test
     fun `saveDraft after resume deletes correct old draft id`() = runTest(testDispatcher) {
-        val oldDraft = DrafInspeksi(id = 99, roomId = 10, localTimestamp = "2025-06-01T00:00:00Z", status = "DRAFT")
         val draftStates = listOf(
             ItemState(itemId = 1, nama = "Meja", kategori = "Furnitur", skor = 1),
             ItemState(itemId = 2, nama = "Kursi", kategori = "Furnitur", skor = 1),
         )
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
         coEvery { inspectionRepository.draftToItemStates(99L, sampleItems) } returns (10L to draftStates)
-        coEvery { drafDao.getDraftById(99L) } returns oldDraft
-        coEvery { drafDao.deleteDraftCascade(oldDraft) } returns Unit
+        coEvery { inspectionRepository.deleteDraft(99L) } returns Unit
         coEvery { drafDao.insertDraft(any()) } returns 200L
         coEvery { drafDao.insertItem(any()) } returns 10L
         coEvery { drafDao.insertPhoto(any()) } returns 1L
@@ -561,8 +577,7 @@ class InspectionFormViewModelTest {
         advanceUntilIdle()
 
         // Verifikasi bahwa delete dipanggil dengan draft id=99 (bukan id lain)
-        coVerify { drafDao.getDraftById(99L) }
-        coVerify { drafDao.deleteDraftCascade(oldDraft) }
+        coVerify { inspectionRepository.deleteDraft(99L) }
     }
 
     // ── isSaving guard (cegah double click) ──

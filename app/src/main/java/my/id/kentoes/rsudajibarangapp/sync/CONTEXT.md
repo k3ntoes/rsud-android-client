@@ -9,7 +9,7 @@ Proses pengiriman data inspeksi (draf dengan status PENDING_SYNC) dari penyimpan
 _Avoid_: Sync, pengiriman data
 
 **Sinkronisasi Master Data**: 
-Proses pengunduhan data referensi dari server ke penyimpanan lokal. Urutan sync: (1) rooms, (2) inspection-items, (3) room-items, (4) user-rooms, (5) my-rooms. Data di-*upsert* ke Room lokal dengan replace all data lama untuk pivot tables.
+Proses pengunduhan data referensi dari server ke penyimpanan lokal. Urutan sync: (1) rooms, (2) inspection-items, (3) room-items, (4) user-rooms, (5) my-rooms. Data di-*upsert* ke Room lokal dengan replace all data lama untuk pivot tables. `RuangEntity.isMyRoom` menandai room yang di-assign ke user login — di-set oleh `syncMyRooms` (selalu snapshot penuh dari epoch) dan di-reset sebelum penandaan ulang, sehingga room yang dicabut admin hilang dari dropdown. Dropdown pemilihan room hanya menampilkan room bertanda `isMyRoom`, kecuali role `admin_ppi` yang melihat semua room. **Catatan**: jalur sync ViewModel (`syncItems` + `syncMyRooms`) tidak memanggil `syncRooms` — untuk `admin_ppi` (yang `/me/rooms`-nya kosong), tabel `ruang` hanya berisi room yang pernah di-sync oleh `SyncManager` background; pastikan sinkronisasi background berjalan sebelum admin menggunakan dropdown.
 _Avoid_: Master sync, data download, refresh data
 
 **Sinkronisasi Inkremental**: 
@@ -25,7 +25,7 @@ _Avoid_: Sync wrapper, data response
 _Avoid_: Sync state, sync status, sync progress
 
 **Penjadwal Latar**: 
-Mekanisme yang menjalankan tugas sinkronisasi di latar belakang secara otomatis saat kondisi jaringan memungkinkan.
+Mekanisme yang menjalankan tugas sinkronisasi di latar belakang secara otomatis saat kondisi jaringan memungkinkan. Dua worker dijadwalkan: (1) `SyncWorker` — sync master data + kirim draf PENDING_SYNC (trigger saat network connected), (2) `DraftPhotoCleanupWorker` — cleanup foto draf yatim (periodik harian, idempotent via `ExistingPeriodicWorkPolicy.UPDATE`). Worker dibuat manual oleh `SyncAwareWorkerFactory` karena `@HiltWorker` tidak diproses KSP.
 _Avoid_: WorkManager, background worker, scheduler
 
 **Upload Dua Langkah**: 

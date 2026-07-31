@@ -48,7 +48,8 @@ class TokenAuthenticator @Inject constructor(
                             .build()
                     }
                 } else {
-                    runBlocking { handler.forceLogout() }
+                    // refreshToken() sudah menangani forceLogout sendiri saat token ditolak server
+                    // (401/403). Kegagalan jaringan TIDAK memicu logout paksa di sini — sesi tetap valid.
                     null
                 }
             } finally {

@@ -40,6 +40,8 @@ class SyncManager @Inject constructor(
         masterDataRepository.syncItems()
         masterDataRepository.syncRooms()
         masterDataRepository.syncRoomItems()
+        // URUTAN LOAD-BEARING: syncRooms REPLACE me-reset isMyRoom=false, jadi syncMyRooms
+        // WAJIB berjalan SETELAH syncRooms agar penanda assignment (isMyRoom) benar.
         masterDataRepository.syncMyRooms()
         masterDataRepository.syncUserRooms()
         masterDataRepository.syncUsers()
@@ -114,15 +116,15 @@ class SyncManager @Inject constructor(
             // Simpan hasil submit ke history cache
             runCatching { inspectionHistoryRepository.cacheInspection(response) }
 
-            // 5. Sukses — atomic: update status + hapus draf
-            drafDao.markSyncedAndDelete(draftId)
+            // 5. Sukses — atomic: update status + hapus draf + file foto lokal
+            inspectionRepository.deleteSyncedDraft(draftId)
             SyncResult(draftId, true, "Inspeksi berhasil dikirim (ID: ${response.id})")
         } catch (e: Exception) {
             val msg = e.message ?: "Error sinkronisasi"
             // ponytail: simple error handling; expand if 409/413 handling needed
             if (msg.contains("DUPLICATE_INSPECTION") || msg.contains("409")) {
-                // Already synced — skip
-                drafDao.markSyncedAndDelete(draftId)
+                // Already synced — skip (hapus baris + file foto lokal)
+                inspectionRepository.deleteSyncedDraft(draftId)
                 SyncResult(draftId, true, "Inspeksi sudah terkirim (duplicate)")
             } else {
                 SyncResult(draftId, false, msg)

@@ -21,7 +21,7 @@ Foto yang diambil Petugas sebagai bukti temuan. Multi-foto per item (unlimited).
 _Avoid_: Evidence, lampiran, gambar bukti
 
 **Draf**: 
-Data inspeksi yang sudah disimpan di perangkat tapi belum dikirim ke server. Boleh incomplete (tidak semua item diskor). Status: `DRAFT` (disimpan) → `PENDING_SYNC` (siap kirim).
+Data inspeksi yang sudah disimpan di perangkat tapi belum dikirim ke server. Boleh incomplete (tidak semua item diskor). Status: `DRAFT` (disimpan) → `PENDING_SYNC` (siap kirim). Menyimpan `inspector_id` pemilik (dari user yang login saat disimpan) untuk pemilahan per akun.
 _Avoid_: Draft, simpan lokal
 
 **Master Data**: 
@@ -75,4 +75,6 @@ Kebijakan penyimpanan data lokal:
 - Metadata inspeksi (`InspectionEntity`, `InspectionDetailEntity`): disimpan permanen (ukuran kecil).
 - Foto bukti: disimpan di `Pictures/rsud_ajibarang/` via MediaStore; dihapus otomatis setelah 30 hari via WorkManager; user bisa hapus manual dari galeri.
 - Draf aktif: foto tidak dihapus sampai draf berhasil dikirim.
+- **Draf bertag `inspector_id`** (diisi dari user yang sedang login saat draf disimpan). Draf TIDAK dihapus saat logout — user yang sama login ulang tidak kehilangan progress. Hanya draf milik akun LAIN (`inspector_id` berbeda) yang dihapus saat akun berbeda login. Draf legacy tanpa `inspector_id` dipertahankan (tidak dapat diatribusikan).
+- **Foto draf yatim** (file di `files/photos/` tanpa referensi `draf_foto` — sisa draf terhapus/capture kamera dibatalkan — atau baris `draf_foto` tanpa header draf valid) dibersihkan otomatis oleh `DraftPhotoCleanupWorker` (periodik harian via WorkManager). File berumur < 24 jam tidak disentuh agar foto yang baru diambil namun belum disimpan ke draf tetap aman. Menghapus draf (via `InspectionRepository.deleteDraft` — termasuk saat resume/simpan ulang) langsung menghapus file fotonya, jadi file yatim tidak menumpuk di sela worker cleanup.
 _Avoid_: Cache, storage policy
