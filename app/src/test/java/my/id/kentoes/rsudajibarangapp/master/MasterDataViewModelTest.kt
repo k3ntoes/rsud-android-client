@@ -47,6 +47,8 @@ class MasterDataViewModelTest {
         every { authRepository.currentUser } returns MutableStateFlow(
             UserOut(id = 1, username = "petugas", role = "inspector", isActive = true)
         )
+        // loadRoomItemCounts() dipanggil saat init & setelah sync — default pivot kosong
+        coEvery { repository.getRoomItemMap() } returns emptyMap()
     }
 
     @After
@@ -71,6 +73,46 @@ class MasterDataViewModelTest {
         assertEquals(3, state.items.size)
         assertEquals(1, state.rooms.size)
         assertFalse(state.isLoading)
+    }
+
+    @Test
+    fun `init loads item counts from pivot room_items`() = runTest {
+        val itemsFlow = MutableStateFlow(sampleItems)
+        val roomsFlow = MutableStateFlow(sampleRooms)
+        every { repository.items } returns itemsFlow
+        every { repository.rooms } returns roomsFlow
+        coEvery { repository.isCacheAvailable() } returns true
+        // Pivot: room 1 punya 2 item
+        coEvery { repository.getRoomItemMap() } returns mapOf(1L to listOf(1L, 2L))
+
+        val viewModel = MasterDataViewModel(repository, authRepository)
+        advanceUntilIdle()
+
+        // Item count RoomCard dari pivot — bukan heuristik nama
+        assertEquals(2, viewModel.uiState.value.roomItemCounts[1L])
+    }
+
+    @Test
+    fun `refresh reloads item counts after sync`() = runTest {
+        val itemsFlow = MutableStateFlow(emptyList<MasterDataItem>())
+        val roomsFlow = MutableStateFlow(emptyList<RuangEntity>())
+        every { repository.items } returns itemsFlow
+        every { repository.rooms } returns roomsFlow
+        coEvery { repository.isCacheAvailable() } returns true
+        coEvery { repository.syncItems() } returns Unit
+        coEvery { repository.syncRooms() } returns Unit
+        coEvery { repository.syncRoomItems() } returns Unit
+        coEvery { repository.syncMyRooms() } returns Unit
+        coEvery { repository.getRoomItemMap() } returns mapOf(7L to listOf(1L))
+
+        val viewModel = MasterDataViewModel(repository, authRepository)
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        // Setelah refresh (sync selesai), pivot dimuat ulang → count segar
+        assertEquals(1, viewModel.uiState.value.roomItemCounts[7L])
     }
 
     @Test
@@ -110,19 +152,23 @@ class MasterDataViewModelTest {
     // ── Init — auto-sync behavior ─────────────────────────
 
     @Test
-    fun `init triggers syncItems and syncMyRooms when cache is empty`() = runTest {
+    fun `init triggers full master data sync when cache is empty`() = runTest {
         val itemsFlow = MutableStateFlow(emptyList<MasterDataItem>())
         val roomsFlow = MutableStateFlow(emptyList<RuangEntity>())
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns false
         coEvery { repository.syncItems() } returns Unit
+        coEvery { repository.syncRooms() } returns Unit
+        coEvery { repository.syncRoomItems() } returns Unit
         coEvery { repository.syncMyRooms() } returns Unit
 
         MasterDataViewModel(repository, authRepository)
         advanceUntilIdle()
 
         coVerify(exactly = 1) { repository.syncItems() }
+        coVerify(exactly = 1) { repository.syncRooms() }
+        coVerify(exactly = 1) { repository.syncRoomItems() }
         coVerify(exactly = 1) { repository.syncMyRooms() }
     }
 
@@ -138,6 +184,8 @@ class MasterDataViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 0) { repository.syncItems() }
+        coVerify(exactly = 0) { repository.syncRooms() }
+        coVerify(exactly = 0) { repository.syncRoomItems() }
         coVerify(exactly = 0) { repository.syncMyRooms() }
     }
 
@@ -160,13 +208,15 @@ class MasterDataViewModelTest {
     // ── Refresh ───────────────────────────────────────────
 
     @Test
-    fun `refresh triggers syncItems and syncMyRooms once`() = runTest {
+    fun `refresh triggers full master data sync once`() = runTest {
         val itemsFlow = MutableStateFlow(emptyList<MasterDataItem>())
         val roomsFlow = MutableStateFlow(emptyList<RuangEntity>())
         every { repository.items } returns itemsFlow
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns true
         coEvery { repository.syncItems() } returns Unit
+        coEvery { repository.syncRooms() } returns Unit
+        coEvery { repository.syncRoomItems() } returns Unit
         coEvery { repository.syncMyRooms() } returns Unit
 
         val viewModel = MasterDataViewModel(repository, authRepository)
@@ -176,6 +226,8 @@ class MasterDataViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { repository.syncItems() }
+        coVerify(exactly = 1) { repository.syncRooms() }
+        coVerify(exactly = 1) { repository.syncRoomItems() }
         coVerify(exactly = 1) { repository.syncMyRooms() }
     }
 
@@ -187,6 +239,8 @@ class MasterDataViewModelTest {
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns true
         coEvery { repository.syncItems() } returns Unit
+        coEvery { repository.syncRooms() } returns Unit
+        coEvery { repository.syncRoomItems() } returns Unit
         coEvery { repository.syncMyRooms() } returns Unit
 
         val viewModel = MasterDataViewModel(repository, authRepository)
@@ -208,6 +262,8 @@ class MasterDataViewModelTest {
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns false
         coEvery { repository.syncItems() } returns Unit
+        coEvery { repository.syncRooms() } returns Unit
+        coEvery { repository.syncRoomItems() } returns Unit
         coEvery { repository.syncMyRooms() } returns Unit
 
         val viewModel = MasterDataViewModel(repository, authRepository)
@@ -248,6 +304,8 @@ class MasterDataViewModelTest {
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns false
         coEvery { repository.syncItems() } returns Unit
+        coEvery { repository.syncRooms() } returns Unit
+        coEvery { repository.syncRoomItems() } returns Unit
         coEvery { repository.syncMyRooms() } returns Unit
 
         val viewModel = MasterDataViewModel(repository, authRepository)

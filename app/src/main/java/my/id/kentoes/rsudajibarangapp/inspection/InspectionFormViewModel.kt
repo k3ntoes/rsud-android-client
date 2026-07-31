@@ -64,18 +64,18 @@ class InspectionFormViewModel @Inject constructor(
         viewModelScope.launch {
             val allMasterItems = masterDataDao.getAllItems().first()
 
-            // Filter items by room: ambil mapping room→itemIds, filter hanya item yang terasosiasi dengan room ini
+            // Filter items by room: ambil mapping room→itemIds, filter hanya item yang terasosiasi dengan room ini.
+            // Pivot KOSONG = form kosong (keputusan review 2026-08) — TIDAK ada fallback "tampilkan semua".
             val roomItems = masterDataDao.getAllRoomItems()
             val itemIdsForRoom = roomItems.filter { it.roomId == roomId }.map { it.itemId }.toSet()
-            val filteredItems = if (itemIdsForRoom.isNotEmpty()) {
-                allMasterItems.filter { it.id in itemIdsForRoom }
-            } else {
-                allMasterItems // fallback: jika belum ada mapping, tampilkan semua
-            }
+            val filteredItems = allMasterItems.filter { it.id in itemIdsForRoom }
 
             val states = if (draftId != null && draftId > 0) {
                 resumeDraftId = draftId
-                val (draftRoomId, draftStates) = inspectionRepository.draftToItemStates(draftId, filteredItems)
+                // Resume: sumber item = draft itu sendiri; masterItems hanya untuk lookup nama/kategori.
+                // Pakai allMasterItems (BUKAN filteredItems) agar nama item tidak jadi "Item #X"
+                // saat pivot kosong (resume tetap jalan walau mapping room belum di-sync).
+                val (draftRoomId, draftStates) = inspectionRepository.draftToItemStates(draftId, allMasterItems)
                 _uiState.value = _uiState.value.copy(roomId = draftRoomId)
                 draftStates
             } else {
@@ -84,6 +84,7 @@ class InspectionFormViewModel @Inject constructor(
                         itemId = entity.id,
                         nama = entity.nama,
                         kategori = entity.kategori,
+                        deskripsi = entity.deskripsi,
                         skor = -1,
                         fotoPaths = emptyList(),
                         catatan = null

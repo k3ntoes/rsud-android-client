@@ -25,18 +25,6 @@ data class IssueFrequencyOut(
     val scoreZeroCount: Int
 )
 
-@Serializable
-data class DashboardDto(
-    @SerialName("pending_count")
-    val pendingCount: Int = 0,
-    @SerialName("total_rooms")
-    val totalRooms: Int = 0,
-    @SerialName("monthly_inspection_count")
-    val monthlyInspectionCount: Int = 0,
-    @SerialName("avg_score_pct")
-    val avgScorePct: Double = 0.0
-)
-
 interface AnalyticsApi {
 
     @GET("analytics/lowest-rooms")
@@ -50,9 +38,4 @@ interface AnalyticsApi {
         @Query("year_month") yearMonth: String? = null,
         @Query("limit") limit: Int = 10
     ): List<IssueFrequencyOut>
-
-    @GET("analytics/dashboard")
-    suspend fun getDashboard(
-        @Query("year_month") yearMonth: String? = null
-    ): DashboardDto
 }

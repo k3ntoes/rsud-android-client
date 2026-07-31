@@ -64,8 +64,12 @@ data class UserRoomDto(
     val userId: Int,
     @SerialName("room_id")
     val roomId: Long,
+    @SerialName("is_active")
+    val isActive: Boolean = true,
     @SerialName("created_at")
-    val createdAt: String? = null
+    val createdAt: String? = null,
+    @SerialName("updated_at")
+    val updatedAt: String? = null
 )
 
 interface AuthApi {

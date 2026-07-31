@@ -147,8 +147,8 @@ interface SyncApi {
 
     /**
      * Replace foto inspeksi (re-upload foto rusak/hilang) — ADR-0016.
-     * Endpoint belum ada di backend (kontrak §4.6); method siap dipakai begitu tersedia.
-     * Response berisi PhotoOutDto dengan nama file server baru.
+     * Endpoint SUDAH diimplementasikan di backend (ADR-0012) — file lama + thumbnail
+     * lama dihapus server, lalu regenerate. Response berisi PhotoOutDto nama file baru.
      */
     @Multipart
     @PUT("inspections/{id}/photos/{photoId}")

@@ -33,8 +33,12 @@ data class RoomItemDto(
     val roomId: Long,
     @SerialName("item_id")
     val itemId: Long,
+    @SerialName("is_active")
+    val isActive: Boolean = true,
     @SerialName("created_at")
-    val createdAt: String? = null
+    val createdAt: String? = null,
+    @SerialName("updated_at")
+    val updatedAt: String? = null
 )
 
 interface MasterDataApi {

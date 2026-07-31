@@ -202,7 +202,11 @@ fun NavGraph(
             val inspectionId = it.arguments?.getLong("inspectionId") ?: 0L
             InspectionDetailScreen(
                 inspectionId = inspectionId,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onReinspection = { roomId, roomName ->
+                    // Inspeksi Ulang — form KOSONG untuk room yang sama (bukan resume draf)
+                    navController.navigate(Routes.inspectionForm(roomId.toString(), roomName))
+                }
             )
         }
     }

@@ -162,10 +162,9 @@ fun MasterDataListScreen(
                     items(uiState.rooms, key = { it.id }) { ruang ->
                         RoomCard(
                             ruang = ruang,
-                            itemCount = uiState.items.count { item ->
-                                item.kategori.contains(ruang.nama, ignoreCase = true) ||
-                                        ruang.nama.contains(item.kategori, ignoreCase = true)
-                            },
+                            // Item count dari pivot room_items (keputusan review 2026-08) —
+                            // bukan heuristik nama kategori. Pivot kosong = 0 item.
+                            itemCount = uiState.roomItemCounts[ruang.id] ?: 0,
                             onClick = { onRoomSelected(ruang.id, ruang.nama) }
                         )
                     }

@@ -1,5 +1,6 @@
 package my.id.kentoes.rsudajibarangapp.dashboard
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,8 +23,6 @@ import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.SyncProblem
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -34,6 +33,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -109,195 +109,211 @@ fun DashboardScreen(
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+            PullToRefreshBox(
+                isRefreshing = uiState.isSyncing,
+                onRefresh = viewModel::refresh,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                // ── Stats Grid ──
-                item {
-                    Text(
-                        "Ringkasan Inspeksi",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        StatCard(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.HourglassEmpty,
-                            label = "Draf",
-                            value = uiState.draftCount.toString(),
-                            color = MaterialTheme.colorScheme.primary,
-                            onClick = onNavigateToDrafts
-                        )
-                        StatCard(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.SyncProblem,
-                            label = "Menunggu Kirim",
-                            value = uiState.pendingSyncCount.toString(),
-                            color = Color(0xFFF9A825)
-                        )
-                    }
-                }
-
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        StatCard(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.CheckCircle,
-                            label = "Terkirim",
-                            value = uiState.syncedCount.toString(),
-                            color = Color(0xFF388E3C)
-                        )
-                        StatCard(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.Inventory2,
-                            label = "Total Inspeksi",
-                            value = uiState.totalDrafts.toString(),
-                            color = MaterialTheme.colorScheme.tertiary
-                        )
-                    }
-                }
-
-                // ── Master Data Stats ──
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        StatCard(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.MeetingRoom,
-                            label = "Ruangan",
-                            value = uiState.totalRooms.toString(),
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                        StatCard(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.Description,
-                            label = "Item",
-                            value = uiState.totalItems.toString(),
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                }
-
-                // ── Status Inspeksi Hari Ini ──
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Status Inspeksi Hari Ini",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        StatCard(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.HourglassEmpty,
-                            label = "Belum Diinspeksi",
-                            value = uiState.uninspectedRoomCount.toString(),
-                            color = MaterialTheme.colorScheme.error,
-                            onClick = onNavigateToUninspectedRooms
-                        )
-                        StatCard(
-                            modifier = Modifier.weight(1f),
-                            icon = Icons.Default.CheckCircle,
-                            label = "Sudah Diinspeksi",
-                            value = uiState.inspectedRoomCount.toString(),
-                            color = Color(0xFF388E3C),
-                            onClick = onNavigateToHistoryWithDate
-                        )
-                    }
-                }
-
-                // ── Action Buttons ──
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        "Aksi Cepat",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-
-                item {
-                    FilledTonalButton(
-                        onClick = onNavigateToHistory,
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(16.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.HourglassEmpty,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Riwayat Inspeksi", style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-
-                // ── Analytics: Lowest Rooms ──
-                if (uiState.lowestRooms.isNotEmpty()) {
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    // ── Status Sync ──
                     item {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        SyncStatusBar(
+                            isSyncing = uiState.isSyncing,
+                            lastSyncAt = uiState.lastSyncAt,
+                            syncError = uiState.syncError,
+                            onRetry = viewModel::refresh
+                        )
+                    }
+
+                    // ── Stats Grid ──
+                    item {
                         Text(
-                            "Ruangan dengan Skor Terendah",
+                            "Ringkasan Inspeksi",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
 
-                    items(uiState.lowestRooms, key = { it.roomId }) { room ->
-                        RoomScoreCard(room = room)
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            StatCard(
+                                modifier = Modifier.weight(1f),
+                                icon = Icons.Default.HourglassEmpty,
+                                label = "Draf",
+                                value = uiState.draftCount.toString(),
+                                color = MaterialTheme.colorScheme.primary,
+                                onClick = onNavigateToDrafts
+                            )
+                            StatCard(
+                                modifier = Modifier.weight(1f),
+                                icon = Icons.Default.SyncProblem,
+                                label = "Menunggu Kirim",
+                                value = uiState.pendingSyncCount.toString(),
+                                color = Color(0xFFF9A825)
+                            )
+                        }
                     }
-                }
 
-                // ── Analytics: Top Issues ──
-                if (uiState.topIssues.isNotEmpty()) {
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            StatCard(
+                                modifier = Modifier.weight(1f),
+                                icon = Icons.Default.CheckCircle,
+                                label = "Terkirim",
+                                value = uiState.syncedCount.toString(),
+                                color = Color(0xFF388E3C)
+                            )
+                            StatCard(
+                                modifier = Modifier.weight(1f),
+                                icon = Icons.Default.Inventory2,
+                                label = "Total Inspeksi",
+                                value = uiState.totalDrafts.toString(),
+                                color = MaterialTheme.colorScheme.tertiary
+                            )
+                        }
+                    }
+
+                    // ── Master Data Stats ──
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            StatCard(
+                                modifier = Modifier.weight(1f),
+                                icon = Icons.Default.MeetingRoom,
+                                label = "Ruangan",
+                                value = uiState.totalRooms.toString(),
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                            StatCard(
+                                modifier = Modifier.weight(1f),
+                                icon = Icons.Default.Description,
+                                label = "Item",
+                                value = uiState.totalItems.toString(),
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                    }
+
+                    // ── Status Inspeksi Hari Ini ──
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Temuan Paling Sering",
+                            "Status Inspeksi Hari Ini",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
 
-                    items(uiState.topIssues, key = { it.itemId }) { issue ->
-                        IssueCard(issue = issue)
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            StatCard(
+                                modifier = Modifier.weight(1f),
+                                icon = Icons.Default.HourglassEmpty,
+                                label = "Belum Diinspeksi",
+                                value = uiState.uninspectedRoomCount.toString(),
+                                color = MaterialTheme.colorScheme.error,
+                                onClick = onNavigateToUninspectedRooms
+                            )
+                            StatCard(
+                                modifier = Modifier.weight(1f),
+                                icon = Icons.Default.CheckCircle,
+                                label = "Sudah Diinspeksi",
+                                value = uiState.inspectedRoomCount.toString(),
+                                color = Color(0xFF388E3C),
+                                onClick = onNavigateToHistoryWithDate
+                            )
+                        }
                     }
-                }
 
-                // ── Recent Drafts ──
-                if (uiState.recentDrafts.isNotEmpty()) {
+                    // ── Action Buttons ──
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Aktivitas Terbaru",
+                            "Aksi Cepat",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
                     }
 
-                    items(uiState.recentDrafts, key = { it.id }) { draft ->
-                        RecentDraftCard(draft = draft)
+                    item {
+                        FilledTonalButton(
+                            onClick = onNavigateToHistory,
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(16.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.HourglassEmpty,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Riwayat Inspeksi", style = MaterialTheme.typography.bodyLarge)
+                        }
+                    }
+
+                    // ── Analytics: Lowest Rooms ──
+                    if (uiState.lowestRooms.isNotEmpty()) {
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "Ruangan dengan Skor Terendah",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        items(uiState.lowestRooms, key = { it.roomId }) { room ->
+                            RoomScoreCard(room = room)
+                        }
+                    }
+
+                    // ── Analytics: Top Issues ──
+                    if (uiState.topIssues.isNotEmpty()) {
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "Temuan Paling Sering",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        items(uiState.topIssues, key = { it.itemId }) { issue ->
+                            IssueCard(issue = issue)
+                        }
+                    }
+
+                    // ── Recent Drafts ──
+                    if (uiState.recentDrafts.isNotEmpty()) {
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                "Aktivitas Terbaru",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        items(uiState.recentDrafts, key = { it.id }) { draft ->
+                            RecentDraftCard(draft = draft)
+                        }
                     }
                 }
             }
@@ -305,3 +321,53 @@ fun DashboardScreen(
     }
 }
 
+/**
+ * Indikator status sync: "Menyinkronkan..." saat sync berjalan, "Sync gagal — ketuk retry"
+ * saat error (klik untuk mencoba lagi), "Terakhir sync: <waktu>" saat sukses.
+ */
+@Composable
+private fun SyncStatusBar(
+    isSyncing: Boolean,
+    lastSyncAt: String?,
+    syncError: String?,
+    onRetry: () -> Unit
+) {
+    val (icon, text, color) = when {
+        isSyncing -> Triple(
+            Icons.Default.SyncProblem,
+            "Menyinkronkan...",
+            MaterialTheme.colorScheme.primary
+        )
+        syncError != null -> Triple(
+            Icons.Default.SyncProblem,
+            "Sync gagal — ketuk untuk mencoba lagi",
+            MaterialTheme.colorScheme.error
+        )
+        lastSyncAt != null -> Triple(
+            Icons.Default.CheckCircle,
+            "Terakhir sync: ${lastSyncAt.replace('T', ' ').take(16)}",
+            MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        else -> return
+    }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = syncError != null, onClick = onRetry)
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = color
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = color
+        )
+    }
+}

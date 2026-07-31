@@ -167,6 +167,7 @@ class InspectionRepository @Inject constructor(
                 itemId = item.itemId,
                 nama = master?.nama ?: "Item #${item.itemId}",
                 kategori = master?.kategori ?: "",
+                deskripsi = master?.deskripsi,
                 skor = item.skor,
                 fotoPaths = fotos.map { it.pathLokal },
                 catatan = item.catatan

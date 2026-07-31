@@ -20,7 +20,9 @@ data class MasterDataUiState(
     val rooms: List<RuangEntity> = emptyList(),
     val syncMessage: String? = null,
     val groupedItems: Map<String, List<MasterDataItem>> = emptyMap(),
-    val excludeRoomIds: Set<Long> = emptySet()
+    val excludeRoomIds: Set<Long> = emptySet(),
+    /** Jumlah item per room dihitung dari pivot room_items — bukan heuristik nama. */
+    val roomItemCounts: Map<Long, Int> = emptyMap()
 )
 
 @HiltViewModel
@@ -34,6 +36,8 @@ class MasterDataViewModel @Inject constructor(
 
     // Reactive flow so combine re-emits when filter changes
     private val _excludeRoomIds = MutableStateFlow<Set<Long>>(emptySet())
+    // Jumlah item per room dari pivot — dimuat sekali (init) & setelah sync
+    private val _roomItemCounts = MutableStateFlow<Map<Long, Int>>(emptyMap())
 
     init {
         // Observasi perubahan dari Room — gabung items + rooms via combine
@@ -42,8 +46,9 @@ class MasterDataViewModel @Inject constructor(
                 repository.items,
                 repository.rooms,
                 _excludeRoomIds,
-                authRepository.currentUser
-            ) { items, allRooms, excludeIds, user ->
+                authRepository.currentUser,
+                _roomItemCounts
+            ) { items, allRooms, excludeIds, user, roomItemCounts ->
                 // Inspector/supervisor: hanya room yang di-assign (isMyRoom).
                 // Admin (admin_ppi): semua room — /me/rooms kosong untuk admin.
                 val baseRooms = if (user?.role == ROLE_ADMIN) allRooms
@@ -55,12 +60,16 @@ class MasterDataViewModel @Inject constructor(
                     groupedItems = items.groupBy { it.kategori },
                     rooms = filteredRooms,
                     excludeRoomIds = excludeIds,
+                    roomItemCounts = roomItemCounts,
                     isLoading = false
                 )
             }.collect { state ->
                 _uiState.value = state
             }
         }
+
+        // Load item counts dari pivot — perlu coroutine (suspend)
+        viewModelScope.launch { loadRoomItemCounts() }
 
         // Init: sync dari API jika cache kosong
         viewModelScope.launch {
@@ -90,6 +99,10 @@ class MasterDataViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isSyncing = true, syncMessage = null)
         try {
             repository.syncItems()
+            repository.syncRooms()
+            // Pivot room_items wajib di-sync juga — RoomCard count berasal dari pivot
+            // (bukan heuristik nama), jadi refresh tanpa pivot = count basi.
+            repository.syncRoomItems()
             repository.syncMyRooms()
             _uiState.value = _uiState.value.copy(isSyncing = false, syncMessage = "Data berhasil diperbarui")
         } catch (e: Exception) {
@@ -98,6 +111,13 @@ class MasterDataViewModel @Inject constructor(
                 syncMessage = e.message ?: "Gagal sinkronisasi"
             )
         }
+        loadRoomItemCounts()
+    }
+
+    /** Muat jumlah item per room dari pivot room_items (setelah sync, mapping sudah segar). */
+    private suspend fun loadRoomItemCounts() {
+        val counts = repository.getRoomItemMap().mapValues { it.value.size }
+        _roomItemCounts.value = counts
     }
 
     fun clearSyncMessage() {

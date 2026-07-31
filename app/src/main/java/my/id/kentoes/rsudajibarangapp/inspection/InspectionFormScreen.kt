@@ -258,7 +258,7 @@ fun InspectionFormScreen(
                         ItemCard(
                             itemId = item.itemId,
                             nama = item.nama,
-                            deskripsi = null,
+                            deskripsi = item.deskripsi,
                             currentScore = item.skor,
                             fotoPaths = item.fotoPaths,
                             currentCatatan = item.catatan,

@@ -20,6 +20,7 @@ import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
+import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.sync.SyncWorker
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -54,8 +55,12 @@ class InspectionFormViewModelTest {
         mockkObject(SyncWorker.Companion)
         every { SyncWorker.enqueue(any()) } returns Unit
 
-        // Mock getAllRoomItems — return empty so fallback shows all items
-        coEvery { masterDataDao.getAllRoomItems() } returns emptyList()
+        // Default pivot: room 1 memiliki semua sample items (1,2,3) — form tidak kosong
+        coEvery { masterDataDao.getAllRoomItems() } returns listOf(
+            RoomItemEntity(id = 1, roomId = 1, itemId = 1),
+            RoomItemEntity(id = 2, roomId = 1, itemId = 2),
+            RoomItemEntity(id = 3, roomId = 1, itemId = 3),
+        )
 
         // Default: belum ada user aktif (inspectorId akan null)
         every { authRepository.currentUser } returns MutableStateFlow(null)
@@ -73,6 +78,12 @@ class InspectionFormViewModelTest {
     @Test
     fun `init loads items and sets correct initial state`() = runTest(testDispatcher) {
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        // Room 10 juga punya semua sample items
+        coEvery { masterDataDao.getAllRoomItems() } returns listOf(
+            RoomItemEntity(id = 1, roomId = 10, itemId = 1),
+            RoomItemEntity(id = 2, roomId = 10, itemId = 2),
+            RoomItemEntity(id = 3, roomId = 10, itemId = 3),
+        )
 
         viewModel.init(roomId = 10, roomName = "Ruang A")
         advanceUntilIdle()
@@ -108,10 +119,10 @@ class InspectionFormViewModelTest {
     fun `init with draftId resumes from draft`() = runTest(testDispatcher) {
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
         val draftStates = listOf(
-            ItemState(itemId = 1, nama = "Meja", kategori = "Furnitur", skor = 2),
+            ItemState(itemId = 1, nama = "Meja", kategori = "Furnitur", deskripsi = "Meja kayu", skor = 2),
             ItemState(itemId = 2, nama = "Kursi", kategori = "Furnitur", skor = 0, fotoPaths = listOf("/photo1.jpg")),
         )
-        coEvery { inspectionRepository.draftToItemStates(5L, sampleItems) } returns (10L to draftStates)
+        coEvery { inspectionRepository.draftToItemStates(5L, any()) } returns (10L to draftStates)
 
         viewModel.init(roomId = 0, roomName = "", draftId = 5L)
         advanceUntilIdle()
@@ -120,6 +131,7 @@ class InspectionFormViewModelTest {
         assertEquals(10L, state.roomId) // roomId from draft, not init param
         assertEquals(2, state.items.size)
         assertEquals(2, state.items.find { it.itemId == 1L }?.skor)
+        assertEquals("Meja kayu", state.items.find { it.itemId == 1L }?.deskripsi)
         assertEquals(0, state.items.find { it.itemId == 2L }?.skor)
         assertEquals(listOf("/photo1.jpg"), state.items.find { it.itemId == 2L }?.fotoPaths)
     }
@@ -449,6 +461,61 @@ class InspectionFormViewModelTest {
         assertTrue(state.groupedItems.isEmpty())
     }
 
+    // ── Pivot kosong = form kosong (keputusan review 2026-08) ──
+
+    @Test
+    fun `init with empty pivot shows no items even when master items exist`() = runTest(testDispatcher) {
+        // Master items ADA, tapi pivot room_items KOSONG → form TIDAK boleh fallback "tampilkan semua"
+        coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        coEvery { masterDataDao.getAllRoomItems() } returns emptyList()
+
+        viewModel.init(roomId = 1, roomName = "Test")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(0, state.items.size)
+        assertEquals(0, state.totalItems)
+        assertFalse(state.submitEnabled)
+    }
+
+    @Test
+    fun `init filters items to only those in pivot for the room`() = runTest(testDispatcher) {
+        coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        // Room 1 hanya punya item 1 & 2 di pivot — item 3 tidak terasosiasi
+        coEvery { masterDataDao.getAllRoomItems() } returns listOf(
+            RoomItemEntity(id = 1, roomId = 1, itemId = 1),
+            RoomItemEntity(id = 2, roomId = 1, itemId = 2),
+        )
+
+        viewModel.init(roomId = 1, roomName = "Test")
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.items.size)
+        assertTrue(viewModel.uiState.value.items.none { it.itemId == 3L })
+    }
+
+    // ── Deskripsi item dari entity (keputusan review 2026-08) ──
+
+    @Test
+    fun `init carries deskripsi from master item into form state`() = runTest(testDispatcher) {
+        val itemsWithDescription = listOf(
+            MasterDataItem(id = 1, nama = "Meja", kategori = "Furnitur", deskripsi = "Meja kayu jati"),
+            MasterDataItem(id = 2, nama = "Kursi", kategori = "Furnitur", deskripsi = null),
+        )
+        coEvery { masterDataDao.getAllItems() } returns flowOf(itemsWithDescription)
+        coEvery { masterDataDao.getAllRoomItems() } returns listOf(
+            RoomItemEntity(id = 1, roomId = 1, itemId = 1),
+            RoomItemEntity(id = 2, roomId = 1, itemId = 2),
+        )
+
+        viewModel.init(roomId = 1, roomName = "Test")
+        advanceUntilIdle()
+
+        // Deskripsi dari entity, bukan null hardcoded; item tanpa deskripsi tetap null
+        assertEquals("Meja kayu jati", viewModel.uiState.value.items.find { it.itemId == 1L }?.deskripsi)
+        assertNull(viewModel.uiState.value.items.find { it.itemId == 2L }?.deskripsi)
+    }
+
     // ── Mixed validation scenarios ──
 
     // ── Resume draft & duplicate prevention (regression) ──
@@ -459,7 +526,7 @@ class InspectionFormViewModelTest {
             ItemState(itemId = 1, nama = "Meja", kategori = "Furnitur", skor = 2),
         )
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
-        coEvery { inspectionRepository.draftToItemStates(5L, sampleItems) } returns (10L to draftStates)
+        coEvery { inspectionRepository.draftToItemStates(5L, any()) } returns (10L to draftStates)
         coEvery { inspectionRepository.deleteDraft(5L) } returns Unit
         coEvery { drafDao.insertDraft(any()) } returns 100L
         coEvery { drafDao.insertItem(any()) } returns 10L
@@ -487,7 +554,7 @@ class InspectionFormViewModelTest {
             ItemState(itemId = 3, nama = "Lantai", kategori = "Struktur", skor = 2),
         )
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
-        coEvery { inspectionRepository.draftToItemStates(5L, sampleItems) } returns (10L to draftStates)
+        coEvery { inspectionRepository.draftToItemStates(5L, any()) } returns (10L to draftStates)
         coEvery { inspectionRepository.deleteDraft(5L) } returns Unit
         coEvery { drafDao.insertDraft(any()) } returns 100L
         coEvery { drafDao.insertItem(any()) } returns 10L
@@ -516,7 +583,7 @@ class InspectionFormViewModelTest {
             ItemState(itemId = 1, nama = "Meja", kategori = "Furnitur", skor = 2),
         )
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
-        coEvery { inspectionRepository.draftToItemStates(5L, sampleItems) } returns (10L to draftStates)
+        coEvery { inspectionRepository.draftToItemStates(5L, any()) } returns (10L to draftStates)
         coEvery { inspectionRepository.deleteDraft(5L) } returns Unit
         coEvery { drafDao.insertDraft(any()) } returns 100L
         coEvery { drafDao.insertItem(any()) } returns 10L
@@ -564,7 +631,7 @@ class InspectionFormViewModelTest {
             ItemState(itemId = 2, nama = "Kursi", kategori = "Furnitur", skor = 1),
         )
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
-        coEvery { inspectionRepository.draftToItemStates(99L, sampleItems) } returns (10L to draftStates)
+        coEvery { inspectionRepository.draftToItemStates(99L, any()) } returns (10L to draftStates)
         coEvery { inspectionRepository.deleteDraft(99L) } returns Unit
         coEvery { drafDao.insertDraft(any()) } returns 200L
         coEvery { drafDao.insertItem(any()) } returns 10L

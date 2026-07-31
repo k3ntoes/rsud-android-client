@@ -28,6 +28,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +59,7 @@ import java.io.File
 fun InspectionDetailScreen(
     inspectionId: Long,
     onNavigateBack: () -> Unit,
+    onReinspection: (roomId: Long, roomName: String) -> Unit = { _, _ -> },
     viewModel: InspectionHistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -154,6 +156,23 @@ fun InspectionDetailScreen(
                                         color = MaterialTheme.colorScheme.error)
                                 }
                             }
+                        }
+                    }
+
+                    // Aksi: inspeksi ulang room yang sama dengan form KOSONG (bukan resume draf)
+                    item {
+                        FilledTonalButton(
+                            onClick = { onReinspection(detail.roomId, uiState.detailRoomName.ifBlank { "Ruangan #${detail.roomId}" }) },
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(16.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Inspeksi Ulang", style = MaterialTheme.typography.bodyLarge)
                         }
                     }
 

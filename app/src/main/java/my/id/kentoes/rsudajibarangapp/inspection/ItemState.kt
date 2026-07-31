@@ -12,6 +12,7 @@ data class ItemState(
     val itemId: Long,
     val nama: String = "",
     val kategori: String = "",
+    val deskripsi: String? = null,
     val skor: Int = -1,
     val fotoPaths: List<String> = emptyList(),
     val catatan: String? = null
