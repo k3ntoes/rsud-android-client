@@ -2,12 +2,14 @@ package my.id.kentoes.rsudajibarangapp.inspection
 
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -63,6 +65,41 @@ class InspectionRepositoryTest {
 
         coVerify(exactly = 1) { drafDao.deleteDraftCascade(draft) }
         assertFalse(photo.exists()) // file foto ikut dihapus — tidak menumpuk file yatim
+    }
+
+    @Test
+    fun `deleteDraft reads photo paths BEFORE cascade delete`() = runTest {
+        // REGRESSION (review 2026-08): query getPhotoPathsForDraft pernah diletakkan
+        // SETELAH deleteDraftCascade — padahal CASCADE FK menghapus baris draf_foto,
+        // sehingga query mengembalikan kosong dan file foto tidak pernah terhapus.
+        val photo = tempFolder.newFile("draft_photo_order.jpg")
+        val draft = DrafInspeksi(id = 5, roomId = 10, localTimestamp = "2026-01-01T00:00:00Z", status = "DRAFT")
+        coEvery { drafDao.getDraftById(5L) } returns draft
+        coEvery { drafDao.getPhotoPathsForDraft(5L) } returns listOf(photo.absolutePath)
+
+        repository.deleteDraft(5L)
+
+        coVerifyOrder {
+            drafDao.getPhotoPathsForDraft(5L)
+            drafDao.deleteDraftCascade(draft)
+        }
+        assertFalse(photo.exists())
+    }
+
+    @Test
+    fun `deleteDraft with deletePhotoFiles false keeps photo files and skips path query`() = runTest {
+        // BUG-FIX (2026-08): saat resume draf → submit, draf baru mereferensikan path foto
+        // yang SAMA — file harus dipertahankan (deletePhotoFiles = false). Tidak boleh ada
+        // query path tambahan (hemat I/O) dan file tidak boleh ikut terhapus.
+        val photo = tempFolder.newFile("resume_kept_photo.jpg")
+        val draft = DrafInspeksi(id = 5, roomId = 10, localTimestamp = "2026-01-01T00:00:00Z", status = "DRAFT")
+        coEvery { drafDao.getDraftById(5L) } returns draft
+
+        repository.deleteDraft(5L, deletePhotoFiles = false)
+
+        coVerify(exactly = 0) { drafDao.getPhotoPathsForDraft(any()) }
+        coVerify(exactly = 1) { drafDao.deleteDraftCascade(draft) }
+        assertTrue(photo.exists()) // file foto dipertahankan untuk draf baru
     }
 
     @Test

@@ -99,13 +99,14 @@ class InspectionRepository @Inject constructor(
      */
     suspend fun deleteDraft(draftId: Long, deletePhotoFiles: Boolean = true) {
         val draft = drafDao.getDraftById(draftId) ?: return
+        // Baca path foto SEBELUM cascade delete. REGRESSION-FIX (review 2026-08): dulu
+        // query diletakkan setelah deleteDraftCascade — padahal CASCADE FK menghapus baris
+        // draf_foto, jadi query mengembalikan kosong dan file foto tidak pernah terhapus
+        // di path default (deletePhotoFiles = true) → file yatim menumpuk. Path resume
+        // (deletePhotoFiles = false) memang tidak perlu query tambahan.
+        val photoPaths = if (deletePhotoFiles) drafDao.getPhotoPathsForDraft(draftId) else emptyList()
         drafDao.deleteDraftCascade(draft)
-        // Hanya baca path foto (query DB) jika file akan dihapus — path resume
-        // (deletePhotoFiles = false) tidak perlu query tambahan.
-        if (deletePhotoFiles) {
-            val photoPaths = drafDao.getPhotoPathsForDraft(draftId)
-            deleteFilesBestEffort(photoPaths)
-        }
+        deleteFilesBestEffort(photoPaths)
     }
 
     /** Hapus file foto lokal best-effort — jangan tinggalkan file yatim. */
