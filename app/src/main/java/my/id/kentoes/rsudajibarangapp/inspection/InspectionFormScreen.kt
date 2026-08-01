@@ -33,8 +33,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -45,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +52,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import my.id.kentoes.rsudajibarangapp.inspection.components.ItemCard
 import my.id.kentoes.rsudajibarangapp.inspection.components.createTempPhotoUri
 import java.io.File
@@ -68,17 +71,20 @@ fun InspectionFormScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    val snackbarHostState = remember { SnackbarHostState() }
 
     // Inisialisasi ViewModel dengan roomId/roomName — dan draftId untuk resume
     LaunchedEffect(roomId, draftId) {
         viewModel.init(roomId, roomName, draftId)
     }
 
-    // Navigasi balik saat draft tersimpan
+    // Navigasi balik saat draft tersimpan.
+    // BUG-FIX (2026-08): dulu pakai snackbarHostState.showSnackbar("Draf tersimpan") —
+    // fungsi itu suspend sampai snackbar ditutup (±4 dtk, SnackbarDuration.Short default),
+    // jadi navigasi balik tertahan dan terasa lambat. Toast bersifat fire-and-forget
+    // (tidak memblok) dan tetap tampil walau layar sudah di-pop (overlay sistem).
     LaunchedEffect(uiState.draftSaved) {
         if (uiState.draftSaved) {
-            snackbarHostState.showSnackbar("Draf tersimpan")
+            Toast.makeText(context, "Draf tersimpan", Toast.LENGTH_SHORT).show()
             viewModel.clearDraftSaved()
             onNavigateBack()
         }
@@ -98,26 +104,42 @@ fun InspectionFormScreen(
 
     // Camera capture launcher — single nullable Uri, bukan mutableListOf
     var pendingPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    val scope = rememberCoroutineScope()
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
         val uri = pendingPhotoUri
         if (success && uri != null) {
             pendingPhotoUri = null
-            // Copy dari URI content ke local file
-            try {
-                val inputStream = context.contentResolver.openInputStream(uri)
-                val photoDir = File(context.getExternalFilesDir(null), "photos")
-                if (!photoDir.exists()) photoDir.mkdirs()
-                val photoFile = File(photoDir, "capture_${System.currentTimeMillis()}.jpg")
-                inputStream?.use { input ->
-                    photoFile.outputStream().use { output ->
-                        input.copyTo(output)
+            // Capture item target SEBELUM coroutine async — selama copy berjalan user
+            // bisa mengetuk "Tambah" di item lain dan mengubah currentPhotoItemId.
+            val targetItemId = currentPhotoItemId.longValue
+            // Copy dari URI content ke local file DI BACKGROUND (Dispatchers.IO).
+            // Dulu dieksekusi sinkron di main thread — foto resolusi penuh membuat
+            // UI membeku berdetik-detik (ANR / "app not responding"), terutama di
+            // mode offline & emulator lambat.
+            scope.launch {
+                val photoPath = withContext(Dispatchers.IO) {
+                    runCatching {
+                        val inputStream = context.contentResolver.openInputStream(uri)
+                        val photoDir = File(context.getExternalFilesDir(null), "photos")
+                        if (!photoDir.exists()) photoDir.mkdirs()
+                        val photoFile = File(photoDir, "capture_${System.currentTimeMillis()}.jpg")
+                        inputStream?.use { input ->
+                            photoFile.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        photoFile.absolutePath
                     }
                 }
-                viewModel.addPhoto(currentPhotoItemId.longValue, photoFile.absolutePath)
-            } catch (e: Exception) {
-                Toast.makeText(context, "Gagal memproses foto: ${e.message}", Toast.LENGTH_SHORT).show()
+                photoPath.onSuccess { path ->
+                    viewModel.addPhoto(targetItemId, path)
+                }.onFailure { e ->
+                    // Jangan telan pembatalan coroutine (mis. user menekan back saat copy berjalan)
+                    if (e is CancellationException) throw e
+                    Toast.makeText(context, "Gagal memproses foto: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -148,7 +170,6 @@ fun InspectionFormScreen(
                 )
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             // Bottom bar with progress + actions
             Column(modifier = Modifier.padding(16.dp)) {

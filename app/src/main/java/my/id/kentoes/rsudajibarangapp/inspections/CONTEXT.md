@@ -41,6 +41,10 @@ _Avoid_: Room items, item assignment, pivot table
 Aksi mengirim inspeksi ke server. Validasi: **semua item yang terasosiasi dengan room harus valid** (skor terisi + foto jika skor 0). Data masuk ke WorkManager untuk dikirim saat jaringan tersedia.
 _Avoid_: Submit, upload
 
+**Catatan Item**:
+Teks opsional per item yang diisi Petugas (mis. detail temuan). Tersimpan di draf (`DrafItem.catatan`) DAN kini ikut dikirim ke server sebagai `catatan` di tiap `details` payload submit (ADR-0018 Q2, 2026-08) — sebelumnya hilang saat submit karena `DetailSubmit` tidak memilikinya. BE perlu kolom `inspection_details.catatan`; Pydantic mengabaikan field tak dikenal sampai kolom ada.
+_Avoid_: Notes, keterangan, komentar
+
 **Simpan Draf**:
 Aksi menyimpan progress inspeksi ke lokal. Tidak perlu semua item lengkap.
 _Avoid_: Save, simpan sementara
@@ -67,6 +71,7 @@ _Avoid_: History, inspection list, log
 
 **Terkirim**:
 Metrik dashboard: jumlah inspeksi yang sudah dikonfirmasi server, dihitung dari `InspectionEntity` (cache riwayat) — **bukan** dari draf berstatus SYNCED (draf dihapus dari DB setelah sync sukses). Card "Total Inspeksi" di Ringkasan Inspeksi dihapus (ADR-0017) karena nilainya identik dengan "Terkirim" — keduanya bersumber dari `InspectionEntity`. Nilai bersifat device-wide (ADR-0016); scope per akun (`inspector_id`) dicatat sebagai follow-up.
+**Definisi sukses (ADR-0018 Q1, 2026-08)**: "terkirim" = server mengakui inspeksi (200 dengan id) DAN cache riwayat lokal tertulis. Path `409 DUPLICATE_INSPECTION` juga menulis cache riwayat (`cacheDuplicateInspection` — cari via `roomId + businessDate` karena list endpoint BE tidak memuat `local_timestamp`; ambil kandidat terbaru) sehingga riwayat & dashboard konsisten tanpa menunggu fetch ulang. Kegagalan cache saat 409 bersifat best-effort — tidak menggagalkan penghapusan draf.
 _Avoid_: Synced, sent count
 
 **Status Inspeksi Hari Ini**:

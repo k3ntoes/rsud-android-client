@@ -130,6 +130,8 @@ class SyncManager @Inject constructor(
                 DetailSubmit(
                     itemId = item.itemId,
                     score = item.skor,
+                    // Q2 (grill-with-docs 2026-08): catatan inspektur ikut dikirim ke server.
+                    catatan = item.catatan,
                     photos = serverFileNames.mapIndexed { i, name ->
                         PhotoSubmit(fileName = name, sortOrder = i)
                     }
@@ -161,6 +163,20 @@ class SyncManager @Inject constructor(
             val msg = e.message ?: "Error sinkronisasi"
             // ponytail: simple error handling; expand if 409/413 handling needed
             if (msg.contains("DUPLICATE_INSPECTION") || msg.contains("409")) {
+                // Q1 (grill-with-docs 2026-08): server sudah punya inspeksi ini (submit
+                // sebelumnya sukses tapi response hilang). Cache ke riwayat lokal agar
+                // dashboard "Terkirim" & riwayat konsisten tanpa menunggu fetch ulang.
+                // Best-effort — kegagalan cache tidak menggagalkan penghapusan draf.
+                runCatching {
+                    inspectionRepository.preparePayload(draftId)?.let { p ->
+                        inspectionHistoryRepository.cacheDuplicateInspection(
+                            roomId = p.roomId,
+                            // REVIEW-FIX (2026-08): list endpoint tidak punya local_timestamp —
+                            // cocokkan businessDate (ada di InspectionListItem).
+                            businessDate = p.businessDate
+                        )
+                    }
+                }
                 // Already synced — skip (hapus baris + file foto lokal)
                 inspectionRepository.deleteSyncedDraft(draftId)
                 SyncResult(draftId, true, "Inspeksi sudah terkirim (duplicate)")

@@ -155,9 +155,13 @@ class InspectionFormViewModel @Inject constructor(
                 val now = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
                     .format(Date())
 
-                // Jika resume dari draft lama, hapus draft lama (baris + file foto) dulu
+                // Jika resume dari draft lama, hapus draft lama dulu (baris DB).
+                // BUG-FIX (diagnosa 2026-08): deletePhotoFiles = FALSE — draf baru
+                // mereferensikan path foto yang SAMA; menghapus file di sini membuat
+                // sync gagal upload (file tidak ada) dan draf macet di "Menunggu Kirim".
+                // File yang benar-benar tak terpakai dibersihkan DraftPhotoCleaner.
                 resumeDraftId?.let { oldId ->
-                    inspectionRepository.deleteDraft(oldId)
+                    inspectionRepository.deleteDraft(oldId, deletePhotoFiles = false)
                     resumeDraftId = null
                 }
 

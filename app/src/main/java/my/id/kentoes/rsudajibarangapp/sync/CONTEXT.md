@@ -5,7 +5,7 @@ Menangani sinkronisasi offline-first antara perangkat dan server. Mengelola uplo
 ## Language
 
 **Sinkronisasi Inspeksi**: 
-Proses pengiriman data inspeksi (draf dengan status PENDING_SYNC) dari penyimpanan perangkat ke server. Alur: kompres foto → upload foto → dapatkan nama file → kirim payload JSON → hapus draf. Berjalan otomatis via WorkManager saat `Network.CONNECTED`.
+Proses pengiriman data inspeksi (draf dengan status PENDING_SYNC) dari penyimpanan perangkat ke server. Alur: kompres foto → upload foto → dapatkan nama file → kirim payload JSON → hapus draf. Berjalan otomatis via WorkManager saat `Network.CONNECTED`. **Sukses (ADR-0018 Q1, 2026-08)**: server mengakui inspeksi (200 dengan id) DAN cache riwayat lokal tertulis; path `409 DUPLICATE_INSPECTION` juga menulis cache via `cacheDuplicateInspection`. **Satu kali sync master data per run** (ADR-0018 Q4) — `syncAllPending()` menjalankannya sebelum memproses draf, `SyncWorker.doWork()` tidak memanggil lagi.
 _Avoid_: Sync, pengiriman data
 
 **Sinkronisasi Master Data**: 
@@ -49,7 +49,7 @@ Struktur data lokal `Map<Int, List<Long>>` (key: userId, value: list of roomIds)
 _Avoid_: User-room map, assignment mapping
 
 **Konflik Sinkronisasi**: 
-Kondisi ketika data lokal dan server tidak sinkron. Ditangani dengan: (1) idempotency key `(room_id, local_timestamp, inspector_id)` untuk mencegah duplikat, (2) validasi server-side untuk room_items dan user_rooms, (3) standard error codes (`TOKEN_EXPIRED`, `DUPLICATE_INSPECTION`, dll).
+Kondisi ketika data lokal dan server tidak sinkron. Ditangani dengan: (1) idempotency key `(room_id, local_timestamp, inspector_id)` untuk mencegah duplikat, (2) validasi server-side untuk room_items dan user_rooms, (3) standard error codes (`TOKEN_EXPIRED`, `DUPLICATE_INSPECTION`, dll). **409 DUPLICATE_INSPECTION** (ADR-0018 Q1): dianggap sukses — draf dihapus, dan inspeksi dicari via `GET /inspections` (cocokkan `roomId + businessDate` — list endpoint tidak memuat `local_timestamp`; ambil kandidat terbaru) lalu di-cache ke riwayat lokal agar dashboard "Terkirim" konsisten tanpa fetch ulang. Kegagalan cache best-effort.
 _Avoid_: Sync conflict, bentrok data
 
 **Riwayat Hibrida**: 

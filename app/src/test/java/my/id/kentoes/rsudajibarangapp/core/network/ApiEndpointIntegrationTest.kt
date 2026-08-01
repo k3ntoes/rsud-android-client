@@ -232,6 +232,7 @@ class ApiEndpointIntegrationTest {
                 DetailSubmit(
                     itemId = 1,
                     score = 2,
+                    catatan = "Catatan inspektur",
                     photos = listOf(
                         PhotoSubmit(fileName = "server_a.jpg", sortOrder = 0)
                     )
@@ -245,7 +246,7 @@ class ApiEndpointIntegrationTest {
         assertRequest(req, "POST", "/inspections")
         assertBodyContains(req,
             "\"room_id\"", "\"local_timestamp\"", "\"business_date\"",
-            "\"item_id\"", "\"score\"", "\"file_name\"", "\"sort_order\""
+            "\"item_id\"", "\"score\"", "\"catatan\"", "\"file_name\"", "\"sort_order\""
         )
         assertEquals(1L, response.id)
         assertEquals("PENDING", response.status)

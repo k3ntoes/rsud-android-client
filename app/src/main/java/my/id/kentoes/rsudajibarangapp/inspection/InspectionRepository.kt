@@ -88,12 +88,24 @@ class InspectionRepository @Inject constructor(
     /**
      * Hapus draf beserta item & foto (via CASCADE FK) DAN file foto di disk —
      * mencegah file yatim menumpuk di sela worker cleanup periodik.
+     *
+     * @param deletePhotoFiles BUG-FIX (diagnosa 2026-08): saat resume draf → submit,
+     *   draf LAMA dihapus tapi draf BARU mereferensikan path foto yang SAMA. Jika file
+     *   ikut dihapus di sini, sync selalu gagal upload (file tidak ada) dan draf macet
+     *   di "Menunggu Kirim" (PENDING_SYNC) selamanya. Path resume memanggil dengan
+     *   `deletePhotoFiles = false`; file yang sudah benar-benar tidak dipakai draf baru
+     *   dibersihkan oleh DraftPhotoCleaner (grace 24 jam). Path lain (hapus manual,
+     *   ganti akun) tetap menghapus file (default true).
      */
-    suspend fun deleteDraft(draftId: Long) {
+    suspend fun deleteDraft(draftId: Long, deletePhotoFiles: Boolean = true) {
         val draft = drafDao.getDraftById(draftId) ?: return
-        val photoPaths = drafDao.getPhotoPathsForDraft(draftId)
         drafDao.deleteDraftCascade(draft)
-        deleteFilesBestEffort(photoPaths)
+        // Hanya baca path foto (query DB) jika file akan dihapus — path resume
+        // (deletePhotoFiles = false) tidak perlu query tambahan.
+        if (deletePhotoFiles) {
+            val photoPaths = drafDao.getPhotoPathsForDraft(draftId)
+            deleteFilesBestEffort(photoPaths)
+        }
     }
 
     /** Hapus file foto lokal best-effort — jangan tinggalkan file yatim. */

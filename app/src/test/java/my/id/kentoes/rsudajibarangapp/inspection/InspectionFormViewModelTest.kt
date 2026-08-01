@@ -19,6 +19,9 @@ import my.id.kentoes.rsudajibarangapp.auth.AuthRepository
 import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
+import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafFoto
+import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
+import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.sync.SyncWorker
@@ -28,9 +31,14 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 
 class InspectionFormViewModelTest {
+
+    @get:Rule
+    val tempFolder = TemporaryFolder()
 
     private val context = mockk<Context>()
     private val masterDataDao = mockk<MasterDataDao>()
@@ -527,7 +535,8 @@ class InspectionFormViewModelTest {
         )
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
         coEvery { inspectionRepository.draftToItemStates(5L, any()) } returns (10L to draftStates)
-        coEvery { inspectionRepository.deleteDraft(5L) } returns Unit
+        // BUG-FIX (diagnosa 2026-08): resume memanggil deleteDraft dengan deletePhotoFiles = false
+        coEvery { inspectionRepository.deleteDraft(5L, deletePhotoFiles = false) } returns Unit
         coEvery { drafDao.insertDraft(any()) } returns 100L
         coEvery { drafDao.insertItem(any()) } returns 10L
         coEvery { drafDao.insertPhoto(any()) } returns 1L
@@ -538,9 +547,10 @@ class InspectionFormViewModelTest {
         viewModel.saveDraft()
         advanceUntilIdle()
 
-        // Draft lama dihapus (baris + file foto) dulu, baru insert draft baru
+        // Draft lama dihapus (baris DB; file foto DI-PERTAHANKAN untuk draf baru) dulu,
+        // baru insert draft baru
         coVerifyOrder {
-            inspectionRepository.deleteDraft(5L)
+            inspectionRepository.deleteDraft(5L, deletePhotoFiles = false)
             drafDao.insertDraft(match { it.status == "DRAFT" })
         }
         assertTrue(viewModel.uiState.value.draftSaved)
@@ -555,7 +565,8 @@ class InspectionFormViewModelTest {
         )
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
         coEvery { inspectionRepository.draftToItemStates(5L, any()) } returns (10L to draftStates)
-        coEvery { inspectionRepository.deleteDraft(5L) } returns Unit
+        // BUG-FIX (diagnosa 2026-08): resume memanggil deleteDraft dengan deletePhotoFiles = false
+        coEvery { inspectionRepository.deleteDraft(5L, deletePhotoFiles = false) } returns Unit
         coEvery { drafDao.insertDraft(any()) } returns 100L
         coEvery { drafDao.insertItem(any()) } returns 10L
         coEvery { drafDao.insertPhoto(any()) } returns 1L
@@ -569,12 +580,62 @@ class InspectionFormViewModelTest {
         viewModel.submit()
         advanceUntilIdle()
 
-        // Draft lama dihapus (baris + file foto) dulu, baru insert draft baru
+        // Draft lama dihapus (baris DB; file foto DI-PERTAHANKAN untuk draf baru) dulu,
+        // baru insert draft baru
         coVerifyOrder {
-            inspectionRepository.deleteDraft(5L)
+            inspectionRepository.deleteDraft(5L, deletePhotoFiles = false)
             drafDao.insertDraft(match { it.status == "PENDING_SYNC" })
         }
         assertTrue(viewModel.uiState.value.draftSaved)
+    }
+
+    @Test
+    fun `submit after resume keeps draft photo files on disk`() = runTest(testDispatcher) {
+        // REGRESSION (bug draf macet di PENDING_SYNC / "Menunggu Kirim"): saat resume
+        // → submit, deleteDraft menghapus file foto draf LAMA, tapi draf baru mereferensikan
+        // path yang sama → file sudah tidak ada → sync selalu gagal upload → draf tidak
+        // pernah terkirim. Test ini menggunakan InspectionRepository SUNGGAH (file temp nyata).
+        val photo = tempFolder.newFile("resume_photo.jpg")
+
+        val drafDaoReal = mockk<DrafDao>()
+        val masterDaoReal = mockk<MasterDataDao>()
+        // allDraftsSummary dikonstruksi saat InspectionRepository dibuat — stub flow-nya dulu
+        coEvery { drafDaoReal.getAllDrafts() } returns flowOf(emptyList())
+        coEvery { masterDaoReal.getAllRooms() } returns flowOf(emptyList())
+        val realRepository = InspectionRepository(drafDaoReal, masterDaoReal)
+
+        // Resume dari draf 5: satu item diskor 2 (valid) dengan satu foto
+        coEvery { masterDaoReal.getAllItems() } returns flowOf(sampleItems)
+        coEvery { masterDaoReal.getAllRoomItems() } returns emptyList()
+        coEvery { drafDaoReal.getDraftById(5L) } returns DrafInspeksi(
+            id = 5, roomId = 10, localTimestamp = "2026-01-01T00:00:00Z", status = "DRAFT"
+        )
+        coEvery { drafDaoReal.getItemsForDraft(5L) } returns listOf(
+            DrafItem(drafId = 5, itemId = 1, skor = 2, catatan = null)
+        )
+        coEvery { drafDaoReal.getPhotosForItem(any()) } returns listOf(
+            DrafFoto(drafItemId = 1, pathLokal = photo.absolutePath)
+        )
+        // deleteDraft draf lama: DAO mengembalikan path foto, deleteDraftCascade dipanggil,
+        // dan InspectionRepository SUNGGAH akan menghapus FILE-nya.
+        coEvery { drafDaoReal.getPhotoPathsForDraft(5L) } returns listOf(photo.absolutePath)
+        coEvery { drafDaoReal.deleteDraftCascade(any()) } returns Unit
+        // Insert draf baru
+        coEvery { drafDaoReal.insertDraft(any()) } returns 100L
+        coEvery { drafDaoReal.insertItem(any()) } returns 10L
+        coEvery { drafDaoReal.insertPhoto(any()) } returns 1L
+
+        val vm = InspectionFormViewModel(context, masterDaoReal, drafDaoReal, realRepository, authRepository)
+        vm.init(roomId = 0, roomName = "", draftId = 5L)
+        advanceUntilIdle()
+        assertTrue(vm.uiState.value.submitEnabled)
+
+        vm.submit()
+        advanceUntilIdle()
+
+        // Draf baru (PENDING_SYNC) mereferensikan path yang sama — file harus MASIH ADA
+        // agar sync bisa meng-upload. Jika dihapus → draf macet selamanya.
+        assertTrue("File foto draf harus tetap ada setelah resume-submit", photo.exists())
     }
 
     @Test
@@ -584,7 +645,8 @@ class InspectionFormViewModelTest {
         )
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
         coEvery { inspectionRepository.draftToItemStates(5L, any()) } returns (10L to draftStates)
-        coEvery { inspectionRepository.deleteDraft(5L) } returns Unit
+        // BUG-FIX (diagnosa 2026-08): resume memanggil deleteDraft dengan deletePhotoFiles = false
+        coEvery { inspectionRepository.deleteDraft(5L, deletePhotoFiles = false) } returns Unit
         coEvery { drafDao.insertDraft(any()) } returns 100L
         coEvery { drafDao.insertItem(any()) } returns 10L
         coEvery { drafDao.insertPhoto(any()) } returns 1L
@@ -592,10 +654,10 @@ class InspectionFormViewModelTest {
         viewModel.init(roomId = 0, roomName = "", draftId = 5L)
         advanceUntilIdle()
 
-        // Save pertama — hapus draft lama (baris + file foto) + insert baru
+        // Save pertama — hapus draft lama (baris DB; file foto dipertahankan) + insert baru
         viewModel.saveDraft()
         advanceUntilIdle()
-        coVerify(exactly = 1) { inspectionRepository.deleteDraft(5L) }
+        coVerify(exactly = 1) { inspectionRepository.deleteDraft(5L, deletePhotoFiles = false) }
 
         // Clear flag
         viewModel.clearDraftSaved()
@@ -603,7 +665,8 @@ class InspectionFormViewModelTest {
         // Save kedua — TIDAK hapus lagi (resumeDraftId sudah null)
         viewModel.saveDraft()
         advanceUntilIdle()
-        coVerify(exactly = 1) { inspectionRepository.deleteDraft(5L) } // masih 1x, tidak bertambah
+        // Masih 1x, tidak bertambah — verifikasi memakai bentuk 2-arg (sama seperti panggilan produksi)
+        coVerify(exactly = 1) { inspectionRepository.deleteDraft(5L, deletePhotoFiles = false) }
         coVerify(exactly = 2) { drafDao.insertDraft(any()) } // 2 insert: 1 dari save pertama, 1 dari save kedua
     }
 
@@ -632,7 +695,8 @@ class InspectionFormViewModelTest {
         )
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
         coEvery { inspectionRepository.draftToItemStates(99L, any()) } returns (10L to draftStates)
-        coEvery { inspectionRepository.deleteDraft(99L) } returns Unit
+        // BUG-FIX (diagnosa 2026-08): resume memanggil deleteDraft dengan deletePhotoFiles = false
+        coEvery { inspectionRepository.deleteDraft(99L, deletePhotoFiles = false) } returns Unit
         coEvery { drafDao.insertDraft(any()) } returns 200L
         coEvery { drafDao.insertItem(any()) } returns 10L
         coEvery { drafDao.insertPhoto(any()) } returns 1L
@@ -644,7 +708,7 @@ class InspectionFormViewModelTest {
         advanceUntilIdle()
 
         // Verifikasi bahwa delete dipanggil dengan draft id=99 (bukan id lain)
-        coVerify { inspectionRepository.deleteDraft(99L) }
+        coVerify { inspectionRepository.deleteDraft(99L, deletePhotoFiles = false) }
     }
 
     // ── isSaving guard (cegah double click) ──

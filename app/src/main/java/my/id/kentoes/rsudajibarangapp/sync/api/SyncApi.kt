@@ -39,6 +39,12 @@ data class DetailSubmit(
     @SerialName("item_id")
     val itemId: Long,
     val score: Int,
+    /**
+     * Catatan inspektur per item (Q2, grill-with-docs 2026-08). Opsional — BE
+     * (Pydantic default) mengabaikan field tak dikenal, jadi mengirim sekarang aman;
+     * kolom `catatan` di BE menyusul (koordinasi kontrak §4.1).
+     */
+    val catatan: String? = null,
     val photos: List<PhotoSubmit> = emptyList()
 )
 

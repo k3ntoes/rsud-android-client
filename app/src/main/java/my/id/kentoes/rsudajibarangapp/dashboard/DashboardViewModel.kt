@@ -117,6 +117,9 @@ class DashboardViewModel @Inject constructor(
                     else -> "Sebagian data diperbarui (${result.succeeded.size}/${result.total} berhasil) — ketuk retry"
                 }
             )
+            // Sync mengisi cache room (fresh login / auto-sync). Hitung ulang status inspeksi
+            // agar card "Belum/Sudah Diinspeksi" tidak macet di 0 sejak init (rooms belum ada).
+            computeInspectionStatus()
         }
     }
 

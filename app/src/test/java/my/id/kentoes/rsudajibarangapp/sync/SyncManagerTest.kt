@@ -295,6 +295,64 @@ class SyncManagerTest {
         coVerify(exactly = 1) { inspectionRepository.deleteSyncedDraft(1L) }
     }
 
+    // ── Q1 (grill-with-docs 2026-08): 409 juga menulis cache riwayat ──
+
+    @Test
+    fun `syncSingleDraft duplicate caches the inspection into history`() = runTest {
+        coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
+        coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server.jpg")
+        coEvery { syncApi.submitInspection(any()) } throws RuntimeException("409: DUPLICATE_INSPECTION")
+        coEvery { inspectionHistoryRepository.cacheDuplicateInspection(any(), any()) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
+
+        val result = syncManager.syncSingleDraft(1L)
+
+        assertTrue(result.success)
+        // Cache riwayat dipanggil dengan identitas draf (roomId, businessDate) —
+        // list endpoint tidak memuat local_timestamp (REVIEW-FIX 2026-08)
+        coVerify(exactly = 1) {
+            inspectionHistoryRepository.cacheDuplicateInspection(roomId = 10L, businessDate = "2026-01-01")
+        }
+    }
+
+    @Test
+    fun `syncSingleDraft duplicate still succeeds when caching fails`() = runTest {
+        coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
+        coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server.jpg")
+        coEvery { syncApi.submitInspection(any()) } throws RuntimeException("409: DUPLICATE_INSPECTION")
+        // Cache gagal (mis. list endpoint error) — tidak boleh menggagalkan penghapusan draf
+        coEvery { inspectionHistoryRepository.cacheDuplicateInspection(any(), any()) } throws RuntimeException("Network down")
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
+
+        val result = syncManager.syncSingleDraft(1L)
+
+        assertTrue(result.success)
+        assertEquals("Inspeksi sudah terkirim (duplicate)", result.message)
+        coVerify(exactly = 1) { inspectionRepository.deleteSyncedDraft(1L) }
+    }
+
+    // ── Q2 (grill-with-docs 2026-08): catatan ikut dikirim ──
+
+    @Test
+    fun `syncSingleDraft sends catatan in submit details`() = runTest {
+        coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
+        coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server_file.jpg")
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
+
+        syncManager.syncSingleDraft(1L)
+
+        coVerify {
+            syncApi.submitInspection(match { request ->
+                request.details[0].catatan == "OK" && // item 1: catatan "OK"
+                    request.details[1].catatan == null // item 2: tanpa catatan
+            })
+        }
+    }
+
     @Test
     fun `syncSingleDraft returns error when submit throws`() = runTest {
         coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload

@@ -8,6 +8,7 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionDetailEntit
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionPhotoEntity
 import my.id.kentoes.rsudajibarangapp.sync.SentPhotoStorage
+import my.id.kentoes.rsudajibarangapp.sync.api.InspectionListItemDto
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.PhotoOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
@@ -124,6 +125,42 @@ class InspectionHistoryRepository @Inject constructor(
         } catch (_: Exception) {
             null
         }
+    }
+
+    /**
+     * Q1 (grill-with-docs 2026-08): saat submit ditolak 409 DUPLICATE_INSPECTION, inspeksi
+     * sebenarnya SUDAH ada di server (percobaan sebelumnya sukses tapi response hilang).
+     * Cari id-nya via list endpoint, fetch detail, lalu cache ke riwayat lokal — supaya
+     * dashboard "Terkirim" & riwayat konsisten tanpa menunggu fetch ulang berikutnya.
+     *
+     * REVIEW-FIX (2026-08): kontrak BE `InspectionListItem` TIDAK memuat `local_timestamp`
+     * (hanya `room_id, business_date, created_at, ...`), jadi pencocokan memakai
+     * `roomId + businessDate` — dua field yang benar-benar ada di list DTO.
+     *
+     * Asumsi urutan: list BE terurut terbaru-dulu (created_at DESC), jadi inspeksi duplikat
+     * (baru dibuat) ada di halaman awal. Kandidat diakumulasi dari SEMUA halaman yang dicari
+     * sebelum memilih id terbesar — pemilihan tetap benar walau urutan berubah.
+     *
+     * Best-effort: pencarian terbatas pada halaman-halaman awal; kegagalan satu halaman
+     * dilewati (bukan menghentikan pencarian); kegagalan detail/404 diam saja —
+     * pemanggil (SyncManager) tidak boleh gagal karena ini.
+     */
+    suspend fun cacheDuplicateInspection(roomId: Long, businessDate: String) {
+        val candidates = mutableListOf<InspectionListItemDto>()
+        for (page in 1..DUPLICATE_SEARCH_MAX_PAGES) {
+            val response = runCatching { syncApi.getInspections(page = page, perPage = 20) }
+                .getOrNull() ?: continue // error satu halaman → coba halaman berikutnya
+            candidates += response.items.filter {
+                it.roomId == roomId && it.businessDate == businessDate
+            }
+        }
+        val match = candidates.maxByOrNull { it.id } ?: return
+        fetchDetail(match.id)?.let { cacheInspection(it) }
+    }
+
+    private companion object {
+        /** Batas pencarian duplikat — inspeksi duplikat selalu baru, cukup halaman awal. */
+        const val DUPLICATE_SEARCH_MAX_PAGES = 3
     }
 
     /**

@@ -347,11 +347,13 @@ Gunakan kombinasi: **Nginx** untuk first line defense + **Middleware** untuk apl
     {
       "item_id": 1,
       "score": 2,
+      "catatan": "Meja dapur kotor, bagian bawah wastafel",
       "photos": ["uuid-photo-1.jpg"]
     },
     {
       "item_id": 2,
       "score": 0,
+      "catatan": null,
       "photos": ["uuid-photo-2.jpg", "uuid-photo-3.jpg"]
     }
   ]
@@ -359,6 +361,8 @@ Gunakan kombinasi: **Nginx** untuk first line defense + **Middleware** untuk apl
 ```
 
 > **Catatan**: `business_date` bersifat opsional — jika tidak dikirim, BE akan mengisi dengan tanggal hari ini. Format: `YYYY-MM-DD`.
+
+> 📌 **Baru (Q2, grill-with-docs 2026-08)**: field `catatan` (string/null, opsional) ditambahkan di tiap `details` — catatan inspektur per item kini ikut dikirim. **BE perlu menambahkan kolom `catatan`** di tabel `inspection_details` + field di `DetailSubmit`/`DetailOut` (Pydantic default mengabaikan field tak dikenal, jadi Android sudah mengirimnya tanpa memblokir).
 
 Validasi sisi server:
 1. `room_id` harus di-assign ke user yang login (via `user_rooms`)

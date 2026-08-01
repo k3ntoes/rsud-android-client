@@ -365,6 +365,115 @@ class InspectionHistoryRepositoryTest {
         }
     }
 
+    // ── cacheDuplicateInspection (ADR-0018 Q1: 409 juga menulis cache riwayat) ──
+
+    @Test
+    fun `cacheDuplicateInspection finds by roomId and businessDate then caches detail`() = runTest {
+        // List endpoint TIDAK memuat local_timestamp — cocokkan roomId + businessDate
+        coEvery { syncApi.getInspections(any(), any(), any()) } returns PaginatedResponse(
+            items = listOf(
+                InspectionListItemDto(id = 7, roomId = 1, inspectorId = 5, status = "PENDING", businessDate = "2026-07-28", createdAt = "2026-07-28T10:00:00Z"),
+                InspectionListItemDto(id = 9, roomId = 1, inspectorId = 5, status = "PENDING", businessDate = "2026-07-28", createdAt = "2026-07-28T11:00:00Z"),
+                InspectionListItemDto(id = 8, roomId = 2, inspectorId = 5, status = "PENDING", businessDate = "2026-07-28", createdAt = "2026-07-28T10:30:00Z") // room beda — bukan kandidat
+            ),
+            total = 3, page = 1, perPage = 20, totalPages = 1
+        )
+        val detail = InspectionOutDto(
+            id = 9, roomId = 1, inspectorId = 5, status = "PENDING",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T11:00:00Z", createdAt = "2026-07-28T11:00:00Z",
+            details = emptyList()
+        )
+        coEvery { syncApi.getInspectionDetail(9L) } returns detail
+        coEvery { masterDataDao.insertInspection(any()) } returns Unit
+
+        repository.cacheDuplicateInspection(roomId = 1, businessDate = "2026-07-28")
+
+        // Kandidat TERBARU (id 9) dipilih, bukan id 7
+        coVerify(exactly = 1) { syncApi.getInspectionDetail(9L) }
+        coVerify(exactly = 1) { masterDataDao.insertInspection(match { it.id == 9L }) }
+    }
+
+    @Test
+    fun `cacheDuplicateInspection picks newest candidate when room inspected multiple times`() = runTest {
+        coEvery { syncApi.getInspections(any(), any(), any()) } returns PaginatedResponse(
+            items = listOf(
+                InspectionListItemDto(id = 3, roomId = 1, inspectorId = 5, status = "PENDING", businessDate = "2026-07-28", createdAt = null),
+                InspectionListItemDto(id = 5, roomId = 1, inspectorId = 5, status = "PENDING", businessDate = "2026-07-28", createdAt = null),
+                InspectionListItemDto(id = 4, roomId = 1, inspectorId = 5, status = "PENDING", businessDate = "2026-07-29", createdAt = null) // tanggal beda — bukan kandidat
+            ),
+            total = 3, page = 1, perPage = 20, totalPages = 1
+        )
+        val detail = InspectionOutDto(
+            id = 5, roomId = 1, inspectorId = 5, status = "PENDING",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T12:00:00Z", createdAt = null,
+            details = emptyList()
+        )
+        coEvery { syncApi.getInspectionDetail(5L) } returns detail
+        coEvery { masterDataDao.insertInspection(any()) } returns Unit
+
+        repository.cacheDuplicateInspection(roomId = 1, businessDate = "2026-07-28")
+
+        coVerify(exactly = 1) { syncApi.getInspectionDetail(5L) }
+        coVerify(exactly = 0) { syncApi.getInspectionDetail(3L) }
+    }
+
+    @Test
+    fun `cacheDuplicateInspection accumulates candidates across pages and picks newest`() = runTest {
+        // Page 1: kandidat lama (id 3) — Page 2: duplikat terbaru (id 9). Pemilihan
+        // id terbesar harus terjadi SETELAH semua halaman dicari (bukan per-halaman).
+        coEvery { syncApi.getInspections(1, 20, null) } returns PaginatedResponse(
+            items = listOf(
+                InspectionListItemDto(id = 3, roomId = 1, inspectorId = 5, status = "PENDING", businessDate = "2026-07-28", createdAt = null)
+            ),
+            total = 2, page = 1, perPage = 20, totalPages = 2
+        )
+        coEvery { syncApi.getInspections(2, 20, null) } returns PaginatedResponse(
+            items = listOf(
+                InspectionListItemDto(id = 9, roomId = 1, inspectorId = 5, status = "PENDING", businessDate = "2026-07-28", createdAt = null)
+            ),
+            total = 2, page = 2, perPage = 20, totalPages = 2
+        )
+        coEvery { syncApi.getInspections(3, 20, null) } returns PaginatedResponse(items = emptyList())
+        val detail = InspectionOutDto(
+            id = 9, roomId = 1, inspectorId = 5, status = "PENDING",
+            businessDate = "2026-07-28", localTimestamp = "2026-07-28T11:00:00Z", createdAt = null,
+            details = emptyList()
+        )
+        coEvery { syncApi.getInspectionDetail(9L) } returns detail
+        coEvery { masterDataDao.insertInspection(any()) } returns Unit
+
+        repository.cacheDuplicateInspection(roomId = 1, businessDate = "2026-07-28")
+
+        // Kandidat terbaru (id 9) dari halaman 2 yang terpilih, bukan id 3 dari halaman 1
+        coVerify(exactly = 1) { syncApi.getInspectionDetail(9L) }
+        coVerify(exactly = 0) { syncApi.getInspectionDetail(3L) }
+    }
+
+    @Test
+    fun `cacheDuplicateInspection does nothing when no match`() = runTest {
+        coEvery { syncApi.getInspections(any(), any(), any()) } returns PaginatedResponse(
+            items = listOf(
+                InspectionListItemDto(id = 1, roomId = 99, inspectorId = 5, status = "PENDING", businessDate = "2026-07-28", createdAt = null)
+            ),
+            total = 1, page = 1, perPage = 20, totalPages = 1
+        )
+
+        repository.cacheDuplicateInspection(roomId = 1, businessDate = "2026-07-28")
+
+        coVerify(exactly = 0) { syncApi.getInspectionDetail(any()) }
+        coVerify(exactly = 0) { masterDataDao.insertInspection(any()) }
+    }
+
+    @Test
+    fun `cacheDuplicateInspection returns silently when list endpoint fails`() = runTest {
+        coEvery { syncApi.getInspections(any(), any(), any()) } throws RuntimeException("Network down")
+
+        repository.cacheDuplicateInspection(roomId = 1, businessDate = "2026-07-28")
+
+        coVerify(exactly = 0) { syncApi.getInspectionDetail(any()) }
+        coVerify(exactly = 0) { masterDataDao.insertInspection(any()) }
+    }
+
     // ── replacePhoto (ADR-0016 re-upload) ──
 
     @Test

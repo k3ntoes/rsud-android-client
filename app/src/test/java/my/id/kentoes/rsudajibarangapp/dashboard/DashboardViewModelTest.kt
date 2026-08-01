@@ -391,6 +391,40 @@ class DashboardViewModelTest {
     // ── Phase 5 (2026-08): Sync UX ──
 
     @Test
+    fun `refresh recomputes inspection status after sync populates rooms`() = runTest {
+        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllInspections() } returns MutableStateFlow(emptyList())
+        coEvery { masterDataRepository.isCacheAvailable() } returns false
+        coEvery { syncManager.syncMasterData() } returns MasterDataSyncResult(
+            succeeded = listOf("Items"), failed = emptyList()
+        )
+        every { syncStateStore.load() } returns SyncState(itemsSyncedAt = "2026-07-29T08:30:00Z")
+        // init: cache kosong → rooms belum ada → kedua count 0
+        coEvery { masterDataDao.getAllRoomsOnce() } returns emptyList()
+        coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns emptySet()
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertEquals(0, viewModel.uiState.value.uninspectedRoomCount)
+        assertEquals(0, viewModel.uiState.value.inspectedRoomCount)
+
+        // Sync selesai → DB terisi rooms. refresh() berikutnya harus menghitung ulang
+        // (regresi: computeInspectionStatus hanya jalan sekali di init, count macet di 0).
+        coEvery { masterDataDao.getAllRoomsOnce() } returns listOf(
+            RuangEntity(id = 1, nama = "Ruang A", isMyRoom = true),
+            RuangEntity(id = 2, nama = "Ruang B", isMyRoom = true),
+            RuangEntity(id = 3, nama = "Ruang C", isMyRoom = false),
+        )
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.uninspectedRoomCount)
+        assertEquals(0, viewModel.uiState.value.inspectedRoomCount)
+    }
+
+    @Test
     fun `empty cache triggers auto sync and sets lastSyncAt`() = runTest {
         every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())

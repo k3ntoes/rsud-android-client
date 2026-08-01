@@ -52,9 +52,9 @@ class SyncWorker(
         createNotificationChannel()
 
         return try {
-            // Sync master data first (hasil parsial dilaporkan internal, tidak dilempar)
-            syncManager.syncMasterData()
-
+            // Q4 (grill-with-docs 2026-08): TIDAK memanggil syncMasterData() di sini —
+            // syncAllPending() sudah menjalankannya lebih dulu sebelum memproses draf.
+            // Panggilan dobel = boros jaringan & menunda drainase antrean draf.
             val results = syncManager.syncAllPending()
 
             val successCount = results.count { it.success }
