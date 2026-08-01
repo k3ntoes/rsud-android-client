@@ -43,12 +43,13 @@ Semua error response dari server menggunakan format `{ detail: String, code: Str
 _Avoid_: Error code, status code, error format
 
 **Entitas Database**: 
-Room database `rsud_ajibarang.db` (version 4) berisi 11 entity:
+Room database `rsud_ajibarang.db` (version 7) berisi 10 entity:
 - `MasterDataItem`, `RuangEntity` — master data. `RuangEntity.isMyRoom` menandai room yang di-assign ke user login (di-set oleh `syncMyRooms`, di-reset sebelum penandaan ulang — lihat Sync)
 - `DrafInspeksi`, `DrafItem`, `DrafFoto` — draft inspeksi. `DrafInspeksi.inspectorId` distempel dari user yang login saat disimpan untuk pemilahan per akun
 - `RoomItemEntity`, `UserRoomEntity` — pivot tables (replace-all full snapshot)
 - `InspectionEntity`, `InspectionDetailEntity`, `InspectionPhotoEntity` — hybrid history cache
-- `UserEntity` — cache user untuk lookup nama petugas
+
+> Update 2026-08-01 (E6): tabel `UserEntity` dihapus (versi 6→7) — `GET /api/auth/users` admin-only (ADR-0008), inspector selalu 403. Lookup nama petugas pakai user login (`auth/me`).
 
 **Keadaan Sinkronisasi**: 
 `SyncStateStore` — persistence SharedPreferences untuk `SyncState` (timestamp `synced_at` per endpoint master data: rooms, items, room-items, user-rooms, my-rooms). Dipakai sebagai parameter `?since=` di sync berikutnya (ADR-0012). `clear()` dipanggil saat logout agar akun berikutnya sync penuh dari epoch. Timestamp non-sensitif, cukup SharedPreferences (bukan token yang butuh Tink).

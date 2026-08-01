@@ -161,11 +161,10 @@ class SyncManagerTest {
         coEvery { masterDataRepository.syncRoomItems() } returns Unit
         coEvery { masterDataRepository.syncMyRooms() } throws RuntimeException("Network down")
         coEvery { masterDataRepository.syncUserRooms() } returns Unit
-        coEvery { masterDataRepository.syncUsers() } returns Unit
 
         val result = syncManager.syncMasterData()
 
-        assertEquals(5, result.succeeded.size)
+        assertEquals(4, result.succeeded.size)
         assertEquals(listOf("Ruangan Saya"), result.failed)
         assertTrue(result.isPartial)
         assertEquals("Network down", result.firstError)
@@ -178,11 +177,10 @@ class SyncManagerTest {
         coEvery { masterDataRepository.syncRoomItems() } throws RuntimeException("down")
         coEvery { masterDataRepository.syncMyRooms() } throws RuntimeException("down")
         coEvery { masterDataRepository.syncUserRooms() } throws RuntimeException("down")
-        coEvery { masterDataRepository.syncUsers() } throws RuntimeException("down")
 
         val result = syncManager.syncMasterData()
 
-        assertEquals(6, result.failed.size)
+        assertEquals(5, result.failed.size)
         assertTrue(result.isAllFailed)
         assertTrue(result.succeeded.isEmpty())
     }

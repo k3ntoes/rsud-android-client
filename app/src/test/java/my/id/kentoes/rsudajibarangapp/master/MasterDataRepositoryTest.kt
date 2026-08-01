@@ -8,13 +8,11 @@ import io.mockk.slot
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import my.id.kentoes.rsudajibarangapp.auth.api.AuthApi
-import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import my.id.kentoes.rsudajibarangapp.auth.api.UserRoomDto
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
-import my.id.kentoes.rsudajibarangapp.core.model.PaginatedResponse
 import my.id.kentoes.rsudajibarangapp.core.model.SyncResponse
 import my.id.kentoes.rsudajibarangapp.master.api.ItemOut
 import my.id.kentoes.rsudajibarangapp.master.api.MasterDataApi
@@ -299,83 +297,6 @@ class MasterDataRepositoryTest {
     fun `syncRoomItems throws when API fails`() = runTest {
         coEvery { api.getRoomItems(any()) } throws RuntimeException("Room items timeout")
         repository.syncRoomItems()
-    }
-
-    // ═══════════════════════════════════════════════
-    // syncUsers
-    // ═══════════════════════════════════════════════
-
-    @Test
-    fun `syncUsers clears then inserts mapped users`() = runTest {
-        val apiUsers = PaginatedResponse(
-            items = listOf(
-                UserOut(id = 1, username = "petugas01", role = "inspector", isActive = true),
-                UserOut(id = 2, username = "supervisor01", role = "supervisor", isActive = true),
-            )
-        )
-        coEvery { authApi.getUsers(any(), any()) } returns apiUsers
-        coEvery { dao.clearUsers() } returns Unit
-        coEvery { dao.insertUsers(any()) } returns Unit
-
-        repository.syncUsers()
-
-        coVerify(exactly = 1) { dao.clearUsers() }
-        coVerify {
-            dao.insertUsers(match { users ->
-                users.size == 2 &&
-                        users[0].id == 1 &&
-                        users[0].username == "petugas01" &&
-                        users[0].role == "inspector" &&
-                        users[0].isActive &&
-                        users[1].id == 2 &&
-                        users[1].username == "supervisor01" &&
-                        users[1].role == "supervisor"
-            })
-        }
-    }
-
-    @Test
-    fun `syncUsers clears but does not insert when API returns empty`() = runTest {
-        coEvery { authApi.getUsers(any(), any()) } returns PaginatedResponse(items = emptyList())
-        coEvery { dao.clearUsers() } returns Unit
-
-        repository.syncUsers()
-
-        coVerify(exactly = 1) { dao.clearUsers() }
-        coVerify(exactly = 0) { dao.insertUsers(any()) }
-    }
-
-    @Test(expected = RuntimeException::class)
-    fun `syncUsers throws when API fails`() = runTest {
-        coEvery { authApi.getUsers(any(), any()) } throws RuntimeException("Users timeout")
-        repository.syncUsers()
-    }
-
-    @Test
-    fun `syncUsers fetches all pages when paginated`() = runTest {
-        // Server returns 30 users split across 2 pages
-        val page1 = PaginatedResponse(
-            items = (1..20).map { UserOut(it, "user$it", "inspector", true) },
-            total = 30, page = 1, perPage = 100, totalPages = 2
-        )
-        val page2 = PaginatedResponse(
-            items = (21..30).map { UserOut(it, "user$it", "inspector", true) },
-            total = 30, page = 2, perPage = 100, totalPages = 2
-        )
-        coEvery { authApi.getUsers(page = 1, perPage = any()) } returns page1
-        coEvery { authApi.getUsers(page = 2, perPage = any()) } returns page2
-        coEvery { dao.clearUsers() } returns Unit
-        coEvery { dao.insertUsers(any()) } returns Unit
-
-        repository.syncUsers()
-
-        // Semua halaman harus di-fetch — bukan hanya page 1
-        coVerify(exactly = 1) { authApi.getUsers(page = 1, perPage = any()) }
-        coVerify(exactly = 1) { authApi.getUsers(page = 2, perPage = any()) }
-        // Semua 30 user masuk dalam SATU insert batch (clear+insert setelah semua halaman)
-        coVerify(exactly = 1) {
-            dao.insertUsers(match { it.size == 30 })
-        }
     }
 
     // ═══════════════════════════════════════════════

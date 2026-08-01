@@ -11,7 +11,6 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionPhotoEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
-import my.id.kentoes.rsudajibarangapp.core.database.entity.UserEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
 
 @Dao
@@ -135,18 +134,4 @@ interface MasterDataDao {
         WHERE d.inspectionId = :inspectionId
     """)
     suspend fun getPhotosForInspection(inspectionId: Long): List<InspectionPhotoEntity>
-
-    // ── User Cache ──
-
-    @Query("SELECT * FROM user")
-    suspend fun getAllUsers(): List<UserEntity>
-
-    @Query("SELECT * FROM user WHERE id = :id")
-    suspend fun getUserById(id: Int): UserEntity?
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertUsers(users: List<UserEntity>)
-
-    @Query("DELETE FROM user")
-    suspend fun clearUsers()
 }

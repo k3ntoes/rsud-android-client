@@ -257,7 +257,7 @@ flowchart LR
   - [x] Pagination tracking (current page, loading more, `hasMorePages` dari `totalPages` server — tanpa ceiling 10)
   - [x] Filter status
 - [x] Lookup `room_name` dari `RoomEntity` lokal
-- [x] Lookup `inspector_name` dari `UserEntity` lokal (via `GET /api/auth/users` sync + `getUserById()`)
+- [x] Lookup `inspector_name` dari `UserEntity` lokal (via `GET /api/auth/users` sync + `getUserById()`) — ⚠️ **diubah 2026-08-01 (E6)**: `GET /api/auth/users` admin-only (ADR-0008) → inspector 403; tabel `UserEntity` dihapus, lookup pakai user login (`auth/me`), fallback "Petugas #ID"
 - [x] Integrasi ke `NavGraph`: routes `INSPECTION_HISTORY` + `INSPECTION_DETAIL/{id}`
 - [x] **Verifikasi:** `./gradlew :app:assembleDebug`
 

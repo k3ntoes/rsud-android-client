@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import my.id.kentoes.rsudajibarangapp.auth.AuthRepository
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
@@ -37,7 +38,8 @@ data class InspectionHistoryUiState(
 @HiltViewModel
 class InspectionHistoryViewModel @Inject constructor(
     private val repository: InspectionHistoryRepository,
-    private val masterDataDao: MasterDataDao
+    private val masterDataDao: MasterDataDao,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(InspectionHistoryUiState())
@@ -148,11 +150,18 @@ class InspectionHistoryViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoadingDetail = true)
             try {
                 val detail = repository.fetchDetail(id)
-                // Lookup room name + inspector name dari cache lokal
+                // Lookup room name dari cache lokal; inspector name dari user LOGIN
+                // (ADR-0017: Android inspector-only — GET /api/auth/users admin-only → 403,
+                // jadi cache UserEntity dihapus; hanya nama user sendiri yang tersedia).
                 val roomName = detail?.roomId?.let { masterDataDao.getRoomById(it)?.nama } ?: ""
-                val inspectorText = detail?.inspectorId?.let {
-                    masterDataDao.getUserById(it)?.let { u -> "${u.username} (${u.role})" }
-                        ?: "Petugas #$it"
+                val currentUser = authRepository.currentUser.value
+                val inspectorText = detail?.inspectorId?.let { inspectorId ->
+                    if (currentUser != null && currentUser.id == inspectorId) {
+                        listOfNotNull(currentUser.name?.ifBlank { null }, currentUser.username)
+                            .joinToString(" · ")
+                    } else {
+                        "Petugas #$inspectorId"
+                    }
                 } ?: "Petugas"
                 // ADR-0016: lokal-first — hanya path backup yang file-nya masih ada di disk
                 val localPaths = detail?.let { dto ->

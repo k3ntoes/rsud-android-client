@@ -59,8 +59,7 @@ class SyncManager @Inject constructor(
             "Ruangan" to { masterDataRepository.syncRooms() },
             "Pivot Room-Item" to { masterDataRepository.syncRoomItems() },
             "Ruangan Saya" to { masterDataRepository.syncMyRooms() },
-            "User-Room" to { masterDataRepository.syncUserRooms() },
-            "Users" to { masterDataRepository.syncUsers() }
+            "User-Room" to { masterDataRepository.syncUserRooms() }
         )
         val succeeded = mutableListOf<String>()
         val failed = mutableListOf<String>()

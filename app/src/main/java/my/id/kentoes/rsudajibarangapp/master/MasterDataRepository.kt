@@ -7,7 +7,6 @@ import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
-import my.id.kentoes.rsudajibarangapp.core.database.entity.UserEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
 import my.id.kentoes.rsudajibarangapp.master.api.MasterDataApi
 import javax.inject.Inject
@@ -172,36 +171,6 @@ class MasterDataRepository @Inject constructor(
         // tapi tetap disimpan untuk forward-compat jika BE kelak menambah updated_at delta.
         response.syncedAt?.let { syncedAt ->
             syncStateStore.update { it.copy(myRoomsSyncedAt = syncedAt) }
-        }
-    }
-
-    /** Ukuran halaman saat sync users — batas atas per_page endpoint auth/users = 100. */
-    private val usersPerPage = 100
-
-    suspend fun syncUsers() {
-        // Loop semua halaman (server-driven totalPages) — jangan hanya page 1
-        val allUsers = mutableListOf<UserEntity>()
-        var page = 1
-        var totalPages = 1
-        do {
-            val response = authApi.getUsers(page = page, perPage = usersPerPage)
-            allUsers += response.items.map { user ->
-                UserEntity(
-                    id = user.id,
-                    username = user.username,
-                    role = user.role,
-                    isActive = user.isActive,
-                    name = user.name
-                )
-            }
-            totalPages = response.totalPages
-            page++
-        } while (page <= totalPages)
-
-        // Clear + insert sekali setelah semua halaman terkumpul (hindari partial wipe)
-        masterDataDao.clearUsers()
-        if (allUsers.isNotEmpty()) {
-            masterDataDao.insertUsers(allUsers)
         }
     }
 

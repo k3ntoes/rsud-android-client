@@ -82,7 +82,7 @@ fun getInspections(): Flow<List<InspectionListItem>> {
 ### Yang TIDAK Disimpan
 
 - `room_name` — lookup dari `RoomEntity` lokal (data master yang sudah di-sync)
-- `inspector_name` — lookup dari `UserEntity` lokal (sync via `GET /api/auth/users`)
+- `inspector_name` — dari **user login** (`auth/me`) — update 2026-08-01 (E6): `GET /api/auth/users` admin-only (ADR-0008) → inspector selalu 403, jadi tabel `UserEntity` dihapus. Jika `inspector_id` == id user login → tampil `name`/`username`; selain itu fallback `"Petugas #ID"`.
 
 ### Pagination (update 2026-07-31)
 
@@ -102,14 +102,15 @@ Race protection antara refresh dan load-more memakai `loadEpoch` counter: `loadN
 - Instant load dari cache (tanpa spinner menunggu API)
 - Data tetap akurat karena di-refresh dari server
 - Bekerja offline penuh (data yang pernah di-cache bisa dilihat tanpa koneksi)
-- `Inspector name` di-lookup dari `UserEntity` — data nama asli, bukan placeholder
+- `Inspector name` di-lookup dari user login (`auth/me`) — update 2026-08-01 (E6): inspeksi milik user login menampilkan `name`/`username` asli; inspeksi user lain fallback `"Petugas #ID"`
 
 ### Negatif
 
-- Kompleksitas: perlu 4 tabel Room tambahan (`InspectionEntity`, `InspectionDetailEntity`, `InspectionPhotoEntity`, `UserEntity`) + DAO methods
+- Kompleksitas: perlu 3 tabel Room tambahan (`InspectionEntity`, `InspectionDetailEntity`, `InspectionPhotoEntity`) + DAO methods
 - Race condition: cache bisa tampil dulu, lalu tiba-tiba berubah saat refresh selesai
-- `UserEntity` perlu sync dari `GET /api/auth/users` — 1 extra request setiap sinkronisasi
 - Pagination server-driven sudah berfungsi (BE return `PaginatedResponse`) — perlu menjaga konsistensi `totalPages` saat filter berubah
+
+> Update 2026-08-01 (E6): tabel `UserEntity` (sync via `GET /api/auth/users`) DIHAPUS — endpoint admin-only (ADR-0008), inspector selalu 403.
 
 ## Referensi
 

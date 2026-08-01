@@ -187,7 +187,6 @@ class AuthRepository @Inject constructor(
         masterDataDao.clearRooms()
         masterDataDao.clearRoomItems()
         masterDataDao.clearUserRooms()
-        masterDataDao.clearUsers()
         syncStateStore.clear()
     }
 

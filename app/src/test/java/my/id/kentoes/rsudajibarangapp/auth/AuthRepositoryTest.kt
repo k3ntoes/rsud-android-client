@@ -384,7 +384,6 @@ class AuthRepositoryTest {
         coEvery { masterDataDao.clearRooms() } just runs
         coEvery { masterDataDao.clearRoomItems() } just runs
         coEvery { masterDataDao.clearUserRooms() } just runs
-        coEvery { masterDataDao.clearUsers() } just runs
         coEvery { syncStateStore.clear() } just runs
 
         repository.forceLogout()
@@ -394,7 +393,6 @@ class AuthRepositoryTest {
         coVerify(exactly = 1) { masterDataDao.clearRooms() }
         coVerify(exactly = 1) { masterDataDao.clearRoomItems() }
         coVerify(exactly = 1) { masterDataDao.clearUserRooms() }
-        coVerify(exactly = 1) { masterDataDao.clearUsers() }
         // Draf TIDAK dihapus saat logout — hanya saat akun BERBEDA login
         coVerify(exactly = 0) { inspectionRepository.clearForeignDrafts(any()) }
         coVerify(exactly = 1) { syncStateStore.clear() }

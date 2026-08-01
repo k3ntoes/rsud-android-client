@@ -15,7 +15,6 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionPhotoEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
-import my.id.kentoes.rsudajibarangapp.core.database.entity.UserEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
 
 @Database(
@@ -27,14 +26,14 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
         DrafFoto::class,
         RoomItemEntity::class,
         UserRoomEntity::class,
-        UserEntity::class,
         InspectionEntity::class,
         InspectionDetailEntity::class,
         InspectionPhotoEntity::class
     ],
-    // v6: kolom `name` di UserEntity (ADR-0017 header dashboard). Migrasi destruktif
-    // sesuai pola project (fallbackToDestructiveMigration) — cache master data di-sync ulang.
-    version = 6,
+    // v7: tabel `user` (UserEntity) dihapus — GET /api/auth/users admin-only (ADR-0008),
+    // inspector selalu 403; lookup nama petugas pakai auth/me (ADR-0017). Migrasi destruktif
+    // sesuai pola project (fallbackToDestructiveMigration) — cache di-sync ulang.
+    version = 7,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

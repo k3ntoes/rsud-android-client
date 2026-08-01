@@ -56,10 +56,11 @@
 
 | No | Endpoint | Sebelum | Sesudah |
 |----|----------|---------|---------|
-| 1 | `GET /api/auth/users` | `list[User]` | `PaginatedResponse<User>` |
-| 2 | `GET /api/rooms` | `list[Room]` | `PaginatedResponse<Room>` (kecuali `?since=`) |
-| 3 | `GET /api/inspection-items` | `list[Item]` | `PaginatedResponse<Item>` (kecuali `?since=`) |
-| 4 | `GET /api/inspections` | `list[Inspection]` | `PaginatedResponse<Inspection>` |
+| 1 | `GET /api/rooms` | `list[Room]` | `PaginatedResponse<Room>` (kecuali `?since=`) |
+| 2 | `GET /api/inspection-items` | `list[Item]` | `PaginatedResponse<Item>` (kecuali `?since=`) |
+| 3 | `GET /api/inspections` | `list[Inspection]` | `PaginatedResponse<Inspection>` |
+
+> `GET /api/auth/users` **admin-only** (ADR-0008) — klien Android inspector (ADR-0017) selalu dapat 403, jadi tidak dipakai di Android. Nama petugas di lookup dari `auth/me` (lihat [Catatan Detail Inspeksi](#catatan-detail-inspeksi)).
 
 ### 2.2. Format Response Paginated
 
@@ -165,20 +166,7 @@ hasMorePages = result.currentPage < result.totalPages
 - **Race protection `loadEpoch`**: setiap refresh / ganti filter menaikkan counter `loadEpoch`; hasil fetch dari epoch lama dibuang agar tidak menimpa state baru (mis. refresh yang tiba saat `loadNextPage` berjalan).
 - **Scope room**: klien Android selalu menampilkan room yang di-assign (inspector-only, ADR-0017).
 
-**Pagination juga dipakai untuk `GET /api/auth/users`** (`per_page` max 100): loop semua halaman, lalu clear+insert **sekali** setelah semua halaman terkumpul (hindari partial wipe).
-
-```kotlin
-var page = 1
-var totalPages = 1
-do {
-    val response = authApi.getUsers(page = page, perPage = 100)
-    allUsers += response.items
-    totalPages = response.totalPages
-    page++
-} while (page <= totalPages)
-masterDataDao.clearUsers()
-masterDataDao.insertUsers(allUsers)
-```
+> ⚠️ `GET /api/auth/users` **admin-only** (ADR-0008) — inspector selalu 403. Android TIDAK sync daftar user; nama petugas detail riwayat diambil dari user login (`auth/me`), fallback `"Petugas #ID"` (E6, 2026-08-01).
 
 ---
 
@@ -531,15 +519,10 @@ Karena semua data master sudah di-sync secara lokal, Android bisa melakukan join
 ```kotlin
 // Data sudah ada di lokal setelah sync:
 val rooms: Map<Int, RoomDto> = ...
-val users: Map<Int, UserDto> = ...  // sync via GET /api/auth/users
 
 // Saat render detail inspeksi:
 fun getRoomName(inspection: InspectionOutDto): String {
     return rooms[inspection.roomId]?.name ?: "Room #${inspection.roomId}"
-}
-
-fun getInspectorName(inspection: InspectionOutDto): String {
-    return users[inspection.inspectorId]?.username ?: "User #${inspection.inspectorId}"
 }
 
 fun getDetailCount(inspection: InspectionOutDto): Int {
@@ -547,7 +530,7 @@ fun getDetailCount(inspection: InspectionOutDto): Int {
 }
 ```
 
-**⚠️ Sync users:** Untuk mendapatkan nama inspector, Android sync daftar user via `GET /api/auth/users?per_page=100` (paginated, loop semua halaman). Di klien Android inspector-only (ADR-0017), nama user dipakai untuk lookup lokal; jika tidak tersedia, fallback `"Petugas #${inspectorId}"`.
+**⚠️ Inspector name:** `GET /api/auth/users` **admin-only** (ADR-0008) → inspector selalu 403, jadi Android TIDAK sync daftar user. Karena Android inspector-only (ADR-0017), detail riwayat menampilkan nama user LOGIN (`auth/me`): jika `inspector_id` == id user login → `name`/`username`; selain itu fallback `"Petugas #${inspectorId}"`.
 
 ---
 
@@ -653,13 +636,6 @@ interface ApiService {
     @POST("api/auth/refresh")
     suspend fun refreshToken(@Body request: RefreshRequest): TokenResponse
 
-    // Users (pagination — per_page max 100, loop semua halaman)
-    @GET("api/auth/users")
-    suspend fun getUsers(
-        @Query("page") page: Int = 1,
-        @Query("per_page") perPage: Int = 100
-    ): PaginatedResponse<UserDto>
-
     // ── Master Data (Sync) ──
     @GET("api/rooms")
     suspend fun getRooms(
@@ -685,6 +661,9 @@ interface ApiService {
     suspend fun getMyRooms(
         @Query("since") since: String? = null
     ): SyncResponse<RoomDto>
+
+    // Catatan: getUsers (GET api/auth/users) TIDAK dipakai Android — admin-only (ADR-0008),
+    // inspector selalu 403. Nama petugas dari auth/me (E6, 2026-08-01).
 
     // ── Inspections ──
     @GET("api/inspections")

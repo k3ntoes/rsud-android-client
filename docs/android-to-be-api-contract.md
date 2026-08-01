@@ -493,7 +493,7 @@ GET /api/inspections?status=PENDING&show_all=true
 > ⚠️ **Tidak ada field `room_name`, `inspector_name`, atau `detail_count` di response ini.**  
 > Android harus melakukan lookup dari data yang sudah di-sync secara lokal:
 > - `room_name` → lookup dari `rooms` (key: `room_id`)  
-> - `inspector_name` → lookup dari `users` (key: `inspector_id`, sync via `GET /api/auth/users`)  
+> - `inspector_name` → dari **user login** (`auth/me`) — `GET /api/auth/users` admin-only (ADR-0008) → inspector selalu 403, jadi Android tidak sync daftar user (E6, 2026-08-01). Jika `inspector_id` == id user login → tampil `name`/`username`; selain itu fallback `"Petugas #ID"`.  
 > - `detail_count` → `details.length`
 
 ---

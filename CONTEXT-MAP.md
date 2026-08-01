@@ -9,7 +9,7 @@ Aplikasi Android *offline-first* untuk inspeksi kebersihan rumah sakit oleh Petu
 | [Auth](./app/src/main/java/my/id/kentoes/rsudajibarangapp/auth/CONTEXT.md) | `auth/` | Token management, login/logout, session handling, pemilahan draf per akun |
 | [Inspections](./app/src/main/java/my/id/kentoes/rsudajibarangapp/inspections/CONTEXT.md) | `inspections/` | Form inspeksi dinamis, skoring, validasi bukti foto, siklus hidup draf & file foto |
 | [Master](./app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/CONTEXT.md) | `master/` | Master data download & incremental sync (`?since=`), `SyncStateStore` (synced_at per endpoint), penanda `isMyRoom` per user |
-| [Sync](./app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/CONTEXT.md) | `sync/` | WorkManager, offline-first sync, upload dua langkah, hybrid inspection history, UserEntity sync, cleanup foto draf yatim |
+| [Sync](./app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/CONTEXT.md) | `sync/` | WorkManager, offline-first sync, upload dua langkah, hybrid inspection history, cleanup foto draf yatim |
 | [Core](./app/src/main/java/my/id/kentoes/rsudajibarangapp/core/CONTEXT.md) | `core/` | App foundation, DI, shared models, base types, database & SharedPreferences |
 
 > Master tidak memiliki `CONTEXT.md` sendiri — semantiknya didokumentasikan di `sync/CONTEXT.md` (Sinkronisasi Master Data, Sinkronisasi Inkremental, Keadaan Sinkronisasi) dan `core/CONTEXT.md` (Entitas Database).
@@ -24,7 +24,7 @@ Aplikasi Android *offline-first* untuk inspeksi kebersihan rumah sakit oleh Petu
 - **Inspections → Master**: Form inspeksi & dropdown pemilihan room memakai master data lokal; hanya room bertanda `isMyRoom` yang tampil (kecuali `admin_ppi`)
 - **Inspections → Sync**: Data inspeksi yang disimpan lokal akan diproses oleh Sync untuk dikirim ke server; `syncSingleDraft` memanggil `InspectionRepository.deleteSyncedDraft` (hapus baris + pindahkan file foto terkompresi ke `photos_sent` — lihat ADR-0016)
 - **Master → Core**: `SyncStateStore` (SharedPreferences) menyimpan `synced_at` per endpoint; `RuangEntity.isMyRoom` dan `MasterDataDao` tinggal di database Core
-- **Sync → Auth**: WorkManager menggunakan Access Token milik sesi terakhir yang tersimpan; `syncUsers()` sync data user dari `GET /api/auth/users` ke `UserEntity`
-- **Sync → Master**: `syncMasterData()` memanggil `MasterDataRepository` (items, rooms, pivots, my-rooms, users); urutan `syncRooms` → `syncMyRooms` load-bearing agar penanda `isMyRoom` benar (REPLACE syncRooms me-reset flag)
+- **Sync → Auth**: WorkManager menggunakan Access Token milik sesi terakhir yang tersimpan. `GET /api/auth/users` admin-only (ADR-0008) → tidak di-sync Android (E6, 2026-08-01); nama petugas riwayat diambil dari user login (`auth/me`)
+- **Sync → Master**: `syncMasterData()` memanggil `MasterDataRepository` (items, rooms, pivots, my-rooms); urutan `syncRooms` → `syncMyRooms` load-bearing agar penanda `isMyRoom` benar (REPLACE syncRooms me-reset flag)
 - **Sync → Inspections**: `DraftPhotoCleanupWorker` memanggil `DraftPhotoCleaner` (package `inspection/`) untuk cleanup foto draf yatim periodik
 - **Sync → Core**: Menggunakan base networking dan dependency injection dari Core

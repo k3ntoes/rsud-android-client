@@ -12,10 +12,11 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import my.id.kentoes.rsudajibarangapp.auth.AuthRepository
+import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionPhotoEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
-import my.id.kentoes.rsudajibarangapp.core.database.entity.UserEntity
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionDetailOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.PhotoOutDto
@@ -37,6 +38,7 @@ class InspectionHistoryViewModelTest {
 
     private lateinit var repository: InspectionHistoryRepository
     private lateinit var masterDataDao: MasterDataDao
+    private lateinit var authRepository: AuthRepository
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -45,10 +47,11 @@ class InspectionHistoryViewModelTest {
         Dispatchers.setMain(testDispatcher)
         repository = mockk()
         masterDataDao = mockk()
+        authRepository = mockk()
+        every { authRepository.currentUser } returns MutableStateFlow(null)
         every { masterDataDao.getAllInspections() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getInspectionsByStatus(any()) } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
-        coEvery { masterDataDao.getUserById(any()) } returns null
         coEvery { masterDataDao.getPhotosForInspection(any()) } returns emptyList()
         coEvery { repository.observeLocalInspections(any(), any()) } returns MutableStateFlow(emptyList())
     }
@@ -58,7 +61,7 @@ class InspectionHistoryViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel() = InspectionHistoryViewModel(repository, masterDataDao)
+    private fun createViewModel() = InspectionHistoryViewModel(repository, masterDataDao, authRepository)
 
     // ── init ──
 
@@ -318,12 +321,14 @@ class InspectionHistoryViewModelTest {
         )
         coEvery { repository.fetchDetail(1L) } returns detail
         coEvery { masterDataDao.getRoomById(1L) } returns RuangEntity(id = 1, nama = "Ruang IGD")
-        coEvery { masterDataDao.getUserById(5) } returns UserEntity(id = 5, username = "petugas01", role = "inspector", isActive = true)
+        every { authRepository.currentUser } returns MutableStateFlow(
+            UserOut(id = 5, username = "petugas01", role = "inspector", isActive = true, name = "Petugas Satu")
+        )
         val viewModel = createViewModel()
         viewModel.loadDetail(1L)
         advanceUntilIdle()
         assertEquals("Ruang IGD", viewModel.uiState.value.detailRoomName)
-        assertEquals("petugas01 (inspector)", viewModel.uiState.value.inspectorName)
+        assertEquals("Petugas Satu · petugas01", viewModel.uiState.value.inspectorName)
     }
 
     @Test
@@ -335,7 +340,9 @@ class InspectionHistoryViewModelTest {
         )
         coEvery { repository.fetchDetail(1L) } returns detail
         coEvery { masterDataDao.getRoomById(1L) } returns null
-        coEvery { masterDataDao.getUserById(99) } returns null
+        every { authRepository.currentUser } returns MutableStateFlow(
+            UserOut(id = 5, username = "petugas01", role = "inspector", isActive = true)
+        )
         val viewModel = createViewModel()
         viewModel.loadDetail(1L)
         advanceUntilIdle()
