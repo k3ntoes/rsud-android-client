@@ -7,9 +7,6 @@ import my.id.kentoes.rsudajibarangapp.auth.api.ChangePasswordRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.LoginRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.LogoutRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.RefreshRequest
-import my.id.kentoes.rsudajibarangapp.dashboard.api.AnalyticsApi
-import my.id.kentoes.rsudajibarangapp.dashboard.api.IssueFrequencyOut
-import my.id.kentoes.rsudajibarangapp.dashboard.api.RoomScoreOut
 import my.id.kentoes.rsudajibarangapp.master.api.ItemOut
 import my.id.kentoes.rsudajibarangapp.master.api.MasterDataApi
 import my.id.kentoes.rsudajibarangapp.master.api.RoomOut
@@ -49,7 +46,6 @@ class ApiEndpointIntegrationTest {
     private lateinit var authApi: AuthApi
     private lateinit var masterDataApi: MasterDataApi
     private lateinit var syncApi: SyncApi
-    private lateinit var analyticsApi: AnalyticsApi
 
     @Before
     fun setup() {
@@ -78,7 +74,6 @@ class ApiEndpointIntegrationTest {
         authApi = retrofit.create(AuthApi::class.java)
         masterDataApi = retrofit.create(MasterDataApi::class.java)
         syncApi = retrofit.create(SyncApi::class.java)
-        analyticsApi = retrofit.create(AnalyticsApi::class.java)
     }
 
     @After
@@ -109,11 +104,6 @@ class ApiEndpointIntegrationTest {
         for (field in expectedFields) {
             assertTrue("Request body should contain '$field' but was: $body", body.contains(field))
         }
-    }
-
-    private fun assertQueryParam(req: RecordedRequest, name: String, expectedValue: String?) {
-        val query = req.requestUrl?.queryParameter(name)
-        assertEquals("Query param '$name' mismatch", expectedValue, query)
     }
 
     // ═══════════════════════════════════════════════
@@ -262,57 +252,6 @@ class ApiEndpointIntegrationTest {
     }
 
     // ═══════════════════════════════════════════════
-    // 📊 ANALYTICS ENDPOINTS
-    // ═══════════════════════════════════════════════
-
-    @Test
-    fun `GET analytics lowest-rooms - correct path and query params`() = runTest {
-        enqueueJson("""[{"room_id":1,"score_pct":45.0,"inspection_count":5}]""")
-
-        analyticsApi.getLowestRooms(yearMonth = "2026-07", limit = 5)
-
-        val req = mockServer.takeRequest()
-        assertRequest(req, "GET", "/analytics/lowest-rooms")
-        assertQueryParam(req, "year_month", "2026-07")
-        assertQueryParam(req, "limit", "5")
-    }
-
-    @Test
-    fun `GET analytics lowest-rooms uses default params when not specified`() = runTest {
-        enqueueJson("[]")
-
-        analyticsApi.getLowestRooms()
-
-        val req = mockServer.takeRequest()
-        assertRequest(req, "GET", "/analytics/lowest-rooms")
-        assertQueryParam(req, "limit", "3")
-        // year_month is null by default — may not be sent
-    }
-
-    @Test
-    fun `GET analytics top-issues - correct path and query params`() = runTest {
-        enqueueJson("""[{"item_id":1,"item_name_snapshot":"Meja","score_zero_count":12}]""")
-
-        analyticsApi.getTopIssues(yearMonth = "2026-07", limit = 10)
-
-        val req = mockServer.takeRequest()
-        assertRequest(req, "GET", "/analytics/top-issues")
-        assertQueryParam(req, "year_month", "2026-07")
-        assertQueryParam(req, "limit", "10")
-    }
-
-    @Test
-    fun `GET analytics top-issues uses default params when not specified`() = runTest {
-        enqueueJson("[]")
-
-        analyticsApi.getTopIssues()
-
-        val req = mockServer.takeRequest()
-        assertRequest(req, "GET", "/analytics/top-issues")
-        assertQueryParam(req, "limit", "10")
-    }
-
-    // ═══════════════════════════════════════════════
     // 🧪 RESPONSE DESERIALIZATION TESTS
     // ═══════════════════════════════════════════════
 
@@ -339,18 +278,6 @@ class ApiEndpointIntegrationTest {
         assertEquals("Meja", response.data[0].name)
         assertEquals(true, response.data[0].isActive)
         assertNotNull(response.data[0].updatedAt)
-    }
-
-    @Test
-    fun `analytics response deserializes snake_case correctly`() = runTest {
-        enqueueJson("""[{"room_id":1,"score_pct":45.0,"inspection_count":5}]""")
-
-        val data: List<RoomScoreOut> = analyticsApi.getLowestRooms()
-
-        assertEquals(1, data.size)
-        assertEquals(1, data[0].roomId)
-        assertEquals(45.0, data[0].scorePct, 0.01)
-        assertEquals(5, data[0].inspectionCount)
     }
 
     @Test

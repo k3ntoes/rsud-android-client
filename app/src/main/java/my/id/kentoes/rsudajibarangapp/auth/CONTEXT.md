@@ -1,19 +1,19 @@
 # Auth
 
-Mengelola autentikasi Petugas: login, penyimpanan token, refresh token otomatis, force logout, dan assignment ruangan. Auth adalah gerbang masuk ke seluruh aplikasi dan menentukan akses pengguna.
+Mengelola autentikasi Petugas: login, penyimpanan token, refresh token otomatis, force logout, dan assignment ruangan. Auth adalah gerbang masuk ke seluruh aplikasi dan menentukan akses pengguna. Android hanya melayani role `inspector`; `supervisor` dan `admin_ppi` melayani via web dashboard (ADR-0017).
 
 ## Language
 
 **Petugas**: 
-Pengguna aplikasi yang melakukan inspeksi kebersihan di lapangan. Memiliki role `inspector` — hanya bisa melihat dan menginspeksi room yang di-assign.
+Pengguna aplikasi Android yang melakukan inspeksi kebersihan di lapangan. Memiliki role `inspector` — hanya bisa melihat dan menginspeksi room yang di-assign. **Satu-satunya role yang login ke aplikasi Android** (keputusan ADR-0017): supervisor dan admin_ppi ditolak saat login dengan pesan "gunakan web", dan sesi non-inspector yang sudah ada di-force-logout saat `init()`.
 _Avoid_: User, pengguna, akun
 
 **Supervisor**: 
-Pengguna dengan role `supervisor` yang memantau hasil inspeksi dan memberikan persetujuan (APPROVED/REJECTED). Dapat melihat dashboard analitik dan semua room (dengan parameter `?show_all=true`).
+Pengguna dengan role `supervisor` yang memantau hasil inspeksi dan memberikan persetujuan (APPROVED/REJECTED). Dapat melihat dashboard analitik dan semua room (dengan parameter `?show_all=true`). Melayani via **web dashboard** — tidak login ke aplikasi Android (ADR-0017).
 _Avoid_: Atasan, manager, penyelia
 
 **Admin PPI**: 
-Pengguna dengan role `admin_ppi` yang mengelola master data (rooms, items, user assignments) melalui web dashboard. Di aplikasi Android, memiliki akses yang sama dengan Supervisor.
+Pengguna dengan role `admin_ppi` yang mengelola master data (rooms, items, user assignments) melalui web dashboard. Melayani via **web dashboard** — tidak login ke aplikasi Android (ADR-0017).
 _Avoid_: Admin, superadmin
 
 **Dual Delivery Refresh Token**: 

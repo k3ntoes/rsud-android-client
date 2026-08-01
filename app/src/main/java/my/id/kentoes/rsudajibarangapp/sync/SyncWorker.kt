@@ -52,8 +52,8 @@ class SyncWorker(
         createNotificationChannel()
 
         return try {
-            // Sync master data first
-            runCatching { syncManager.syncMasterData() }
+            // Sync master data first (hasil parsial dilaporkan internal, tidak dilempar)
+            syncManager.syncMasterData()
 
             val results = syncManager.syncAllPending()
 

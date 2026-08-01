@@ -1,6 +1,5 @@
 package my.id.kentoes.rsudajibarangapp.dashboard
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -10,13 +9,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import my.id.kentoes.rsudajibarangapp.auth.AuthRepository
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
-import my.id.kentoes.rsudajibarangapp.dashboard.api.AnalyticsApi
-import my.id.kentoes.rsudajibarangapp.dashboard.api.IssueFrequencyOut
-import my.id.kentoes.rsudajibarangapp.dashboard.api.RoomScoreOut
 import my.id.kentoes.rsudajibarangapp.master.MasterDataRepository
 import my.id.kentoes.rsudajibarangapp.master.SyncStateStore
 import my.id.kentoes.rsudajibarangapp.master.latestSyncTime
@@ -28,15 +23,10 @@ import javax.inject.Inject
 
 data class DashboardUiState(
     val isLoading: Boolean = true,
-    val totalDrafts: Int = 0,
     val draftCount: Int = 0,
     val pendingSyncCount: Int = 0,
     val syncedCount: Int = 0,
-    val totalRooms: Int = 0,
-    val totalItems: Int = 0,
     val recentDrafts: List<DrafInspeksi> = emptyList(),
-    val lowestRooms: List<RoomScoreOut> = emptyList(),
-    val topIssues: List<IssueFrequencyOut> = emptyList(),
     val inspectedRoomCount: Int = 0,
     val uninspectedRoomCount: Int = 0,
     val isSyncing: Boolean = false,
@@ -48,11 +38,9 @@ data class DashboardUiState(
 class DashboardViewModel @Inject constructor(
     private val drafDao: DrafDao,
     private val masterDataDao: MasterDataDao,
-    private val analyticsApi: AnalyticsApi,
     private val masterDataRepository: MasterDataRepository,
     private val syncManager: SyncManager,
-    private val syncStateStore: SyncStateStore,
-    private val authRepository: AuthRepository
+    private val syncStateStore: SyncStateStore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DashboardUiState())
@@ -62,27 +50,20 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 drafDao.getAllDrafts(),
-                masterDataDao.getAllRooms().map { it.size },
-                masterDataDao.getAllItems().map { it.size },
                 masterDataDao.getAllInspections().map { it.size }
-            ) { drafts, roomCount, itemCount, inspectionCount ->
+            ) { drafts, inspectionCount ->
                 DashboardUiState(
                     isLoading = false,
-                    totalDrafts = inspectionCount,
                     draftCount = drafts.count { it.status == "DRAFT" },
                     pendingSyncCount = drafts.count { it.status == "PENDING_SYNC" },
-                    // Terkirim & Total dari InspectionEntity (cache riwayat server) — BUKAN
-                    // draf SYNCED (draf dihapus dari DB setelah sync sukses, jadi count-nya
-                    // selalu 0). Inspeksi terkirim = baris InspectionEntity di cache lokal.
+                    // Terkirim dari InspectionEntity (cache riwayat server) — BUKAN draf
+                    // SYNCED (draf dihapus dari DB setelah sync sukses, jadi count-nya selalu
+                    // 0). Inspeksi terkirim = baris InspectionEntity di cache lokal.
                     syncedCount = inspectionCount,
-                    totalRooms = roomCount,
-                    totalItems = itemCount,
                     recentDrafts = drafts.take(5)
                 )
             }.collect { state ->
                 _uiState.value = state.copy(
-                    lowestRooms = _uiState.value.lowestRooms,
-                    topIssues = _uiState.value.topIssues,
                     inspectedRoomCount = _uiState.value.inspectedRoomCount,
                     uninspectedRoomCount = _uiState.value.uninspectedRoomCount,
                     isSyncing = _uiState.value.isSyncing,
@@ -93,7 +74,6 @@ class DashboardViewModel @Inject constructor(
         }
 
         computeInspectionStatus()
-        fetchAnalytics()
         autoSyncIfCacheEmpty()
     }
 
@@ -120,18 +100,23 @@ class DashboardViewModel @Inject constructor(
         if (_uiState.value.isSyncing) return
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isSyncing = true, syncError = null)
-            try {
-                syncManager.syncMasterData()
-                _uiState.value = _uiState.value.copy(
-                    isSyncing = false,
-                    lastSyncAt = syncStateStore.load().latestSyncTime()
-                )
-            } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    isSyncing = false,
-                    syncError = e.message ?: "Sync gagal"
-                )
-            }
+            // Sync per-langkah: sebagian berhasil ≠ "gagal total" — pesan mencerminkan realita
+            // (H1, partial-sync). Angka dashboard berubah dari DB yang ter-update sebagian,
+            // jadi pesan "Sebagian data diperbarui" benar; "Sync gagal" hanya saat nihil.
+            val result = syncManager.syncMasterData()
+            _uiState.value = _uiState.value.copy(
+                isSyncing = false,
+                lastSyncAt = if (result.failed.isEmpty()) {
+                    syncStateStore.load().latestSyncTime()
+                } else {
+                    _uiState.value.lastSyncAt
+                },
+                syncError = when {
+                    result.failed.isEmpty() -> null
+                    result.succeeded.isEmpty() -> "Sync gagal"
+                    else -> "Sebagian data diperbarui (${result.succeeded.size}/${result.total} berhasil) — ketuk retry"
+                }
+            )
         }
     }
 
@@ -139,10 +124,8 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
             val allRooms = masterDataDao.getAllRoomsOnce()
-            val role = authRepository.currentUser.value?.role
-            // Inspector/supervisor: hanya room yang di-assign (isMyRoom). Admin_ppi: semua room.
-            // Konsisten dengan filter daftar ruangan di MasterDataViewModel.
-            val scopeRooms = if (role == ROLE_ADMIN) allRooms else allRooms.filter { it.isMyRoom }
+            // Android = klien inspector-only (ADR-0017): scope SELALU room yang di-assign.
+            val scopeRooms = allRooms.filter { it.isMyRoom }
             val inspectedIds = masterDataRepository.getInspectedRoomIdsForDate(date)
             val inspectedInScope = scopeRooms.count { it.id in inspectedIds }
             _uiState.value = _uiState.value.copy(
@@ -150,35 +133,5 @@ class DashboardViewModel @Inject constructor(
                 uninspectedRoomCount = (scopeRooms.size - inspectedInScope).coerceAtLeast(0)
             )
         }
-    }
-
-    private fun fetchAnalytics() {
-        // Analytics HANYA untuk supervisor/admin_ppi (keputusan review 2026-08) —
-        // inspector tidak fetch dan tidak render (list tetap kosong di UI).
-        // CATATAN: gate ini baca role SEKALI saat init — aman karena AuthRepository.init()
-        // menyetel currentUser SEBELUM emit Authenticated. Jika urutan itu berubah,
-        // analytics supervisor/admin tidak akan pernah termuat (perlu re-collect role).
-        val role = authRepository.currentUser.value?.role
-        if (role != ROLE_SUPERVISOR && role != ROLE_ADMIN) return
-        viewModelScope.launch {
-            val yearMonth = SimpleDateFormat("yyyy-MM", Locale.US).format(Date())
-            try {
-                val lowestRooms = analyticsApi.getLowestRooms(yearMonth = yearMonth, limit = 3)
-                val topIssues = analyticsApi.getTopIssues(yearMonth = yearMonth, limit = 10)
-                _uiState.value = _uiState.value.copy(
-                    lowestRooms = lowestRooms,
-                    topIssues = topIssues
-                )
-            } catch (e: Exception) {
-                Log.w("DashboardVM", "Gagal fetch analytics: ${e.message}")
-            }
-        }
-    }
-
-    companion object {
-        /** Role admin melihat SEMUA room; role lain hanya room yang di-assign. */
-        private const val ROLE_ADMIN = "admin_ppi"
-        /** Role supervisor — bersama admin, satu-satunya yang berhak melihat analytics. */
-        private const val ROLE_SUPERVISOR = "supervisor"
     }
 }

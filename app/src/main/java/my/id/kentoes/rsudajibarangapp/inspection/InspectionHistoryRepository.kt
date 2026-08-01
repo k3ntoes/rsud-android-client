@@ -86,10 +86,9 @@ class InspectionHistoryRepository @Inject constructor(
     suspend fun fetchInspections(
         page: Int = 1,
         perPage: Int = 20,
-        status: String? = null,
-        showAll: Boolean? = null
+        status: String? = null
     ): PaginatedResult {
-        val response = syncApi.getInspections(page, perPage, status, showAll)
+        val response = syncApi.getInspections(page, perPage, status)
         val roomMap = masterDataDao.getAllRoomsOnce().associateBy { it.id }
         val items = response.items.map { item ->
             InspectionHistoryItem(

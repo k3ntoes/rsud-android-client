@@ -1,7 +1,7 @@
 # Panduan Implementasi Android — RSUD Ajibarang Server Stack
 
-> **Versi:** 1.1  
-> **Tanggal:** 31 Juli 2026  
+> **Versi:** 1.1
+> **Tanggal:** 31 Juli 2026
 > **Tujuan:** Panduan untuk tim Android dalam mengimplementasikan API terbaru — Pagination (server-driven), Relasi Room↔Item, Dashboard Endpoint, dan Sync Inkremental (`since`/`SyncStateStore`)
 
 ---
@@ -19,7 +19,7 @@
 | Sync master data (`?since=`) | ✅ `GET /api/rooms`, `GET /api/inspection-items`, `GET /api/room-items` |
 | Assigned rooms (`/me/rooms`) | ✅ `GET /api/auth/me/rooms?since=...` — siap |
 | User-Rooms bulk sync | ✅ `GET /api/auth/user-rooms?since=...` — endpoint baru ditambahkan |
-| Dashboard | ✅ `GET /api/analytics/dashboard?year_month=...` — siap |
+| Dashboard | ⚠️ Analytics dashboard (`/api/analytics/*`) dipakai **web dashboard** saja — tidak diimplementasikan di Android (ADR-0017) |
 
 > ⚠️ **Catatan penting:** Response `GET /api/inspections/{id}` (detail inspeksi) hanya mengembalikan `room_id` dan `inspector_id`, **bukan** `room_name` atau `inspector_name`. Android perlu melakukan lookup dari data yang sudah di-sync secara lokal. Lihat [Catatan Detail Inspeksi](#catatan-detail-inspeksi) untuk detailnya.
 
@@ -85,7 +85,7 @@
 
 ### 2.4. Catatan Khusus
 
-**⚠️ Dual mode untuk master data:**  
+**⚠️ Dual mode untuk master data:**
 Endpoint `/api/rooms` dan `/api/inspection-items` punya 2 mode:
 
 1. **Web mode (tanpa `?since=`)** → return `PaginatedResponse`
@@ -127,7 +127,7 @@ Endpoint `/api/rooms` dan `/api/inspection-items` punya 2 mode:
 
 **Request:**
 ```
-GET /api/inspections?page=1&per_page=20&status=PENDING&show_all=true
+GET /api/inspections?page=1&per_page=20&status=PENDING
 ```
 
 | Parameter | Tipe | Default | Deskripsi |
@@ -135,7 +135,8 @@ GET /api/inspections?page=1&per_page=20&status=PENDING&show_all=true
 | `page` | int | 1 | Halaman (1-indexed) |
 | `per_page` | int | 20 | Jumlah per halaman (max 100) |
 | `status` | string | null | Filter status: `PENDING` / `APPROVED` / `REJECTED` |
-| `show_all` | bool | `false` | Untuk supervisor — jika `true`, tampilkan **semua room** (tidak hanya yang di-assign) |
+
+> `show_all` TIDAK dipakai Android (param dihapus, ADR-0017): web dashboard supervisor yang memfilter semua room, bukan klien inspector. Klien Android selalu memakai scope room yang di-assign.
 
 **Alur di Android** (`InspectionHistoryRepository` + `InspectionHistoryViewModel`):
 
@@ -147,8 +148,8 @@ data class PaginatedResult(
 )
 
 // Repository — terjemahkan response server apa adanya (tanpa tebak-tebakan)
-suspend fun fetchInspections(page: Int, perPage: Int, status: String?, showAll: Boolean?): PaginatedResult {
-    val response = syncApi.getInspections(page, perPage, status, showAll)
+suspend fun fetchInspections(page: Int, perPage: Int, status: String?): PaginatedResult {
+    val response = syncApi.getInspections(page, perPage, status)
     return PaginatedResult(
         items = mapItems(response.items),
         totalPages = response.totalPages,
@@ -162,9 +163,9 @@ hasMorePages = result.currentPage < result.totalPages
 
 - **Infinite scroll**: `loadNextPage()` memuat `currentPage + 1` selama `hasMorePages == true` dan tidak sedang `isLoadingMore`.
 - **Race protection `loadEpoch`**: setiap refresh / ganti filter menaikkan counter `loadEpoch`; hasil fetch dari epoch lama dibuang agar tidak menimpa state baru (mis. refresh yang tiba saat `loadNextPage` berjalan).
-- **`show_all`**: supervisor melihat semua room; inspector biasa tanpa flag hanya melihat room yang di-assign.
+- **Scope room**: klien Android selalu menampilkan room yang di-assign (inspector-only, ADR-0017).
 
-**Pagination juga dipakai untuk `GET /api/auth/users`** (admin-only, `per_page` max 100): loop semua halaman, lalu clear+insert **sekali** setelah semua halaman terkumpul (hindari partial wipe).
+**Pagination juga dipakai untuk `GET /api/auth/users`** (`per_page` max 100): loop semua halaman, lalu clear+insert **sekali** setelah semua halaman terkumpul (hindari partial wipe).
 
 ```kotlin
 var page = 1
@@ -452,20 +453,24 @@ data class DashboardDto(
 
 ### 4.3. Auth & Role
 
-Endpoint ini hanya bisa diakses oleh **Supervisor** dan **Admin PPI**.  
-Jika user `inspector` mencoba akses → `403 Forbidden`.
+**Android = klien `inspector` saja (ADR-0017).** `supervisor` dan `admin_ppi` menggunakan web dashboard.
+Enforcement **client-side penuh**: login menolak role non-inspector dengan pesan jelas, dan sesi lama dicek ulang saat `init()`/`refreshCurrentUser()` — role non-inspector di-force-logout. Tidak ada klaim enforcement server-side (backend tidak membedakan client Android vs web).
 
 **Penanganan di Android:**
 ```kotlin
-// Sembunyikan dashboard untuk inspector
-if (userRole == "inspector") {
-    // Tampilkan halaman kosong atau redirect
-} else {
-    // Tampilkan dashboard
+// AuthRepository.login(): tolak SEBELUM menyimpan token
+if (response.user.role != "inspector") {
+    _authState.value = AuthState.Error("Akun ini hanya dapat digunakan via web dashboard")
+    return false
 }
+
+// AuthRepository.init()/refreshCurrentUser(): force-logout sesi non-inspector
+if (user.role != "inspector") forceLogout()
 ```
 
-### 4.4. Endpoint Analytics Lainnya (jika dibutuhkan)
+### 4.4. Endpoint Analytics Lainnya (web dashboard)
+
+Endpoint analytics (`/analytics/lowest-rooms`, `/analytics/top-issues`, `/analytics/inspector-performance`, `/analytics/dashboard`) **hanya dipakai web dashboard** untuk `supervisor`/`admin_ppi` (ADR-0017). Tidak diimplementasikan di klien Android (analytics dihapus dari dashboard Android).
 
 | Endpoint | Method | Deskripsi |
 |----------|--------|-----------|
@@ -473,7 +478,7 @@ if (userRole == "inspector") {
 | `/api/analytics/top-issues?year_month=2026-07&limit=10` | GET | 10 item paling sering bermasalah |
 | `/api/analytics/inspector-performance?year_month=2026-07` | GET | Kinerja inspector bulan ini |
 
-Semua endpoint di atas membutuhkan role **Supervisor** atau **Admin PPI**.
+Semua endpoint di atas membutuhkan role **Supervisor** atau **Admin PPI** — diakses via web dashboard.
 
 ---
 
@@ -542,7 +547,7 @@ fun getDetailCount(inspection: InspectionOutDto): Int {
 }
 ```
 
-**⚠️ Sync users:** Untuk mendapatkan nama inspector, Android perlu sync daftar user via `GET /api/auth/users?per_page=10000` (admin-only, membutuhkan role admin/supervisor). Jika user adalah inspector biasa (tanpa akses admin), cukup tampilkan `"Inspector #${inspectorId}"` — nama tidak diperlukan.
+**⚠️ Sync users:** Untuk mendapatkan nama inspector, Android sync daftar user via `GET /api/auth/users?per_page=100` (paginated, loop semua halaman). Di klien Android inspector-only (ADR-0017), nama user dipakai untuk lookup lokal; jika tidak tersedia, fallback `"Petugas #${inspectorId}"`.
 
 ---
 
@@ -644,82 +649,81 @@ interface ApiService {
     // ── Auth ──
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): TokenResponse
-    
+
     @POST("api/auth/refresh")
     suspend fun refreshToken(@Body request: RefreshRequest): TokenResponse
-    
-    // Users (admin-only, pagination — per_page max 100)
+
+    // Users (pagination — per_page max 100, loop semua halaman)
     @GET("api/auth/users")
     suspend fun getUsers(
         @Query("page") page: Int = 1,
         @Query("per_page") perPage: Int = 100
     ): PaginatedResponse<UserDto>
-    
+
     // ── Master Data (Sync) ──
     @GET("api/rooms")
     suspend fun getRooms(
         @Query("since") since: String? = null
     ): SyncResponse<RoomDto>
-    
+
     @GET("api/inspection-items")
     suspend fun getItems(
         @Query("since") since: String? = null
     ): SyncResponse<ItemDto>
-    
+
     @GET("api/room-items")
     suspend fun getRoomItems(
         @Query("since") since: String? = null
     ): SyncResponse<RoomItemDto>
-    
+
     @GET("api/auth/user-rooms")
     suspend fun getUserRooms(
         @Query("since") since: String? = null
     ): SyncResponse<UserRoomDto>
-    
+
     @GET("api/auth/me/rooms")
     suspend fun getMyRooms(
         @Query("since") since: String? = null
     ): SyncResponse<RoomDto>
-    
+
     // ── Inspections ──
     @GET("api/inspections")
     suspend fun getInspections(
         @Query("page") page: Int = 1,
         @Query("per_page") perPage: Int = 20,
         @Query("status") status: String? = null,
-        @Query("show_all") showAll: Boolean? = null,   // supervisor: semua room
         @Query("sort_by") sortBy: String? = null,
         @Query("sort_order") sortOrder: String? = null
     ): PaginatedResponse<InspectionListItemDto>
-    
+
     @GET("api/inspections/{id}")
     suspend fun getInspectionDetail(
         @Path("id") id: Int
     ): InspectionOutDto
-    
+
     @POST("api/inspections")
     suspend fun submitInspection(
         @Body request: InspectionSubmitRequest
     ): InspectionOutDto
-    
+
     // ── Analytics / Dashboard ──
     @GET("api/analytics/dashboard")
     suspend fun getDashboard(
         @Query("year_month") yearMonth: String? = null
     ): DashboardDto
-    
+
     @GET("api/analytics/lowest-rooms")
     suspend fun getLowestRooms(
         @Query("year_month") yearMonth: String? = null,
         @Query("limit") limit: Int = 3
     ): List<RoomScoreDto>
-    
+
     @GET("api/analytics/top-issues")
     suspend fun getTopIssues(
         @Query("year_month") yearMonth: String? = null,
         @Query("limit") limit: Int = 10
     ): List<IssueFrequencyDto>
-    
+
     @GET("api/analytics/inspector-performance")
     suspend fun getInspectorPerformance(
         @Query("year_month") yearMonth: String? = null
@@ -900,8 +904,8 @@ data class InspectorPerformanceDto(
 | **🟡 P2** | Master Data Sync (Rooms + Items) | `GET /api/rooms?since=`, `GET /api/inspection-items?since=` | Kecil | Cache lokal untuk offline |
 | **🟡 P2** | Submit Inspection | `POST /api/inspections` | Sedang | **Core feature** — kirim inspeksi |
 | **🟡 P2** | Riwayat Inspeksi (dengan pagination) | `GET /api/inspections?page=&per_page=` | Sedang | History screen |
-| **🟢 P3** | Dashboard | `GET /api/analytics/dashboard` | Kecil | Tampilan awal supervisor |
-| **🟢 P3** | Analytics (Lowest Rooms, Top Issues) | `GET /api/analytics/*` | Kecil | Detail analitik |
+| **🟢 P3** | Dashboard (web) | `GET /api/analytics/dashboard` | Kecil | Hanya web dashboard supervisor (ADR-0017) |
+| **🟢 P3** | Analytics (web) | `GET /api/analytics/*` | Kecil | Hanya web dashboard (tidak ada di Android) |
 
 ### Catatan Tambahan
 
@@ -937,25 +941,25 @@ abstract class AppDatabase : RoomDatabase() {
 interface RoomDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRooms(rooms: List<RoomEntity>)
-    
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertItems(items: List<ItemEntity>)
-    
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertRoomItems(roomItems: List<RoomItemEntity>)
-    
+
     @Query("SELECT * FROM rooms WHERE is_active = 1 ORDER BY name")
     suspend fun getActiveRooms(): List<RoomEntity>
-    
+
     @Query("SELECT i.name FROM room_items ri JOIN inspection_items i ON ri.item_id = i.id WHERE ri.room_id = :roomId")
     suspend fun getItemNamesForRoom(roomId: Int): List<String>
-    
+
     @Query("DELETE FROM rooms")
     suspend fun deleteAllRooms()
-    
+
     @Query("DELETE FROM inspection_items")
     suspend fun deleteAllItems()
-    
+
     @Query("DELETE FROM room_items")
     suspend fun deleteAllRoomItems()
 }
@@ -970,25 +974,25 @@ class AuthInterceptor(
     private val tokenProvider: TokenProvider,
     private val tokenRefresher: TokenRefresher
 ) : Interceptor {
-    
+
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalRequest = chain.request()
-        
+
         // Tambahkan access token
         val request = originalRequest.newBuilder()
             .header("Authorization", "Bearer ${tokenProvider.getAccessToken()}")
             .build()
-        
+
         val response = chain.proceed(request)
-        
+
         // Jika 401, coba refresh
         if (response.code == 401) {
             response.close()
-            
+
             val refreshSuccess = runBlocking {
                 tokenRefresher.refresh()
             }
-            
+
             if (refreshSuccess) {
                 // Retry dengan token baru
                 val retryRequest = originalRequest.newBuilder()
@@ -1000,7 +1004,7 @@ class AuthInterceptor(
                 throw IOException("Session expired")
             }
         }
-        
+
         return response
     }
 }
@@ -1109,5 +1113,5 @@ Berikut adalah field-field yang ada di setiap response inspection — cocokkan d
 
 ---
 
-> **Dokumen ini akan diperbarui secara berkala.**  
+> **Dokumen ini akan diperbarui secara berkala.**
 > Untuk pertanyaan atau klarifikasi, hubungi tim Backend.

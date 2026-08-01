@@ -89,14 +89,16 @@ class MasterDataRepository @Inject constructor(
         val response = masterDataApi.getRooms(since = effectiveSince)
         val apiRooms = response.data
         if (apiRooms.isNotEmpty()) {
+            // H2: PRESERVE penanda isMyRoom — hanya syncMyRooms yang mengelolanya. Jika /rooms
+            // me-reset flag lalu /me/rooms gagal (partial sync), scope room inspector hilang.
+            val existingFlags = masterDataDao.getAllRoomsOnce().associate { it.id to it.isMyRoom }
             val rooms = apiRooms.map { api ->
                 RuangEntity(
                     id = api.id,
                     nama = api.name,
                     lantai = null,
                     isActive = api.isActive,
-                    // Penanda "room saya" dimiliki syncMyRooms — room umum tidak ditandai.
-                    isMyRoom = false,
+                    isMyRoom = existingFlags[api.id] ?: false,
                     updatedAt = api.updatedAt
                 )
             }
@@ -188,7 +190,8 @@ class MasterDataRepository @Inject constructor(
                     id = user.id,
                     username = user.username,
                     role = user.role,
-                    isActive = user.isActive
+                    isActive = user.isActive,
+                    name = user.name
                 )
             }
             totalPages = response.totalPages

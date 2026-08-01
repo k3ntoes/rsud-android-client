@@ -58,6 +58,21 @@ class AuthRepositoryTest {
         assertEquals(sampleUser, repository.currentUser.value)
     }
 
+    @Test
+    fun `init force-logouts a saved non-inspector session`() = runTest {
+        // Sesi lama non-inspector (sebelum ADR-0017) → harus di-force-logout saat restore
+        coEvery { tokenManager.isLoggedIn() } returns true
+        coEvery { tokenManager.getUser() } returns UserOut(
+            id = 9, username = "super01", role = "supervisor", isActive = true
+        )
+        coEvery { tokenManager.clearTokens() } just runs
+
+        repository.init()
+
+        assertTrue(repository.authState.value is AuthState.Unauthenticated)
+        coVerify { tokenManager.clearTokens() }
+    }
+
     // ── login() ──
 
     private val sampleUser = UserOut(id = 1, username = "user", role = "inspector", isActive = true)
@@ -76,6 +91,38 @@ class AuthRepositoryTest {
         coVerify { tokenManager.saveUser(sampleUser) }
         assertEquals(sampleUser, repository.currentUser.value)
         assertTrue(repository.authState.value is AuthState.Authenticated)
+    }
+
+    @Test
+    fun `login rejects supervisor and does not save session`() = runTest {
+        val supervisor = UserOut(id = 9, username = "super01", role = "supervisor", isActive = true)
+        coEvery { authApi.login(any()) } returns TokenResponse("at", "rt", supervisor)
+        coEvery { tokenManager.saveTokens(any(), any()) } just runs
+        coEvery { tokenManager.saveUser(any()) } just runs
+
+        val result = repository.login("super01", "pass")
+
+        assertFalse(result)
+        // Token TIDAK boleh disimpan — sesi non-inspector tidak boleh ada
+        coVerify(exactly = 0) { tokenManager.saveTokens(any(), any()) }
+        coVerify(exactly = 0) { tokenManager.saveUser(any()) }
+        assertTrue(repository.authState.value is AuthState.Error)
+        assertEquals(
+            "Akun ini hanya dapat digunakan via web dashboard",
+            (repository.authState.value as AuthState.Error).message
+        )
+    }
+
+    @Test
+    fun `login rejects admin_ppi and does not save session`() = runTest {
+        val admin = UserOut(id = 10, username = "admin01", role = "admin_ppi", isActive = true)
+        coEvery { authApi.login(any()) } returns TokenResponse("at", "rt", admin)
+
+        val result = repository.login("admin01", "pass")
+
+        assertFalse(result)
+        coVerify(exactly = 0) { tokenManager.saveTokens(any(), any()) }
+        assertTrue(repository.authState.value is AuthState.Error)
     }
 
     @Test
@@ -146,6 +193,20 @@ class AuthRepositoryTest {
 
         assertFalse(result)
         coVerify(exactly = 0) { inspectionRepository.clearForeignDrafts(any()) }
+    }
+
+    @Test
+    fun `refreshCurrentUser force-logouts when role changed to non-inspector`() = runTest {
+        // User diubah admin menjadi supervisor — sesi tidak boleh bertahan
+        coEvery { authApi.me() } returns UserOut(
+            id = 1, username = "user", role = "supervisor", isActive = true
+        )
+        coEvery { tokenManager.clearTokens() } just runs
+
+        repository.refreshCurrentUser()
+
+        assertTrue(repository.authState.value is AuthState.Unauthenticated)
+        coVerify { tokenManager.clearTokens() }
     }
 
     // ── refreshToken() ──

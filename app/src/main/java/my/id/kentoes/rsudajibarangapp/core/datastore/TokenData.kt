@@ -13,5 +13,7 @@ data class TokenData(
     val userId: Int = 0,
     val username: String = "",
     val role: String = "",
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    // Nama lengkap user (ADR-0017 header) — string kosong bila versi lama belum menyimpannya.
+    val name: String = ""
 )

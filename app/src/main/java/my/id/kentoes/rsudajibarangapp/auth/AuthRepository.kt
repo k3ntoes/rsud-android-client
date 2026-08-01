@@ -46,7 +46,14 @@ class AuthRepository @Inject constructor(
     suspend fun init() {
         val isLoggedIn = tokenManager.isLoggedIn()
         if (isLoggedIn) {
-            _currentUser.value = tokenManager.getUser()
+            val user = tokenManager.getUser()
+            // ADR-0017 R1: sesi lama non-inspector di-force-logout — Android hanya
+            // melayani role inspector; supervisor/admin_ppi via web dashboard.
+            if (user != null && user.role != ROLE_INSPECTOR) {
+                forceLogout()
+                return
+            }
+            _currentUser.value = user
             _authState.value = AuthState.Authenticated()
             // Refresh profil dari server (abaikan error jika offline)
             refreshCurrentUser()
@@ -59,6 +66,11 @@ class AuthRepository @Inject constructor(
     suspend fun refreshCurrentUser() {
         try {
             val user = authApi.me()
+            // ADR-0017 R1: role user diubah admin jadi non-inspector → logout paksa
+            if (user.role != ROLE_INSPECTOR) {
+                forceLogout()
+                return
+            }
             tokenManager.saveUser(user)
             _currentUser.value = user
         } catch (_: Exception) {
@@ -71,6 +83,12 @@ class AuthRepository @Inject constructor(
         _authState.value = AuthState.Loading
         return try {
             val response: TokenResponse = authApi.login(LoginRequest(username, password))
+            // ADR-0017: tolak role non-inspector SEBELUM menyimpan token — jangan
+            // pernah meninggalkan sesi yang bisa masuk dashboard.
+            if (response.user.role != ROLE_INSPECTOR) {
+                _authState.value = AuthState.Error("Akun ini hanya dapat digunakan via web dashboard")
+                return false
+            }
             tokenManager.saveTokens(
                 accessToken = response.accessToken,
                 refreshToken = response.refreshToken
@@ -171,5 +189,10 @@ class AuthRepository @Inject constructor(
         masterDataDao.clearUserRooms()
         masterDataDao.clearUsers()
         syncStateStore.clear()
+    }
+
+    companion object {
+        /** Android = klien inspector-only (ADR-0017) — satu-satunya role yang diizinkan login. */
+        private const val ROLE_INSPECTOR = "inspector"
     }
 }

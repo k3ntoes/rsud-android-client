@@ -77,6 +77,7 @@ class MasterDataRepositoryTest {
         val apiRooms = SyncResponse(data = listOf(RoomOut(1, "Ruang 1")))
         coEvery { api.getItems(any()) } returns apiItems
         coEvery { api.getRooms(any()) } returns apiRooms
+        coEvery { dao.getAllRoomsOnce() } returns emptyList()
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -93,6 +94,7 @@ class MasterDataRepositoryTest {
         val apiRooms = SyncResponse(data = listOf(RoomOut(id = 5, name = "IGD", isActive = true)))
         coEvery { api.getItems(any()) } returns apiItems
         coEvery { api.getRooms(any()) } returns apiRooms
+        coEvery { dao.getAllRoomsOnce() } returns emptyList()
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -171,6 +173,7 @@ class MasterDataRepositoryTest {
                 it.nama
             )
         })
+        coEvery { dao.getAllRoomsOnce() } returns emptyList()
         coEvery { dao.insertItems(any()) } returns Unit
         coEvery { dao.insertRooms(any()) } returns Unit
 
@@ -612,6 +615,7 @@ class MasterDataRepositoryTest {
             data = listOf(RoomOut(1, "Ruang 1")),
             syncedAt = "2026-07-29T08:30:00Z"
         )
+        coEvery { dao.getAllRoomsOnce() } returns emptyList()
         coEvery { dao.insertRooms(any()) } returns Unit
 
         repository.syncRooms()
@@ -632,6 +636,30 @@ class MasterDataRepositoryTest {
         repository.syncRooms()
 
         coVerify(exactly = 0) { syncStateStore.update(any()) }
+    }
+
+    @Test
+    fun `syncRooms preserves isMyRoom flags set by syncMyRooms`() = runTest {
+        // H2: /rooms tidak boleh me-reset penanda assignment — hanya syncMyRooms yang
+        // mengelolanya. Jika di-reset lalu /me/rooms gagal, scope room inspector hilang.
+        coEvery { api.getRooms(any()) } returns SyncResponse(
+            data = listOf(RoomOut(1, "Ruang 1"), RoomOut(2, "Ruang 2"))
+        )
+        coEvery { dao.getAllRoomsOnce() } returns listOf(
+            RuangEntity(1, "Ruang 1", "Lantai 1", isActive = true, isMyRoom = true, updatedAt = null),
+            RuangEntity(2, "Ruang 2", "Lantai 2", isActive = true, isMyRoom = false, updatedAt = null)
+        )
+        coEvery { dao.insertRooms(any()) } returns Unit
+
+        repository.syncRooms()
+
+        coVerify {
+            dao.insertRooms(match { rooms ->
+                rooms.size == 2 &&
+                    rooms[0].id == 1L && rooms[0].isMyRoom &&
+                    rooms[1].id == 2L && !rooms[1].isMyRoom
+            })
+        }
     }
 
     @Test

@@ -101,9 +101,6 @@ fun NavGraph(
                 onNavigateToDrafts = {
                     navController.navigate(Routes.DRAFT_LIST)
                 },
-                onNavigateToHistory = {
-                    navController.navigate(Routes.INSPECTION_HISTORY)
-                },
                 onNavigateToUninspectedRooms = {
                     navController.navigate(Routes.inspectionList(uninspectedOnly = true, date = today))
                 },

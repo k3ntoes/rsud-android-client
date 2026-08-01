@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import my.id.kentoes.rsudajibarangapp.auth.AuthRepository
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
 import javax.inject.Inject
@@ -27,8 +26,7 @@ data class MasterDataUiState(
 
 @HiltViewModel
 class MasterDataViewModel @Inject constructor(
-    private val repository: MasterDataRepository,
-    private val authRepository: AuthRepository
+    private val repository: MasterDataRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MasterDataUiState())
@@ -46,13 +44,10 @@ class MasterDataViewModel @Inject constructor(
                 repository.items,
                 repository.rooms,
                 _excludeRoomIds,
-                authRepository.currentUser,
                 _roomItemCounts
-            ) { items, allRooms, excludeIds, user, roomItemCounts ->
-                // Inspector/supervisor: hanya room yang di-assign (isMyRoom).
-                // Admin (admin_ppi): semua room — /me/rooms kosong untuk admin.
-                val baseRooms = if (user?.role == ROLE_ADMIN) allRooms
-                    else allRooms.filter { it.isMyRoom }
+            ) { items, allRooms, excludeIds, roomItemCounts ->
+                // Android = klien inspector-only (ADR-0017): HANYA room yang di-assign (isMyRoom).
+                val baseRooms = allRooms.filter { it.isMyRoom }
                 val filteredRooms = if (excludeIds.isEmpty()) baseRooms
                     else baseRooms.filter { it.id !in excludeIds }
                 _uiState.value.copy(
@@ -97,21 +92,33 @@ class MasterDataViewModel @Inject constructor(
 
     private suspend fun syncFromApi() {
         _uiState.value = _uiState.value.copy(isSyncing = true, syncMessage = null)
-        try {
-            repository.syncItems()
-            repository.syncRooms()
-            // Pivot room_items wajib di-sync juga — RoomCard count berasal dari pivot
-            // (bukan heuristik nama), jadi refresh tanpa pivot = count basi.
-            repository.syncRoomItems()
-            repository.syncMyRooms()
-            _uiState.value = _uiState.value.copy(isSyncing = false, syncMessage = "Data berhasil diperbarui")
-        } catch (e: Exception) {
-            _uiState.value = _uiState.value.copy(
-                isSyncing = false,
-                syncMessage = e.message ?: "Gagal sinkronisasi"
-            )
+        // Per-langkah (H1, partial-sync): data yang sukses tetap dipakai, pesan jujur.
+        val steps: List<Pair<String, suspend () -> Unit>> = listOf(
+            "Items" to { repository.syncItems() },
+            "Ruangan" to { repository.syncRooms() },
+            "Pivot Room-Item" to { repository.syncRoomItems() },
+            "Ruangan Saya" to { repository.syncMyRooms() }
+        )
+        val succeeded = mutableListOf<String>()
+        val failed = mutableListOf<String>()
+        var firstError: String? = null
+        steps.forEach { (name, step) ->
+            runCatching { step() }
+                .onSuccess { succeeded += name }
+                .onFailure {
+                    failed += name
+                    if (firstError == null) firstError = it.message
+                }
         }
         loadRoomItemCounts()
+        _uiState.value = _uiState.value.copy(
+            isSyncing = false,
+            syncMessage = when {
+                failed.isEmpty() -> "Data berhasil diperbarui"
+                succeeded.isEmpty() -> firstError ?: "Gagal sinkronisasi"
+                else -> "Sebagian data diperbarui (${succeeded.size}/${steps.size} berhasil) — ketuk retry"
+            }
+        )
     }
 
     /** Muat jumlah item per room dari pivot room_items (setelah sync, mapping sudah segar). */
@@ -122,10 +129,5 @@ class MasterDataViewModel @Inject constructor(
 
     fun clearSyncMessage() {
         _uiState.value = _uiState.value.copy(syncMessage = null)
-    }
-
-    companion object {
-        /** Role admin melihat SEMUA room; role lain hanya room yang di-assign. */
-        private const val ROLE_ADMIN = "admin_ppi"
     }
 }

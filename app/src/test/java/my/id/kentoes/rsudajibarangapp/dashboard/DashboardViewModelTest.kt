@@ -11,20 +11,16 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import my.id.kentoes.rsudajibarangapp.auth.AuthRepository
-import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
-import my.id.kentoes.rsudajibarangapp.dashboard.api.AnalyticsApi
-import my.id.kentoes.rsudajibarangapp.dashboard.api.IssueFrequencyOut
-import my.id.kentoes.rsudajibarangapp.dashboard.api.RoomScoreOut
 import my.id.kentoes.rsudajibarangapp.master.MasterDataRepository
 import my.id.kentoes.rsudajibarangapp.master.SyncState
 import my.id.kentoes.rsudajibarangapp.master.SyncStateStore
+import my.id.kentoes.rsudajibarangapp.sync.MasterDataSyncResult
 import my.id.kentoes.rsudajibarangapp.sync.SyncManager
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -38,11 +34,9 @@ class DashboardViewModelTest {
 
     private lateinit var drafDao: DrafDao
     private lateinit var masterDataDao: MasterDataDao
-    private lateinit var analyticsApi: AnalyticsApi
     private lateinit var masterDataRepository: MasterDataRepository
     private lateinit var syncManager: SyncManager
     private lateinit var syncStateStore: SyncStateStore
-    private lateinit var authRepository: AuthRepository
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
@@ -50,21 +44,16 @@ class DashboardViewModelTest {
         Dispatchers.setMain(testDispatcher)
         drafDao = mockk()
         masterDataDao = mockk()
-        analyticsApi = mockk(relaxed = true)
         masterDataRepository = mockk()
         syncManager = mockk()
         syncStateStore = mockk()
-        authRepository = mockk()
-        every { authRepository.currentUser } returns MutableStateFlow(
-            UserOut(id = 1, username = "petugas01", role = "inspector", isActive = true)
-        )
         // Default mocks for computeInspectionStatus() called in init
         coEvery { masterDataDao.getAllRoomsOnce() } returns emptyList()
         coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns emptySet()
         // Default: cache terisi → auto-sync TIDAK jalan; lastSyncAt dibaca dari store
         coEvery { masterDataRepository.isCacheAvailable() } returns true
         every { syncStateStore.load() } returns SyncState()
-        // combine() mengamati 4 flow — InspectionEntity default kosong
+        // combine() mengamati 2 flow — InspectionEntity default kosong
         every { masterDataDao.getAllInspections() } returns MutableStateFlow(emptyList())
     }
 
@@ -75,8 +64,8 @@ class DashboardViewModelTest {
 
     private fun createViewModel(): DashboardViewModel =
         DashboardViewModel(
-            drafDao, masterDataDao, analyticsApi, masterDataRepository,
-            syncManager, syncStateStore, authRepository
+            drafDao, masterDataDao, masterDataRepository,
+            syncManager, syncStateStore
         )
 
     @Test
@@ -119,13 +108,10 @@ class DashboardViewModelTest {
 
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
-        // Terkirim & Total dari InspectionEntity (bukan draf SYNCED)
-        assertEquals(3, state.totalDrafts)
+        // Terkirim dari InspectionEntity (bukan draf SYNCED)
         assertEquals(1, state.draftCount)
         assertEquals(1, state.pendingSyncCount)
         assertEquals(3, state.syncedCount)
-        assertEquals(2, state.totalRooms)
-        assertEquals(4, state.totalItems)
     }
 
     @Test
@@ -152,8 +138,7 @@ class DashboardViewModelTest {
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        // Total & Terkirim dari InspectionEntity
-        assertEquals(6, state.totalDrafts)
+        // Terkirim dari InspectionEntity
         assertEquals(2, state.draftCount)
         assertEquals(3, state.pendingSyncCount)
         assertEquals(6, state.syncedCount)
@@ -171,12 +156,9 @@ class DashboardViewModelTest {
 
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
-        assertEquals(0, state.totalDrafts)
         assertEquals(0, state.draftCount)
         assertEquals(0, state.pendingSyncCount)
         assertEquals(0, state.syncedCount)
-        assertEquals(0, state.totalRooms)
-        assertEquals(0, state.totalItems)
         assertTrue(state.recentDrafts.isEmpty())
     }
 
@@ -208,7 +190,6 @@ class DashboardViewModelTest {
         val viewModel = createViewModel()
 
         assertTrue(viewModel.uiState.value.isLoading)
-        assertEquals(0, viewModel.uiState.value.totalDrafts)
     }
 
     @Test
@@ -228,7 +209,6 @@ class DashboardViewModelTest {
 
         val state = viewModel.uiState.value
         // Tidak ada InspectionEntity & draft berstatus unknown tidak dihitung di draf/pending
-        assertEquals(0, state.totalDrafts)
         assertEquals(0, state.draftCount)
         assertEquals(0, state.pendingSyncCount)
         assertEquals(0, state.syncedCount)
@@ -251,7 +231,6 @@ class DashboardViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertEquals(1, viewModel.uiState.value.totalDrafts)
         assertEquals(1, viewModel.uiState.value.draftCount)
         assertEquals(1, viewModel.uiState.value.syncedCount)
 
@@ -263,7 +242,7 @@ class DashboardViewModelTest {
 
         assertEquals(2, viewModel.uiState.value.draftCount)
 
-        // Inspections flow update → Terkirim/Total ikut berubah
+        // Inspections flow update → Terkirim ikut berubah
         inspectionsFlow.value = listOf(
             InspectionEntity(id = 101, roomId = 1, inspectorId = 1, status = "PENDING"),
             InspectionEntity(id = 102, roomId = 2, inspectorId = 1, status = "APPROVED"),
@@ -271,77 +250,6 @@ class DashboardViewModelTest {
         advanceUntilIdle()
 
         assertEquals(2, viewModel.uiState.value.syncedCount)
-        assertEquals(2, viewModel.uiState.value.totalDrafts)
-    }
-
-    // ── Analytics (hanya supervisor/admin_ppi — keputusan review 2026-08) ──
-
-    @Test
-    fun `supervisor fetches analytics from BE`() = runTest {
-        every { authRepository.currentUser } returns MutableStateFlow(
-            UserOut(id = 9, username = "super01", role = "supervisor", isActive = true)
-        )
-        val sampleRooms = listOf(
-            RoomScoreOut(roomId = 1, scorePct = 0.45, inspectionCount = 5),
-            RoomScoreOut(roomId = 2, scorePct = 0.60, inspectionCount = 3),
-        )
-        val sampleIssues = listOf(
-            IssueFrequencyOut(itemId = 1, itemNameSnapshot = "Meja", scoreZeroCount = 12),
-        )
-
-        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
-        every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
-        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
-        coEvery { analyticsApi.getLowestRooms(any(), any()) } returns sampleRooms
-        coEvery { analyticsApi.getTopIssues(any(), any()) } returns sampleIssues
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { analyticsApi.getLowestRooms(any(), any()) }
-        coVerify(exactly = 1) { analyticsApi.getTopIssues(any(), any()) }
-        assertEquals(2, viewModel.uiState.value.lowestRooms.size)
-        assertEquals(1, viewModel.uiState.value.topIssues.size)
-        assertEquals(1, viewModel.uiState.value.lowestRooms[0].roomId)
-        assertEquals("Meja", viewModel.uiState.value.topIssues[0].itemNameSnapshot)
-    }
-
-    @Test
-    fun `admin fetches analytics from BE`() = runTest {
-        every { authRepository.currentUser } returns MutableStateFlow(
-            UserOut(id = 9, username = "admin01", role = "admin_ppi", isActive = true)
-        )
-        val sampleRooms = listOf(
-            RoomScoreOut(roomId = 1, scorePct = 0.45, inspectionCount = 5),
-        )
-
-        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
-        every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
-        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
-        coEvery { analyticsApi.getLowestRooms(any(), any()) } returns sampleRooms
-        coEvery { analyticsApi.getTopIssues(any(), any()) } returns emptyList()
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { analyticsApi.getLowestRooms(any(), any()) }
-        assertEquals(1, viewModel.uiState.value.lowestRooms.size)
-    }
-
-    @Test
-    fun `inspector does not fetch analytics`() = runTest {
-        // Role default setup = inspector → analytics TIDAK boleh di-fetch
-        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
-        every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
-        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        coVerify(exactly = 0) { analyticsApi.getLowestRooms(any(), any()) }
-        coVerify(exactly = 0) { analyticsApi.getTopIssues(any(), any()) }
-        assertTrue(viewModel.uiState.value.lowestRooms.isEmpty())
-        assertTrue(viewModel.uiState.value.topIssues.isEmpty())
     }
 
     // ── Phase 4: Inspection Status ──
@@ -390,31 +298,6 @@ class DashboardViewModelTest {
 
         assertEquals(2, viewModel.uiState.value.inspectedRoomCount)
         assertEquals(0, viewModel.uiState.value.uninspectedRoomCount)
-    }
-
-    @Test
-    fun `admin scope counts all rooms regardless of isMyRoom`() = runTest {
-        every { authRepository.currentUser } returns MutableStateFlow(
-            UserOut(id = 9, username = "admin01", role = "admin_ppi", isActive = true)
-        )
-        val sampleRoomList = listOf(
-            RuangEntity(id = 1, nama = "Ruang A", isMyRoom = true),
-            RuangEntity(id = 2, nama = "Ruang B", isMyRoom = false),
-            RuangEntity(id = 3, nama = "Ruang C", isMyRoom = false),
-        )
-        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
-        every { masterDataDao.getAllRooms() } returns MutableStateFlow(sampleRoomList)
-        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
-        every { masterDataDao.getAllInspections() } returns MutableStateFlow(emptyList())
-        coEvery { masterDataDao.getAllRoomsOnce() } returns sampleRoomList
-        coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns setOf(1L)
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        // Admin melihat semua room — 3 total, 1 sudah diinspeksi
-        assertEquals(1, viewModel.uiState.value.inspectedRoomCount)
-        assertEquals(2, viewModel.uiState.value.uninspectedRoomCount)
     }
 
     @Test
@@ -505,24 +388,6 @@ class DashboardViewModelTest {
         coVerify { masterDataRepository.getInspectedRoomIdsForDate(match { it.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) }) }
     }
 
-    @Test
-    fun `analytics fetch failure returns empty lists`() = runTest {
-        every { authRepository.currentUser } returns MutableStateFlow(
-            UserOut(id = 9, username = "super01", role = "supervisor", isActive = true)
-        )
-        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
-        every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
-        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
-        coEvery { analyticsApi.getLowestRooms(any(), any()) } throws RuntimeException("Network error")
-        coEvery { analyticsApi.getTopIssues(any(), any()) } throws RuntimeException("Network error")
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        assertTrue(viewModel.uiState.value.lowestRooms.isEmpty())
-        assertTrue(viewModel.uiState.value.topIssues.isEmpty())
-    }
-
     // ── Phase 5 (2026-08): Sync UX ──
 
     @Test
@@ -531,7 +396,9 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
         coEvery { masterDataRepository.isCacheAvailable() } returns false
-        coEvery { syncManager.syncMasterData() } returns Unit
+        coEvery { syncManager.syncMasterData() } returns MasterDataSyncResult(
+            succeeded = listOf("Items"), failed = emptyList()
+        )
         every { syncStateStore.load() } returns SyncState(itemsSyncedAt = "2026-07-29T08:30:00Z")
 
         val viewModel = createViewModel()
@@ -565,7 +432,9 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
         coEvery { masterDataRepository.isCacheAvailable() } returns true
         every { syncStateStore.load() } returns SyncState(itemsSyncedAt = "2026-07-29T08:30:00Z")
-        coEvery { syncManager.syncMasterData() } returns Unit
+        coEvery { syncManager.syncMasterData() } returns MasterDataSyncResult(
+            succeeded = listOf("Items"), failed = emptyList()
+        )
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -583,7 +452,9 @@ class DashboardViewModelTest {
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
         coEvery { masterDataRepository.isCacheAvailable() } returns true
-        coEvery { syncManager.syncMasterData() } throws RuntimeException("Network down")
+        coEvery { syncManager.syncMasterData() } returns MasterDataSyncResult(
+            succeeded = emptyList(), failed = listOf("Items"), firstError = "Network down"
+        )
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -591,8 +462,34 @@ class DashboardViewModelTest {
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isSyncing)
-        assertEquals("Network down", viewModel.uiState.value.syncError)
+        assertEquals("Sync gagal", viewModel.uiState.value.syncError)
         assertNull(viewModel.uiState.value.lastSyncAt)
+    }
+
+    @Test
+    fun `refresh partial success shows partial message instead of blanket failure`() = runTest {
+        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
+        coEvery { masterDataRepository.isCacheAvailable() } returns true
+        // H1: 5 langkah sukses, 1 gagal — pesan harus "Sebagian", bukan "Sync gagal",
+        // karena DB memang sudah ter-update sebagian (nilai dashboard berubah).
+        coEvery { syncManager.syncMasterData() } returns MasterDataSyncResult(
+            succeeded = listOf("Items", "Ruangan", "Pivot Room-Item", "User-Room", "Users"),
+            failed = listOf("Ruangan Saya"),
+            firstError = "Network down"
+        )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isSyncing)
+        assertEquals(
+            "Sebagian data diperbarui (5/6 berhasil) — ketuk retry",
+            viewModel.uiState.value.syncError
+        )
     }
 
     @Test
@@ -610,7 +507,7 @@ class DashboardViewModelTest {
         coEvery { syncManager.syncMasterData() } coAnswers {
             viewModelForGuard.refresh()
             refreshReentered = true
-            Unit
+            MasterDataSyncResult(succeeded = emptyList(), failed = emptyList())
         }
 
         viewModelForGuard.refresh()

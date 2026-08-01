@@ -23,7 +23,11 @@ data class UserOut(
     val username: String,
     val role: String,
     @SerialName("is_active")
-    val isActive: Boolean
+    val isActive: Boolean,
+    // BE selalu mengisi saat login (kontrak UserOut: id, username, name, role, is_active).
+    // Nullable & terakhir agar konstruktor positional lama tetap kompatibel.
+    @SerialName("name")
+    val name: String? = null
 )
 
 @Serializable

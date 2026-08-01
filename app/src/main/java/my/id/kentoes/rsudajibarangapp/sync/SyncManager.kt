@@ -26,6 +26,21 @@ data class SyncResult(
     val message: String
 )
 
+/**
+ * Hasil sinkronisasi master data per langkah. Setiap langkah menulis ke DB begitu
+ * sukses, jadi kegagalan di tengah = data ter-update sebagian — pesan error harus
+ * mencerminkan itu, bukan "gagal total" (H1, fix partial-sync).
+ */
+data class MasterDataSyncResult(
+    val succeeded: List<String>,
+    val failed: List<String>,
+    val firstError: String? = null
+) {
+    val total: Int get() = succeeded.size + failed.size
+    val isPartial: Boolean get() = failed.isNotEmpty() && succeeded.isNotEmpty()
+    val isAllFailed: Boolean get() = failed.isNotEmpty() && succeeded.isEmpty()
+}
+
 @Singleton
 class SyncManager @Inject constructor(
     private val inspectionRepository: InspectionRepository,
@@ -37,16 +52,28 @@ class SyncManager @Inject constructor(
     private val sentPhotoStorage: SentPhotoStorage
 ) {
 
-    /** Sync master data sebelum sync inspeksi */
-    suspend fun syncMasterData() {
-        masterDataRepository.syncItems()
-        masterDataRepository.syncRooms()
-        masterDataRepository.syncRoomItems()
-        // URUTAN LOAD-BEARING: syncRooms REPLACE me-reset isMyRoom=false, jadi syncMyRooms
-        // WAJIB berjalan SETELAH syncRooms agar penanda assignment (isMyRoom) benar.
-        masterDataRepository.syncMyRooms()
-        masterDataRepository.syncUserRooms()
-        masterDataRepository.syncUsers()
+    /** Sync master data — per-langkah; hasil parsial dilaporkan, bukan dilempar. */
+    suspend fun syncMasterData(): MasterDataSyncResult {
+        val steps: List<Pair<String, suspend () -> Unit>> = listOf(
+            "Items" to { masterDataRepository.syncItems() },
+            "Ruangan" to { masterDataRepository.syncRooms() },
+            "Pivot Room-Item" to { masterDataRepository.syncRoomItems() },
+            "Ruangan Saya" to { masterDataRepository.syncMyRooms() },
+            "User-Room" to { masterDataRepository.syncUserRooms() },
+            "Users" to { masterDataRepository.syncUsers() }
+        )
+        val succeeded = mutableListOf<String>()
+        val failed = mutableListOf<String>()
+        var firstError: String? = null
+        for ((name, step) in steps) {
+            runCatching { step() }
+                .onSuccess { succeeded += name }
+                .onFailure {
+                    failed += name
+                    if (firstError == null) firstError = it.message
+                }
+        }
+        return MasterDataSyncResult(succeeded, failed, firstError)
     }
 
     /**
@@ -55,8 +82,8 @@ class SyncManager @Inject constructor(
      */
     suspend fun syncAllPending(): List<SyncResult> {
         val results = mutableListOf<SyncResult>()
-        // Sync master data dulu
-        runCatching { syncMasterData() }
+        // Sync master data dulu — hasil parsial tidak menggagalkan sync draf
+        syncMasterData()
 
         // Load draf dengan status PENDING_SYNC langsung via DAO
         val pendingDrafts = drafDao.getDraftsByStatus("PENDING_SYNC").first()

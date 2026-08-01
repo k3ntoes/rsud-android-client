@@ -32,7 +32,9 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.UserRoomEntity
         InspectionDetailEntity::class,
         InspectionPhotoEntity::class
     ],
-    version = 5,
+    // v6: kolom `name` di UserEntity (ADR-0017 header dashboard). Migrasi destruktif
+    // sesuai pola project (fallbackToDestructiveMigration) — cache master data di-sync ulang.
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

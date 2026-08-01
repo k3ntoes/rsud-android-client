@@ -126,7 +126,7 @@ class InspectionHistoryRepositoryTest {
             perPage = 20,
             totalPages = 1
         )
-        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns apiResponse
+        coEvery { syncApi.getInspections(any(), any(), any()) } returns apiResponse
         every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
         coEvery { masterDataDao.insertInspection(any()) } returns Unit
 
@@ -137,23 +137,23 @@ class InspectionHistoryRepositoryTest {
         assertEquals("Ruang A", result.items[0].roomName)
         assertEquals(3, result.items[0].detailCount)
         assertEquals(1, result.currentPage)
-        coVerify(exactly = 1) { syncApi.getInspections(1, 20, null, null) }
+        coVerify(exactly = 1) { syncApi.getInspections(1, 20, null) }
         coVerify(exactly = 1) { masterDataDao.insertInspection(any()) }
     }
 
     @Test
     fun `fetchInspections passes status filter to API`() = runTest {
-        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns PaginatedResponse(items = emptyList())
+        coEvery { syncApi.getInspections(any(), any(), any()) } returns PaginatedResponse(items = emptyList())
         every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
 
         repository.fetchInspections(page = 1, perPage = 10, status = "APPROVED")
 
-        coVerify { syncApi.getInspections(1, 10, "APPROVED", null) }
+        coVerify { syncApi.getInspections(1, 10, "APPROVED") }
     }
 
     @Test
     fun `fetchInspections returns empty result when API returns empty`() = runTest {
-        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns PaginatedResponse(items = emptyList())
+        coEvery { syncApi.getInspections(any(), any(), any()) } returns PaginatedResponse(items = emptyList())
         every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
 
         val result = repository.fetchInspections()
@@ -173,7 +173,7 @@ class InspectionHistoryRepositoryTest {
             perPage = 20,
             totalPages = 1
         )
-        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns apiItems
+        coEvery { syncApi.getInspections(any(), any(), any()) } returns apiItems
         every { masterDataDao.getAllRooms() } returns flowOf(emptyList())
         coEvery { masterDataDao.insertInspection(any()) } returns Unit
 
@@ -400,7 +400,7 @@ class InspectionHistoryRepositoryTest {
 
     @Test
     fun `fetchInspections returns PaginatedResult with correct page`() = runTest {
-        coEvery { syncApi.getInspections(any(), any(), any(), any()) } returns PaginatedResponse(items = emptyList(), page = 3, totalPages = 5)
+        coEvery { syncApi.getInspections(any(), any(), any()) } returns PaginatedResponse(items = emptyList(), page = 3, totalPages = 5)
         every { masterDataDao.getAllRooms() } returns flowOf(sampleRooms)
 
         val result = repository.fetchInspections(page = 3, perPage = 10)

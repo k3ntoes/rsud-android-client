@@ -135,8 +135,7 @@ interface SyncApi {
     suspend fun getInspections(
         @Query("page") page: Int = 1,
         @Query("per_page") perPage: Int = 20,
-        @Query("status") status: String? = null,
-        @Query("show_all") showAll: Boolean? = null
+        @Query("status") status: String? = null
     ): PaginatedResponse<InspectionListItemDto>
 
     /** Detail inspeksi */

@@ -11,8 +11,6 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import my.id.kentoes.rsudajibarangapp.auth.AuthRepository
-import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
 import org.junit.After
@@ -26,7 +24,6 @@ import org.junit.Test
 class MasterDataViewModelTest {
 
     private lateinit var repository: MasterDataRepository
-    private lateinit var authRepository: AuthRepository
     private val testDispatcher = StandardTestDispatcher()
 
     private val sampleItems = listOf(
@@ -42,11 +39,6 @@ class MasterDataViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         repository = mockk()
-        authRepository = mockk()
-        // Default: user inspector (non-admin) — dropdown hanya menampilkan room yang di-assign
-        every { authRepository.currentUser } returns MutableStateFlow(
-            UserOut(id = 1, username = "petugas", role = "inspector", isActive = true)
-        )
         // loadRoomItemCounts() dipanggil saat init & setelah sync — default pivot kosong
         coEvery { repository.getRoomItemMap() } returns emptyMap()
     }
@@ -66,7 +58,7 @@ class MasterDataViewModelTest {
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns true
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -85,7 +77,7 @@ class MasterDataViewModelTest {
         // Pivot: room 1 punya 2 item
         coEvery { repository.getRoomItemMap() } returns mapOf(1L to listOf(1L, 2L))
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         // Item count RoomCard dari pivot — bukan heuristik nama
@@ -105,7 +97,7 @@ class MasterDataViewModelTest {
         coEvery { repository.syncMyRooms() } returns Unit
         coEvery { repository.getRoomItemMap() } returns mapOf(7L to listOf(1L))
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         viewModel.refresh()
@@ -123,7 +115,7 @@ class MasterDataViewModelTest {
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns true
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         val grouped = viewModel.uiState.value.groupedItems
@@ -140,7 +132,7 @@ class MasterDataViewModelTest {
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns true
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
@@ -163,7 +155,7 @@ class MasterDataViewModelTest {
         coEvery { repository.syncRoomItems() } returns Unit
         coEvery { repository.syncMyRooms() } returns Unit
 
-        MasterDataViewModel(repository, authRepository)
+        MasterDataViewModel(repository)
         advanceUntilIdle()
 
         coVerify(exactly = 1) { repository.syncItems() }
@@ -180,7 +172,7 @@ class MasterDataViewModelTest {
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns true
 
-        MasterDataViewModel(repository, authRepository)
+        MasterDataViewModel(repository)
         advanceUntilIdle()
 
         coVerify(exactly = 0) { repository.syncItems() }
@@ -197,7 +189,7 @@ class MasterDataViewModelTest {
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns true
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isLoading)
@@ -219,7 +211,7 @@ class MasterDataViewModelTest {
         coEvery { repository.syncRoomItems() } returns Unit
         coEvery { repository.syncMyRooms() } returns Unit
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         viewModel.refresh()
@@ -243,7 +235,7 @@ class MasterDataViewModelTest {
         coEvery { repository.syncRoomItems() } returns Unit
         coEvery { repository.syncMyRooms() } returns Unit
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         viewModel.refresh()
@@ -266,7 +258,7 @@ class MasterDataViewModelTest {
         coEvery { repository.syncRoomItems() } returns Unit
         coEvery { repository.syncMyRooms() } returns Unit
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         // Before advanceUntilIdle: isLoading is true, isSyncing false
         assertTrue(viewModel.uiState.value.isLoading)
         assertFalse(viewModel.uiState.value.isSyncing)
@@ -287,11 +279,38 @@ class MasterDataViewModelTest {
         coEvery { repository.isCacheAvailable() } returns false
         coEvery { repository.syncItems() } throws RuntimeException("Server error 500")
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isSyncing)
         assertEquals("Server error 500", viewModel.uiState.value.syncMessage)
+    }
+
+    @Test
+    fun `refresh partial failure shows partial message instead of blanket failure`() = runTest {
+        // H1: 3 langkah sukses, syncMyRooms gagal — pesan harus "Sebagian", bukan error
+        // mentah, karena sebagian data memang sudah ter-update.
+        val itemsFlow = MutableStateFlow(emptyList<MasterDataItem>())
+        val roomsFlow = MutableStateFlow(emptyList<RuangEntity>())
+        every { repository.items } returns itemsFlow
+        every { repository.rooms } returns roomsFlow
+        coEvery { repository.isCacheAvailable() } returns true
+        coEvery { repository.syncItems() } returns Unit
+        coEvery { repository.syncRooms() } returns Unit
+        coEvery { repository.syncRoomItems() } returns Unit
+        coEvery { repository.syncMyRooms() } throws RuntimeException("Network down")
+
+        val viewModel = MasterDataViewModel(repository)
+        advanceUntilIdle()
+
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isSyncing)
+        assertEquals(
+            "Sebagian data diperbarui (3/4 berhasil) — ketuk retry",
+            viewModel.uiState.value.syncMessage
+        )
     }
 
     // ── clearSyncMessage ──────────────────────────────────
@@ -308,7 +327,7 @@ class MasterDataViewModelTest {
         coEvery { repository.syncRoomItems() } returns Unit
         coEvery { repository.syncMyRooms() } returns Unit
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
         assertEquals("Data berhasil diperbarui", viewModel.uiState.value.syncMessage)
 
@@ -328,7 +347,7 @@ class MasterDataViewModelTest {
         coEvery { repository.isCacheAvailable() } returns true
         coEvery { repository.getInspectedRoomIdsForDate(any()) } returns setOf(1L)
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         assertEquals(0, viewModel.uiState.value.excludeRoomIds.size)
@@ -350,7 +369,7 @@ class MasterDataViewModelTest {
         coEvery { repository.isCacheAvailable() } returns true
         coEvery { repository.getInspectedRoomIdsForDate(any()) } returns setOf(1L)
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         // Initially all rooms visible
@@ -374,7 +393,7 @@ class MasterDataViewModelTest {
         coEvery { repository.isCacheAvailable() } returns true
         coEvery { repository.getInspectedRoomIdsForDate(any()) } returns emptySet()
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         viewModel.setUninspectedFilter("2026-07-30")
@@ -391,7 +410,7 @@ class MasterDataViewModelTest {
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns true
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         viewModel.clearSyncMessage()
@@ -416,7 +435,7 @@ class MasterDataViewModelTest {
         every { repository.rooms } returns roomsFlow
         coEvery { repository.isCacheAvailable() } returns true
 
-        val viewModel = MasterDataViewModel(repository, authRepository)
+        val viewModel = MasterDataViewModel(repository)
         advanceUntilIdle()
 
         // Hanya room yang di-assign yang tampil — room B (dicabut) tidak muncul
@@ -425,44 +444,4 @@ class MasterDataViewModelTest {
         assertEquals(1L, rooms[0].id)
     }
 
-    @Test
-    fun `admin sees all rooms regardless of assignment`() = runTest {
-        every { authRepository.currentUser } returns MutableStateFlow(
-            UserOut(id = 9, username = "admin", role = "admin_ppi", isActive = true)
-        )
-        val itemsFlow = MutableStateFlow(sampleItems)
-        val roomsFlow = MutableStateFlow(listOf(
-            RuangEntity(id = 1, nama = "Ruang A", isMyRoom = true),
-            RuangEntity(id = 2, nama = "Ruang B", isMyRoom = false),
-        ))
-        every { repository.items } returns itemsFlow
-        every { repository.rooms } returns roomsFlow
-        coEvery { repository.isCacheAvailable() } returns true
-
-        val viewModel = MasterDataViewModel(repository, authRepository)
-        advanceUntilIdle()
-
-        // admin_ppi tidak punya assignment — tetap melihat semua room
-        assertEquals(2, viewModel.uiState.value.rooms.size)
-    }
-
-    @Test
-    fun `null user is treated as non-admin and sees only assigned rooms`() = runTest {
-        every { authRepository.currentUser } returns MutableStateFlow(null)
-        val itemsFlow = MutableStateFlow(sampleItems)
-        val roomsFlow = MutableStateFlow(listOf(
-            RuangEntity(id = 1, nama = "Ruang A", isMyRoom = true),
-            RuangEntity(id = 2, nama = "Ruang B", isMyRoom = false),
-        ))
-        every { repository.items } returns itemsFlow
-        every { repository.rooms } returns roomsFlow
-        coEvery { repository.isCacheAvailable() } returns true
-
-        val viewModel = MasterDataViewModel(repository, authRepository)
-        advanceUntilIdle()
-
-        // Defensif: user null → perilaku non-admin (filter isMyRoom)
-        assertEquals(1, viewModel.uiState.value.rooms.size)
-        assertEquals(1L, viewModel.uiState.value.rooms[0].id)
-    }
 }

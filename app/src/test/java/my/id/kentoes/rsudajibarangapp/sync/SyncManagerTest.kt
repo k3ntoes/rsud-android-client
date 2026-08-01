@@ -152,6 +152,41 @@ class SyncManagerTest {
         coVerify(exactly = 0) { inspectionHistoryRepository.cacheInspection(any(), any()) }
     }
 
+    // ── syncMasterData — partial result (H1) ──
+
+    @Test
+    fun `syncMasterData continues after a step fails and reports partial result`() = runTest {
+        coEvery { masterDataRepository.syncItems() } returns Unit
+        coEvery { masterDataRepository.syncRooms() } returns Unit
+        coEvery { masterDataRepository.syncRoomItems() } returns Unit
+        coEvery { masterDataRepository.syncMyRooms() } throws RuntimeException("Network down")
+        coEvery { masterDataRepository.syncUserRooms() } returns Unit
+        coEvery { masterDataRepository.syncUsers() } returns Unit
+
+        val result = syncManager.syncMasterData()
+
+        assertEquals(5, result.succeeded.size)
+        assertEquals(listOf("Ruangan Saya"), result.failed)
+        assertTrue(result.isPartial)
+        assertEquals("Network down", result.firstError)
+    }
+
+    @Test
+    fun `syncMasterData reports all failed when every step fails`() = runTest {
+        coEvery { masterDataRepository.syncItems() } throws RuntimeException("down")
+        coEvery { masterDataRepository.syncRooms() } throws RuntimeException("down")
+        coEvery { masterDataRepository.syncRoomItems() } throws RuntimeException("down")
+        coEvery { masterDataRepository.syncMyRooms() } throws RuntimeException("down")
+        coEvery { masterDataRepository.syncUserRooms() } throws RuntimeException("down")
+        coEvery { masterDataRepository.syncUsers() } throws RuntimeException("down")
+
+        val result = syncManager.syncMasterData()
+
+        assertEquals(6, result.failed.size)
+        assertTrue(result.isAllFailed)
+        assertTrue(result.succeeded.isEmpty())
+    }
+
     // ── syncAllPending ──
 
     @Test

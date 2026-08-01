@@ -18,14 +18,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.HourglassEmpty
-import androidx.compose.material.icons.filled.Inventory2
-import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.SyncProblem
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -45,9 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
-import my.id.kentoes.rsudajibarangapp.dashboard.components.IssueCard
 import my.id.kentoes.rsudajibarangapp.dashboard.components.RecentDraftCard
-import my.id.kentoes.rsudajibarangapp.dashboard.components.RoomScoreCard
 import my.id.kentoes.rsudajibarangapp.dashboard.components.StatCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,7 +49,6 @@ import my.id.kentoes.rsudajibarangapp.dashboard.components.StatCard
 fun DashboardScreen(
     currentUser: UserOut?,
     onNavigateToDrafts: () -> Unit,
-    onNavigateToHistory: () -> Unit = {},
     onNavigateToUninspectedRooms: () -> Unit = {},
     onNavigateToHistoryWithDate: () -> Unit = {},
     onLogout: () -> Unit,
@@ -70,8 +63,10 @@ fun DashboardScreen(
                     Column {
                         Text("Dashboard", fontWeight = FontWeight.Bold)
                         Text(
+                            // ADR-0017: role kini konstan inspector — header menampilkan nama · username
                             text = if (currentUser != null) {
-                                "${currentUser.username} · ${currentUser.role}"
+                                listOfNotNull(currentUser.name?.ifBlank { null }, currentUser.username)
+                                    .joinToString(" · ")
                             } else {
                                 "RSUD Ajibarang"
                             },
@@ -175,39 +170,8 @@ fun DashboardScreen(
                                 value = uiState.syncedCount.toString(),
                                 color = Color(0xFF388E3C)
                             )
-                            StatCard(
-                                modifier = Modifier.weight(1f),
-                                icon = Icons.Default.Inventory2,
-                                label = "Total Inspeksi",
-                                value = uiState.totalDrafts.toString(),
-                                color = MaterialTheme.colorScheme.tertiary
-                            )
                         }
                     }
-
-                    // ── Master Data Stats ──
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            StatCard(
-                                modifier = Modifier.weight(1f),
-                                icon = Icons.Default.MeetingRoom,
-                                label = "Ruangan",
-                                value = uiState.totalRooms.toString(),
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                            StatCard(
-                                modifier = Modifier.weight(1f),
-                                icon = Icons.Default.Description,
-                                label = "Item",
-                                value = uiState.totalItems.toString(),
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                        }
-                    }
-
                     // ── Status Inspeksi Hari Ini ──
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
@@ -239,64 +203,6 @@ fun DashboardScreen(
                                 color = Color(0xFF388E3C),
                                 onClick = onNavigateToHistoryWithDate
                             )
-                        }
-                    }
-
-                    // ── Action Buttons ──
-                    item {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "Aksi Cepat",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-
-                    item {
-                        FilledTonalButton(
-                            onClick = onNavigateToHistory,
-                            modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(16.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.HourglassEmpty,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Riwayat Inspeksi", style = MaterialTheme.typography.bodyLarge)
-                        }
-                    }
-
-                    // ── Analytics: Lowest Rooms ──
-                    if (uiState.lowestRooms.isNotEmpty()) {
-                        item {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                "Ruangan dengan Skor Terendah",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-
-                        items(uiState.lowestRooms, key = { it.roomId }) { room ->
-                            RoomScoreCard(room = room)
-                        }
-                    }
-
-                    // ── Analytics: Top Issues ──
-                    if (uiState.topIssues.isNotEmpty()) {
-                        item {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                "Temuan Paling Sering",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-
-                        items(uiState.topIssues, key = { it.itemId }) { issue ->
-                            IssueCard(issue = issue)
                         }
                     }
 

@@ -77,7 +77,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `init triggers refresh from server`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 1, currentPage = 1
         )
         val viewModel = createViewModel()
@@ -89,7 +89,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `refreshFromServer updates cache and resets page`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 1, currentPage = 1
         )
         val viewModel = createViewModel()
@@ -100,7 +100,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `refreshFromServer sets error on failure`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } throws RuntimeException("Network error")
+        coEvery { repository.fetchInspections(any(), any(), any()) } throws RuntimeException("Network error")
         val viewModel = createViewModel()
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.isRefreshing)
@@ -111,7 +111,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `setFilter updates filter status and resets page`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 1, currentPage = 1
         )
         val viewModel = createViewModel()
@@ -124,7 +124,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `setFilter to null shows all`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 1, currentPage = 1
         )
         val viewModel = createViewModel()
@@ -138,7 +138,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `loadNextPage does nothing when hasMorePages is false`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 1, currentPage = 1
         )
         val viewModel = createViewModel()
@@ -151,13 +151,13 @@ class InspectionHistoryViewModelTest {
     @Test
     fun `loadNextPage does nothing when already loading`() = runTest(testDispatcher) {
         // Stub for init — page 1 of 2, sehingga hasMorePages tetap true setelah init
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(emptyList(), totalPages = 2, currentPage = 1)
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(emptyList(), totalPages = 2, currentPage = 1)
         val viewModel = createViewModel()
         advanceUntilIdle() // init completes
 
         // Overwrite with count-tracking stub for pagination
         var callCount = 0
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } coAnswers {
+        coEvery { repository.fetchInspections(any(), any(), any()) } coAnswers {
             callCount++
             kotlinx.coroutines.delay(100000)
             PaginatedResult(items = emptyList(), totalPages = 2, currentPage = firstArg())
@@ -171,12 +171,12 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `loadNextPage sets error on failure`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 2, currentPage = 1
         )
         val viewModel = createViewModel()
         advanceUntilIdle()
-        coEvery { repository.fetchInspections(page = 2, any(), any(), any()) } throws RuntimeException("Timeout")
+        coEvery { repository.fetchInspections(page = 2, any(), any()) } throws RuntimeException("Timeout")
         viewModel.loadNextPage()
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.isLoadingMore)
@@ -186,7 +186,7 @@ class InspectionHistoryViewModelTest {
     @Test
     fun `refresh landing mid loadNextPage does not clobber pagination state`() = runTest(testDispatcher) {
         // Init: page 1 of 2 → hasMorePages tetap true
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 2, currentPage = 1
         )
         val viewModel = createViewModel()
@@ -194,7 +194,7 @@ class InspectionHistoryViewModelTest {
 
         // Gate: fetch halaman 2 (loadMore) memblok sampai dilepaskan
         val gate = CompletableDeferred<Unit>()
-        coEvery { repository.fetchInspections(page = 2, any(), any(), any()) } coAnswers {
+        coEvery { repository.fetchInspections(page = 2, any(), any()) } coAnswers {
             gate.await()
             PaginatedResult(items = emptyList(), totalPages = 2, currentPage = 2)
         }
@@ -217,7 +217,7 @@ class InspectionHistoryViewModelTest {
     @Test
     fun `loadNextPage landing after refresh result does not clobber pagination state`() = runTest(testDispatcher) {
         // Init: page 1 of 2 → hasMorePages tetap true
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 2, currentPage = 1
         )
         val viewModel = createViewModel()
@@ -225,12 +225,12 @@ class InspectionHistoryViewModelTest {
 
         // Refresh dan loadMore sama-sama ditahan sampai dilepas bergantian
         val refreshGate = CompletableDeferred<Unit>()
-        coEvery { repository.fetchInspections(page = 1, any(), any(), any()) } coAnswers {
+        coEvery { repository.fetchInspections(page = 1, any(), any()) } coAnswers {
             refreshGate.await()
             PaginatedResult(items = emptyList(), totalPages = 2, currentPage = 1)
         }
         val loadGate = CompletableDeferred<Unit>()
-        coEvery { repository.fetchInspections(page = 2, any(), any(), any()) } coAnswers {
+        coEvery { repository.fetchInspections(page = 2, any(), any()) } coAnswers {
             loadGate.await()
             PaginatedResult(items = emptyList(), totalPages = 2, currentPage = 2)
         }
@@ -259,14 +259,14 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `loadNextPage stops at last page from server totalPages`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 3, currentPage = 1
         )
         val viewModel = createViewModel()
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.hasMorePages)
 
-        coEvery { repository.fetchInspections(page = 2, any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(page = 2, any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 3, currentPage = 2
         )
         viewModel.loadNextPage()
@@ -274,7 +274,7 @@ class InspectionHistoryViewModelTest {
         assertTrue(viewModel.uiState.value.hasMorePages)
         assertEquals(2, viewModel.uiState.value.currentPage)
 
-        coEvery { repository.fetchInspections(page = 3, any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(page = 3, any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 3, currentPage = 3
         )
         viewModel.loadNextPage()
@@ -462,7 +462,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `init handles fetch failure gracefully`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } throws RuntimeException("Server down")
+        coEvery { repository.fetchInspections(any(), any(), any()) } throws RuntimeException("Server down")
         val viewModel = createViewModel()
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.isInitialLoading)
@@ -471,7 +471,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `multiple fast refreshes cancel previous`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } coAnswers {
+        coEvery { repository.fetchInspections(any(), any(), any()) } coAnswers {
             kotlinx.coroutines.delay(500)
             PaginatedResult(items = emptyList(), totalPages = 1, currentPage = firstArg())
         }
@@ -487,7 +487,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `setFilterDate updates filterDate state`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 1, currentPage = 1
         )
         coEvery { repository.observeLocalInspections(any(), any()) } returns MutableStateFlow(emptyList())
@@ -503,7 +503,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `setFilterDate resets to page 1`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 2, currentPage = 1
         )
         coEvery { repository.observeLocalInspections(any(), any()) } returns MutableStateFlow(emptyList())
@@ -519,7 +519,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `setFilterDate passes date to observeLocalInspections`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 1, currentPage = 1
         )
         val viewModel = createViewModel()
@@ -533,7 +533,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `setFilterDate with null clears filter`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 1, currentPage = 1
         )
         coEvery { repository.observeLocalInspections(any(), any()) } returns MutableStateFlow(emptyList())
@@ -552,7 +552,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `setFilter preserves filterDate when changing status`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 1, currentPage = 1
         )
         coEvery { repository.observeLocalInspections(any(), any()) } returns MutableStateFlow(emptyList())
@@ -572,7 +572,7 @@ class InspectionHistoryViewModelTest {
 
     @Test
     fun `setFilter with date passes both to repository`() = runTest(testDispatcher) {
-        coEvery { repository.fetchInspections(any(), any(), any(), any()) } returns PaginatedResult(
+        coEvery { repository.fetchInspections(any(), any(), any()) } returns PaginatedResult(
             items = emptyList(), totalPages = 1, currentPage = 1
         )
         val viewModel = createViewModel()

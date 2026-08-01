@@ -9,7 +9,6 @@ import my.id.kentoes.rsudajibarangapp.BuildConfig
 import my.id.kentoes.rsudajibarangapp.auth.api.AuthApi
 import my.id.kentoes.rsudajibarangapp.core.network.AuthInterceptor
 import my.id.kentoes.rsudajibarangapp.core.network.TokenAuthenticator
-import my.id.kentoes.rsudajibarangapp.dashboard.api.AnalyticsApi
 import my.id.kentoes.rsudajibarangapp.master.api.MasterDataApi
 import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
 import okhttp3.MediaType.Companion.toMediaType
@@ -52,12 +51,6 @@ object AppModule {
     @Singleton
     fun provideSyncApi(retrofit: Retrofit): SyncApi {
         return retrofit.create(SyncApi::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideAnalyticsApi(retrofit: Retrofit): AnalyticsApi {
-        return retrofit.create(AnalyticsApi::class.java)
     }
 
     @Provides

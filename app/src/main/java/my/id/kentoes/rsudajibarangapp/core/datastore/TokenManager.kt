@@ -35,7 +35,8 @@ class TokenManager @Inject constructor(
                 userId = current.userId,
                 username = current.username,
                 role = current.role,
-                isActive = current.isActive
+                isActive = current.isActive,
+                name = current.name
             )
         }
     }
@@ -46,7 +47,8 @@ class TokenManager @Inject constructor(
                 userId = user.id,
                 username = user.username,
                 role = user.role,
-                isActive = user.isActive
+                isActive = user.isActive,
+                name = user.name.orEmpty()
             )
         }
     }
@@ -58,7 +60,8 @@ class TokenManager @Inject constructor(
                 id = data.userId,
                 username = data.username,
                 role = data.role,
-                isActive = data.isActive
+                isActive = data.isActive,
+                name = data.name.ifBlank { null }
             )
         } else null
     }
