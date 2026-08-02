@@ -1,9 +1,35 @@
+import java.io.StringReader
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+}
+
+// ===== BASE_URL dari file .env (root project) =====
+// Ubah URL backend cukup edit file `.env` — tanpa perlu buka project / file ini.
+// Format: BASE_URL=https://be-ajib.kentoes.my.id/api/
+// Jika `.env` tidak ada atau key BASE_URL kosong → fallback ke BASE_URL_DEFAULT.
+private val BASE_URL_DEFAULT = "https://be-ajib.kentoes.my.id/api/"
+
+private fun resolveBaseUrl(): String {
+    val envFile = rootProject.layout.projectDirectory.file(".env")
+    // providers.fileContents di-track configuration cache → build otomatis
+    // memakai nilai terbaru saat .env berubah (tanpa perlu clean / no-config-cache).
+    val envText = if (envFile.asFile.exists()) {
+        providers.fileContents(envFile).asText.get().removePrefix("\uFEFF") // anti-BOM (Notepad Windows)
+    } else {
+        ""
+    }
+    if (envText.isBlank()) return BASE_URL_DEFAULT
+    val props = Properties()
+    props.load(StringReader(envText))
+    // Escape untuk buildConfigField (URL normal tidak mengandung karakter ini)
+    return props.getProperty("BASE_URL")?.trim()?.takeIf { it.isNotBlank() }
+        ?.replace("\\", "\\\\")?.replace("\"", "\\\"") ?: BASE_URL_DEFAULT
 }
 
 android {
@@ -19,14 +45,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Base URL — override di debug build type
-        buildConfigField("String", "BASE_URL", "\"https://be-ajib.kentoes.my.id/api/\"")
+        // Base URL — dibaca dari file .env di root project (lihat resolveBaseUrl)
+        buildConfigField("String", "BASE_URL", "\"${resolveBaseUrl()}\"")
     }
 
     buildTypes {
-        debug {
-            buildConfigField("String", "BASE_URL", "\"https://be-ajib.kentoes.my.id/api/\"")
-        }
+        // BASE_URL diwarisi dari defaultConfig (sumber: .env) untuk semua build type.
         release {
             isMinifyEnabled = true
             isShrinkResources = true

@@ -5,7 +5,7 @@ Fondasi aplikasi yang digunakan bersama oleh semua konteks lain. Menyediakan pen
 ## Language
 
 **Alamat Server**: 
-Lokasi server backend RSUD yang menjadi tujuan semua permintaan data. Termasuk path prefix `/api/` — semua endpoint Retrofit menggunakan path relatif tanpa `/api/`. Contoh: `BASE_URL = "https://be-ajib.kentoes.my.id/api/"`.
+Lokasi server backend RSUD yang menjadi tujuan semua permintaan data. Termasuk path prefix `/api/` — semua endpoint Retrofit menggunakan path relatif tanpa `/api/`. Contoh: `BASE_URL = "https://be-ajib.kentoes.my.id/api/"`. Nilai `BASE_URL` dibaca saat build dari file `.env` di root project (fallback ke default di `app/build.gradle.kts`) — ubah URL server cukup edit `.env` lalu build ulang, tanpa perlu membuka project.
 _Avoid_: Base URL, server address, endpoint
 
 **Penyedia Token**: 
