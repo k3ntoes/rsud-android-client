@@ -33,3 +33,6 @@ docs/graphify-out/
 # Python cache & diagram build intermediates
 scripts/__pycache__/
 docs/.flow-diagrams-build/
+
+# Build artifacts — hasil task buildApk
+/apk/

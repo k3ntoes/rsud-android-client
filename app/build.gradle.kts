@@ -75,6 +75,56 @@ android {
         compose = true
         buildConfig = true
     }
+    compileSdkMinor = 0
+}
+
+// ===== Task buildApk: build APK debug + release, salin ke folder `apk/` =====
+// Usage: ./gradlew buildApk
+// Output:
+//   apk/rsud-ajibarang-v<versionName>-debug.apk
+//   apk/rsud-ajibarang-v<versionName>-release-unsigned.apk  (belum ada signing config)
+tasks.register("buildApk") {
+    group = "build"
+    description = "Build APK debug + release dan salin hasilnya ke folder apk/ di root project"
+
+    // Catatan: nama task assemble ini berlaku selama project single-flavor;
+    // jika nanti menambah product flavors, task berubah jadi assemble<Flavor><Type>.
+    dependsOn("assembleDebug", "assembleRelease")
+
+    // Nilai di-resolve ke File/String polos di level task (bukan script level),
+    // agar doLast tidak menangkap referensi objek script — kompatibel configuration cache.
+    val outputDir = rootProject.layout.projectDirectory.dir("apk").asFile
+    val apkOutputParentDir = layout.buildDirectory.dir("outputs/apk").get().asFile
+    val projectRootDir = rootProject.layout.projectDirectory.asFile
+    val appVersionName = android.defaultConfig.versionName ?: "1.0"
+
+    doLast {
+        // Bersihkan APK lama hasil task ini (bukan APK lain yang mungkin ditaruh manual).
+        outputDir.listFiles { file -> file.extension == "apk" && file.name.startsWith("rsud-ajibarang-") }
+            ?.forEach { it.delete() }
+        outputDir.mkdirs()
+
+        val baseName = "rsud-ajibarang-v$appVersionName"
+
+        fun copyApk(buildType: String) {
+            val apkDir = File(apkOutputParentDir, buildType)
+            // Prioritaskan APK signed (nama tanpa "unsigned"); fallback ke APK apa pun.
+            val apk = apkDir.listFiles { file -> file.extension == "apk" }
+                ?.sortedBy { it.name.contains("unsigned") }
+                ?.firstOrNull()
+                ?: error("APK $buildType tidak ditemukan di $apkDir — build gagal?")
+            // Nama target mencerminkan kondisi asli: release tanpa signing -> suffix "-unsigned".
+            val suffix = if (apk.name.contains("unsigned")) "-unsigned" else ""
+            val target = File(outputDir, "$baseName-$buildType$suffix.apk")
+            apk.copyTo(target, overwrite = true)
+            println("  \u2714 $buildType: ${apk.name} -> ${target.relativeTo(projectRootDir)}")
+        }
+
+        println("Menyalin APK (debug + release) ke folder apk/...")
+        copyApk("debug")
+        copyApk("release")
+        println("Selesai. APK tersedia di folder: ${outputDir.relativeTo(projectRootDir)}")
+    }
 }
 
 dependencies {
