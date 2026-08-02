@@ -5,9 +5,9 @@
     "semantic_hash": "46a2a00761be2785e59661f0e3c11471"
   },
   "app/build.gradle.kts": {
-    "mtime": 1785492494.9617217,
-    "ast_hash": "90c3cfeccdc51d885946a498f46f21fe",
-    "semantic_hash": "90c3cfeccdc51d885946a498f46f21fe"
+    "mtime": 1785674170.825848,
+    "ast_hash": "4f9584b764d1030dbbe90d0c2a74f46e",
+    "semantic_hash": "4f9584b764d1030dbbe90d0c2a74f46e"
   },
   "app/src/androidTest/java/my/id/kentoes/rsudajibarangapp/ExampleInstrumentedTest.kt": {
     "mtime": 1785152852.9361126,
@@ -220,9 +220,9 @@
     "semantic_hash": "a183d29d479f330d54f6914d5dfe144e"
   },
   "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/InspectionFormScreen.kt": {
-    "mtime": 1785573472.8271844,
-    "ast_hash": "58c44521d7678fee8341117e3713ad57",
-    "semantic_hash": "58c44521d7678fee8341117e3713ad57"
+    "mtime": 1785597802.8062007,
+    "ast_hash": "96462b13fbbc6bdc3627fd475e5bf708",
+    "semantic_hash": "96462b13fbbc6bdc3627fd475e5bf708"
   },
   "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/InspectionFormViewModel.kt": {
     "mtime": 1785593617.8364573,
@@ -240,9 +240,9 @@
     "semantic_hash": "f99eb71056c1cb2107a0b74b7ea93b61"
   },
   "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/InspectionRepository.kt": {
-    "mtime": 1785593836.4010766,
-    "ast_hash": "5d49852e556e731ccd5c8b205723f8a2",
-    "semantic_hash": "5d49852e556e731ccd5c8b205723f8a2"
+    "mtime": 1785598126.048261,
+    "ast_hash": "07d502f4e39f35152bf81f903328b50a",
+    "semantic_hash": "07d502f4e39f35152bf81f903328b50a"
   },
   "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/ItemState.kt": {
     "mtime": 1785524046.4809763,
@@ -440,9 +440,9 @@
     "semantic_hash": "ebc5b5ba6d50c929b0ddd9b0b5a2cc8c"
   },
   "app/src/test/java/my/id/kentoes/rsudajibarangapp/inspection/InspectionRepositoryTest.kt": {
-    "mtime": 1785492951.2806547,
-    "ast_hash": "316f6e6459f04d25ec67b4c633fcf25a",
-    "semantic_hash": "316f6e6459f04d25ec67b4c633fcf25a"
+    "mtime": 1785598137.7132072,
+    "ast_hash": "514a8883750a241bd7c2afd501067ec0",
+    "semantic_hash": "514a8883750a241bd7c2afd501067ec0"
   },
   "app/src/test/java/my/id/kentoes/rsudajibarangapp/inspection/ui/DateUtilsTest.kt": {
     "mtime": 1785473246.8786566,
@@ -1255,9 +1255,9 @@
     "semantic_hash": "9ee591be72fb336861a8044086054daa"
   },
   "app/src/main/java/my/id/kentoes/rsudajibarangapp/core/CONTEXT.md": {
-    "mtime": 1785571523.2750688,
-    "ast_hash": "afa862866cb412beb986ae1319fd180c",
-    "semantic_hash": "afa862866cb412beb986ae1319fd180c"
+    "mtime": 1785672360.6254716,
+    "ast_hash": "c7ae76c21f8114e1a40406e75c3c7ca4",
+    "semantic_hash": "c7ae76c21f8114e1a40406e75c3c7ca4"
   },
   "app/src/main/java/my/id/kentoes/rsudajibarangapp/inspections/CONTEXT.md": {
     "mtime": 1785592524.5881886,
@@ -1323,5 +1323,55 @@
     "mtime": 1785595628.1311638,
     "ast_hash": "710a369e9eeabe5def2ce54ed04aec14",
     "semantic_hash": "710a369e9eeabe5def2ce54ed04aec14"
+  },
+  "docs/TUTORIAL-PENGGUNAAN.html": {
+    "mtime": 1785671216.1668403,
+    "ast_hash": "d2f4526e0a0ecb8753c2b65d862fa370",
+    "semantic_hash": "d2f4526e0a0ecb8753c2b65d862fa370"
+  },
+  "docs/flow-diagrams.html": {
+    "mtime": 1785596751.4401946,
+    "ast_hash": "1a0f54eb2db63950f5d65a0e0fdbd5a6",
+    "semantic_hash": "1a0f54eb2db63950f5d65a0e0fdbd5a6"
+  },
+  "docs/tutorial-preview/Dashboard.png": {
+    "mtime": 1785671314.2586777,
+    "ast_hash": "19453131bb580e01405553504e782fba",
+    "semantic_hash": "19453131bb580e01405553504e782fba"
+  },
+  "docs/tutorial-preview/Detail.png": {
+    "mtime": 1785671318.170671,
+    "ast_hash": "1543c1536709a99ad3bf0e110d904ebf",
+    "semantic_hash": "1543c1536709a99ad3bf0e110d904ebf"
+  },
+  "docs/tutorial-preview/Draf.png": {
+    "mtime": 1785671316.5796738,
+    "ast_hash": "21a1f2af2e5638a4987619fa80117d45",
+    "semantic_hash": "21a1f2af2e5638a4987619fa80117d45"
+  },
+  "docs/tutorial-preview/FormInspeksi.png": {
+    "mtime": 1785671315.783675,
+    "ast_hash": "a7ba478f85c2500bb188b241bceb06bd",
+    "semantic_hash": "a7ba478f85c2500bb188b241bceb06bd"
+  },
+  "docs/tutorial-preview/Login.png": {
+    "mtime": 1785671313.4586792,
+    "ast_hash": "cb3147ab24747ed419ebd9fa4da4bbdd",
+    "semantic_hash": "cb3147ab24747ed419ebd9fa4da4bbdd"
+  },
+  "docs/tutorial-preview/PilihRuangan.png": {
+    "mtime": 1785671315.0186763,
+    "ast_hash": "b23c15a6c9ce8ebfbf3fa71ac74a8978",
+    "semantic_hash": "b23c15a6c9ce8ebfbf3fa71ac74a8978"
+  },
+  "docs/tutorial-preview/Riwayat.png": {
+    "mtime": 1785671317.3526723,
+    "ast_hash": "5f949ceecf7c911aa340811c5c389fb0",
+    "semantic_hash": "5f949ceecf7c911aa340811c5c389fb0"
+  },
+  "docs/tutorial-preview/SyncFlow.png": {
+    "mtime": 1785671318.8866696,
+    "ast_hash": "4b73a33a8b17d50715827f8394c8f129",
+    "semantic_hash": "4b73a33a8b17d50715827f8394c8f129"
   }
 }

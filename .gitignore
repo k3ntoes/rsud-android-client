@@ -35,4 +35,4 @@ scripts/__pycache__/
 docs/.flow-diagrams-build/
 
 # Build artifacts — hasil task buildApk
-/apk/
+#/apk/
