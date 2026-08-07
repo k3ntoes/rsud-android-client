@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
@@ -50,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil.compose.AsyncImage
 import my.id.kentoes.rsudajibarangapp.BuildConfig
+import my.id.kentoes.rsudajibarangapp.core.model.inspectionStatusLabel
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionHistoryViewModel
 import my.id.kentoes.rsudajibarangapp.sync.api.PhotoOutDto
 import java.io.File
@@ -100,11 +102,18 @@ fun InspectionDetailScreen(
             }
             else -> {
                 val detail = uiState.selectedDetail!!
+                // UX Phase 7: warna token M3 (bukan hex) + label status via inspectionStatusLabel()
                 val statusColor = when (detail.status) {
-                    "APPROVED" -> Color(0xFF388E3C)
+                    "APPROVED" -> MaterialTheme.colorScheme.secondary
                     "REJECTED" -> MaterialTheme.colorScheme.error
-                    else -> Color(0xFFF9A825)
+                    else -> MaterialTheme.colorScheme.tertiary
                 }
+                // Ringkasan skor dari details[].score — data existing, tanpa endpoint baru
+                val scoreCounts = detail.details.groupingBy { it.score }.eachCount()
+                val berisiko = scoreCounts[0] ?: 0
+                val minor = scoreCounts[1] ?: 0
+                val sesuai = scoreCounts[2] ?: 0
+                val totalScored = detail.details.size
 
                 LazyColumn(
                     contentPadding = PaddingValues(16.dp),
@@ -131,7 +140,7 @@ fun InspectionDetailScreen(
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column(modifier = Modifier.weight(1f)) {
-                                        Text("Status: ${detail.status}", fontWeight = FontWeight.Bold,
+                                        Text(detail.status.inspectionStatusLabel(), fontWeight = FontWeight.Bold,
                                             style = MaterialTheme.typography.titleMedium)
                                         Text(uiState.inspectorName,
                                             style = MaterialTheme.typography.bodySmall,
@@ -149,6 +158,27 @@ fun InspectionDetailScreen(
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
+                                // Ringkasan skor — informatif (Phase 7): berapa item Berisiko/Minor/Sesuai
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    ScoreCountText("$berisiko Berisiko", MaterialTheme.colorScheme.error)
+                                    ScoreCountText("$minor Minor", MaterialTheme.colorScheme.tertiary)
+                                    ScoreCountText("$sesuai Sesuai", MaterialTheme.colorScheme.secondary)
+                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                LinearProgressIndicator(
+                                    progress = {
+                                        if (totalScored > 0) sesuai.toFloat() / totalScored else 0f
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    "$sesuai dari $totalScored item sesuai standar",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+
                                 detail.rejectionReason?.let { reason ->
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Text("Alasan ditolak: $reason",
@@ -231,6 +261,16 @@ fun InspectionDetailScreen(
             }
         }
     }
+}
+
+@Composable
+private fun ScoreCountText(count: String, color: Color) {
+    Text(
+        text = count,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
+        color = color
+    )
 }
 
 @Composable

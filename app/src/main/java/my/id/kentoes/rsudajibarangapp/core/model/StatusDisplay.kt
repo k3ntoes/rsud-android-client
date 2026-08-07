@@ -42,3 +42,14 @@ fun String.toStatusDisplay(): StatusDisplay {
         )
     }
 }
+
+/**
+ * Label bahasa Indonesia untuk status inspeksi (server-side).
+ * Warna TIDAK di sini — pakai token M3 di call-site via `when(status)` (lihat Riwayat/Detail).
+ */
+fun String.inspectionStatusLabel(): String = when (this) {
+    "PENDING" -> "Menunggu Review"
+    "APPROVED" -> "Disetujui"
+    "REJECTED" -> "Ditolak"
+    else -> this
+}

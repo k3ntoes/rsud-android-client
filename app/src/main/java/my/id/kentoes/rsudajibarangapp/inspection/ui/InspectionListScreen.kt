@@ -54,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import my.id.kentoes.rsudajibarangapp.core.model.inspectionStatusLabel
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionHistoryItem
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionHistoryViewModel
 
@@ -276,16 +277,25 @@ private fun InspectionHistoryCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            Icon(
-                imageVector = when (item.status) {
-                    "APPROVED" -> Icons.Default.CheckCircle
-                    "REJECTED" -> Icons.Default.Warning
-                    else -> Icons.Default.HourglassEmpty
-                },
-                contentDescription = item.status,
-                tint = statusColor,
-                modifier = Modifier.size(24.dp)
-            )
+            // Phase 7: ikon + label status teks (bukan hanya ikon)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = when (item.status) {
+                        "APPROVED" -> Icons.Default.CheckCircle
+                        "REJECTED" -> Icons.Default.Warning
+                        else -> Icons.Default.HourglassEmpty
+                    },
+                    contentDescription = item.status,
+                    tint = statusColor,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = item.status.inspectionStatusLabel(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = statusColor
+                )
+            }
         }
     }
 }
