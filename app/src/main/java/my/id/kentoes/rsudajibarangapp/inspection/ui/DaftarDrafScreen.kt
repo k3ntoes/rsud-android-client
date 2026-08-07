@@ -56,7 +56,7 @@ import my.id.kentoes.rsudajibarangapp.inspection.DraftSummary
 @Composable
 fun DaftarDrafScreen(
     onNavigateBack: () -> Unit,
-    onResumeDraft: (draftId: Long) -> Unit,
+    onResumeDraft: (draftId: Long, roomName: String) -> Unit,
     onStartInspection: () -> Unit = {},
     viewModel: DaftarDrafViewModel = hiltViewModel()
 ) {
@@ -181,7 +181,7 @@ fun DaftarDrafScreen(
                         DraftCard(
                             draft = draft,
                             isDeleting = uiState.deletingId == draft.id,
-                            onResume = { onResumeDraft(draft.id) },
+                            onResume = { onResumeDraft(draft.id, draft.roomName) },
                             onDelete = { viewModel.requestDelete(draft) }
                         )
                     }

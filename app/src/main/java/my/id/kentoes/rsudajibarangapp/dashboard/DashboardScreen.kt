@@ -70,7 +70,7 @@ fun DashboardScreen(
     onNavigateToDrafts: () -> Unit,
     onNavigateToHistory: () -> Unit,
     onOpenRoomForm: (Long, String) -> Unit,
-    onResumeDraft: (Long) -> Unit,
+    onResumeDraft: (Long, String) -> Unit,
     onInspectionClick: (Long) -> Unit,
     onLogout: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
@@ -222,7 +222,10 @@ fun DashboardScreen(
                             )
                         }
                     } else {
-                        items(uiState.roomStatuses, key = { it.roomId }) { status ->
+                        // Prefix key agar tidak bertabrakan dengan key draf di LazyColumn yang
+                        // sama (roomId dan draft.id sama-sama mulai dari 1) — tanpa ini aplikasi
+                        // crash "Key X was already used" saat draf & status ruangan tampil bareng.
+                        items(uiState.roomStatuses, key = { "room_${it.roomId}" }) { status ->
                             RoomStatusRow(
                                 item = status,
                                 onOpenForm = onOpenRoomForm,
@@ -243,8 +246,8 @@ fun DashboardScreen(
                             )
                         }
 
-                        items(uiState.recentDrafts, key = { it.id }) { draft ->
-                            RecentDraftCard(draft = draft)
+                        items(uiState.recentDrafts, key = { "draft_${it.draft.id}" }) { item ->
+                            RecentDraftCard(draft = item.draft, roomName = item.roomName)
                         }
                     }
                 }
@@ -390,7 +393,7 @@ private fun ProgressTodayCard(
 private fun RoomStatusRow(
     item: RoomStatusItem,
     onOpenForm: (Long, String) -> Unit,
-    onResumeDraft: (Long) -> Unit,
+    onResumeDraft: (Long, String) -> Unit,
     onInspectionClick: (Long) -> Unit
 ) {
     val (statusLabel, statusColor, actionLabel, actionIcon) = when (item.status) {
@@ -438,7 +441,7 @@ private fun RoomStatusRow(
             .clickable {
                 when (item.status) {
                     RoomStatus.BELUM -> onOpenForm(item.roomId, item.roomName)
-                    RoomStatus.DRAF, RoomStatus.MENUNGGU_KIRIM -> item.draftId?.let(onResumeDraft)
+                    RoomStatus.DRAF, RoomStatus.MENUNGGU_KIRIM -> item.draftId?.let { onResumeDraft(it, item.roomName) }
                     else -> item.inspectionId?.let(onInspectionClick)
                 }
             },
@@ -536,7 +539,7 @@ private fun RoomStatusRow(
                     onClick = {
                         when (item.status) {
                             RoomStatus.BELUM -> onOpenForm(item.roomId, item.roomName)
-                            RoomStatus.DRAF, RoomStatus.MENUNGGU_KIRIM -> item.draftId?.let(onResumeDraft)
+                            RoomStatus.DRAF, RoomStatus.MENUNGGU_KIRIM -> item.draftId?.let { onResumeDraft(it, item.roomName) }
                             else -> item.inspectionId?.let(onInspectionClick)
                         }
                     }
@@ -577,9 +580,12 @@ private fun DashboardHeader(
     fun formatToWib(isoTimestamp: String?): String {
         if (isoTimestamp == null) return "--:-- WIB"
         return try {
+            // Server mengirim fraksi detik (mis. "...02.040377Z") sedangkan pola di bawah
+            // tidak mengenali milidetik — strip fraksi dulu agar selalu bisa di-parse.
+            val normalized = isoTimestamp.replace(Regex("\\.\\d+Z$"), "Z")
             val inputFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
             inputFormat.timeZone = TimeZone.getTimeZone("UTC")
-            val date = inputFormat.parse(isoTimestamp) ?: return "--:-- WIB"
+            val date = inputFormat.parse(normalized) ?: return "--:-- WIB"
             val outputFormat = SimpleDateFormat("HH:mm", Locale.US)
             outputFormat.timeZone = TimeZone.getTimeZone("Asia/Jakarta")
             "${outputFormat.format(date)} WIB"

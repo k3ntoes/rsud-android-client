@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import my.id.kentoes.rsudajibarangapp.auth.AuthRepository
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
+import my.id.kentoes.rsudajibarangapp.inspection.ui.wibToday
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafFoto
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
@@ -196,7 +197,11 @@ class InspectionFormViewModel @Inject constructor(
                         // Stempel pemilik draf — dasar pemilahan per akun saat ganti akun
                         inspectorId = authRepository.currentUser.value?.id?.toString(),
                         status = status,
-                        businessDate = now.take(10)
+                        // BUG-FIX (2026-08): businessDate harus hari-bisnis WIB (Asia/Jakarta),
+                        // BUKAN take(10) dari timestamp UTC. Sebelumnya draf yang dibuat
+                        // 00:00–07:00 WIB (UTC masih hari sebelumnya) distempel tanggal salah
+                        // dan tampil sebagai "kemarin" di dashboard.
+                        businessDate = wibToday()
                     )
                 )
 

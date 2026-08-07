@@ -19,6 +19,7 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
 import my.id.kentoes.rsudajibarangapp.master.MasterDataRepository
+import my.id.kentoes.rsudajibarangapp.inspection.ui.wibToday
 import my.id.kentoes.rsudajibarangapp.master.SyncState
 import my.id.kentoes.rsudajibarangapp.master.SyncStateStore
 import my.id.kentoes.rsudajibarangapp.sync.MasterDataSyncResult
@@ -30,9 +31,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class DashboardViewModelTest {
 
@@ -185,8 +183,28 @@ class DashboardViewModelTest {
         advanceUntilIdle()
 
         assertEquals(5, viewModel.uiState.value.recentDrafts.size)
-        assertEquals(1L, viewModel.uiState.value.recentDrafts[0].id)
-        assertEquals(5L, viewModel.uiState.value.recentDrafts[4].id)
+        assertEquals(1L, viewModel.uiState.value.recentDrafts[0].draft.id)
+        assertEquals(5L, viewModel.uiState.value.recentDrafts[4].draft.id)
+    }
+
+    @Test
+    fun `recentDrafts resolve roomName from rooms flow`() = runTest {
+        val drafts = listOf(
+            DrafInspeksi(id = 5, roomId = 1, localTimestamp = "2026-08-07T09:00:00Z", status = "DRAFT"),
+            DrafInspeksi(id = 6, roomId = 99, localTimestamp = "2026-08-07T10:00:00Z", status = "DRAFT"), // ruangan tak dikenal
+        )
+        every { drafDao.getAllDrafts() } returns MutableStateFlow(drafts)
+        every { masterDataDao.getAllRooms() } returns MutableStateFlow(
+            listOf(RuangEntity(id = 1, nama = "ICU"))
+        )
+        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllInspections() } returns MutableStateFlow(emptyList())
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals("ICU", viewModel.uiState.value.recentDrafts[0].roomName)
+        assertNull(viewModel.uiState.value.recentDrafts[1].roomName)
     }
 
     @Test
@@ -384,7 +402,7 @@ class DashboardViewModelTest {
 
     @Test
     fun `roomStatuses derives status with precedence inspection over draft`() = runTest {
-        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val today = wibToday()
         val rooms = listOf(
             RuangEntity(id = 1, nama = "Ruang A", isMyRoom = true),
             RuangEntity(id = 2, nama = "Ruang B", isMyRoom = true),
@@ -428,7 +446,7 @@ class DashboardViewModelTest {
 
     @Test
     fun `roomStatuses maps PENDING_SYNC draft to MENUNGGU_KIRIM and REJECTED to DITOLAK`() = runTest {
-        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val today = wibToday()
         val rooms = listOf(
             RuangEntity(id = 1, nama = "Ruang A", isMyRoom = true),
             RuangEntity(id = 2, nama = "Ruang B", isMyRoom = true),
@@ -455,7 +473,7 @@ class DashboardViewModelTest {
 
     @Test
     fun `roomStatuses sorts BELUM first then by name`() = runTest {
-        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val today = wibToday()
         val rooms = listOf(
             RuangEntity(id = 1, nama = "Zulu", isMyRoom = true),
             RuangEntity(id = 2, nama = "Alpha", isMyRoom = true),
@@ -481,7 +499,7 @@ class DashboardViewModelTest {
     fun `roomStatuses refresh when drafts flow re-emits after save`() = runTest {
         // Regresi reviewer: status per-room harus segar saat user kembali dari form
         // setelah menyimpan draf — bukan hanya saat init/refresh.
-        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val today = wibToday()
         val rooms = listOf(RuangEntity(id = 1, nama = "Ruang A", isMyRoom = true))
         val draftsFlow = MutableStateFlow(emptyList<DrafInspeksi>())
         every { drafDao.getAllDrafts() } returns draftsFlow

@@ -14,12 +14,10 @@ import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
 import my.id.kentoes.rsudajibarangapp.master.MasterDataRepository
+import my.id.kentoes.rsudajibarangapp.inspection.ui.wibToday
 import my.id.kentoes.rsudajibarangapp.master.SyncStateStore
 import my.id.kentoes.rsudajibarangapp.master.latestSyncTime
 import my.id.kentoes.rsudajibarangapp.sync.SyncManager
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import javax.inject.Inject
 
 /** Status satu ruangan pada hari ini (businessDate = today) — daftar per-room di dashboard. */
@@ -38,12 +36,18 @@ data class RoomStatusItem(
     val inspectionId: Long? = null
 )
 
+/** Draf di "Aktivitas Terbaru" + nama ruangannya (draf hanya menyimpan roomId). */
+data class RecentDraftItem(
+    val draft: DrafInspeksi,
+    val roomName: String?
+)
+
 data class DashboardUiState(
     val isLoading: Boolean = true,
     val draftCount: Int = 0,
     val pendingSyncCount: Int = 0,
     val syncedCount: Int = 0,
-    val recentDrafts: List<DrafInspeksi> = emptyList(),
+    val recentDrafts: List<RecentDraftItem> = emptyList(),
     val inspectedRoomCount: Int = 0,
     val uninspectedRoomCount: Int = 0,
     val roomStatuses: List<RoomStatusItem> = emptyList(),
@@ -68,8 +72,12 @@ class DashboardViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 drafDao.getAllDrafts(),
-                masterDataDao.getAllInspections().map { it.size }
-            ) { drafts, inspectionCount ->
+                masterDataDao.getAllInspections().map { it.size },
+                // Flow ruangan dipakai untuk menampilkan NAMA ruangan di "Aktivitas Terbaru"
+                // (draf hanya menyimpan roomId) — emit ulang saat room baru ter-sync.
+                masterDataDao.getAllRooms()
+            ) { drafts, inspectionCount, rooms ->
+                val roomNames = rooms.associate { it.id to it.nama }
                 DashboardUiState(
                     isLoading = false,
                     draftCount = drafts.count { it.status == "DRAFT" },
@@ -78,7 +86,9 @@ class DashboardViewModel @Inject constructor(
                     // SYNCED (draf dihapus dari DB setelah sync sukses, jadi count-nya selalu
                     // 0). Inspeksi terkirim = baris InspectionEntity di cache lokal.
                     syncedCount = inspectionCount,
-                    recentDrafts = drafts.take(5)
+                    recentDrafts = drafts.take(5).map { draft ->
+                        RecentDraftItem(draft = draft, roomName = roomNames[draft.roomId])
+                    }
                 )
             }.collect { state ->
                 _uiState.value = state.copy(
@@ -148,7 +158,10 @@ class DashboardViewModel @Inject constructor(
 
     private fun computeInspectionStatus() {
         viewModelScope.launch {
-            val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+            // BUG-FIX (2026-08): "hari ini" harus hari-bisnis WIB — sama dengan stempel
+            // businessDate di InspectionFormViewModel. Sebelumnya device-local vs UTC
+            // bisa beda hari, jadi draf malam hari tampil sebagai "kemarin".
+            val date = wibToday()
             val allRooms = masterDataDao.getAllRoomsOnce()
             // Android = klien inspector-only (ADR-0017): scope SELALU room yang di-assign.
             val scopeRooms = allRooms.filter { it.isMyRoom }

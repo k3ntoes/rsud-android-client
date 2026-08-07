@@ -6,10 +6,10 @@
 <title>Panduan Penggunaan — Aplikasi Inspeksi Kebersihan RSUD Ajibarang</title>
 <style>
   :root{
-    --primary:#1565C0; --primary-dark:#0D47A1; --primary-light:#D1E4FF;
-    --teal:#00897B; --red:#D32F2F; --amber:#F9A825; --green:#388E3C;
-    --bg:#F3F6FB; --surface:#FFFFFF; --ink:#1B2430; --muted:#64748B;
-    --line:#E2E8F0; --shadow:0 10px 30px rgba(21,101,192,.10);
+    --primary:#16A34A; --primary-dark:#15803D; --primary-light:#BBF7D0;
+    --teal:#22C55E; --red:#EF4444; --amber:#F59E0B; --green:#10B981;
+    --bg:#F5FAF7; --surface:#FFFFFF; --ink:#1F2937; --muted:#64748B;
+    --line:#E2E8F0; --shadow:0 10px 30px rgba(22,163,74,.10);
     --radius:18px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -20,7 +20,7 @@
   }
   /* ── Hero ─────────────────────────────── */
   .hero{
-    background:linear-gradient(135deg,#0D47A1 0%,#1565C0 45%,#00897B 100%);
+    background:linear-gradient(135deg,#14532D 0%,#16A34A 50%,#22C55E 100%);
     color:#fff; padding:64px 24px 56px; position:relative; overflow:hidden;
   }
   .hero::after{
@@ -56,7 +56,7 @@
     display:block;color:var(--ink);text-decoration:none;font-size:14px;padding:7px 10px;
     border-radius:9px;border-left:3px solid transparent;margin-bottom:2px;
   }
-  .toc a:hover{background:#F0F5FF}
+  .toc a:hover{background:#F0FDF4}
   .toc a.active{background:var(--primary-light);border-left-color:var(--primary);font-weight:600;color:var(--primary-dark)}
   /* ── Sections ─────────────────────────── */
   section{margin-bottom:64px;scroll-margin-top:20px}
@@ -74,14 +74,14 @@
   .steps .n{
     flex:0 0 30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;
     display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;
-    margin-top:2px;box-shadow:0 4px 10px rgba(21,101,192,.3);
+    margin-top:2px;box-shadow:0 4px 10px rgba(22,163,74,.3);
   }
   .steps li b{display:block;font-size:15px}
   .steps li span{color:var(--muted);font-size:14px}
   /* ── Callouts ─────────────────────────── */
   .note{border-radius:14px;padding:16px 18px;margin-top:18px;font-size:14px;border:1px solid}
   .note b{display:block;margin-bottom:2px}
-  .note.info{background:#EFF6FF;border-color:#BFDBFE;color:#1E40AF}
+  .note.info{background:#E6FFFA;border-color:#99F6E4;color:#115E59}
   .note.tip{background:#ECFDF5;border-color:#A7F3D0;color:#065F46}
   .note.warn{background:#FEF2F2;border-color:#FECACA;color:#991B1B}
   .note.warn2{background:#FFFBEB;border-color:#FDE68A;color:#92400E}
@@ -89,9 +89,9 @@
   .showcase{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:28px;align-items:center}
   @media(max-width:820px){.showcase{grid-template-columns:1fr;justify-items:center}}
   .phone-wrap{position:relative}
-  .phone{display:block;width:280px;height:auto;filter:drop-shadow(0 24px 40px rgba(13,71,161,.28))}
+  .phone{display:block;width:280px;height:auto;filter:drop-shadow(0 24px 40px rgba(22,163,74,.25))}
   .phone-shadow{position:absolute;left:8%;right:8%;bottom:-18px;height:26px;border-radius:50%;
-    background:radial-gradient(ellipse at center,rgba(13,71,161,.35),transparent 70%);filter:blur(4px)}
+    background:radial-gradient(ellipse at center,rgba(22,163,74,.35),transparent 70%);filter:blur(4px)}
   .phone-cap{text-align:center;font-size:13px;color:var(--muted);margin-top:16px;font-weight:600}
   /* ── Grids / chips ────────────────────── */
   .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
@@ -111,7 +111,7 @@
   footer{background:#0B1220;color:#94A3B8;padding:36px 24px;text-align:center;font-size:14px}
   footer b{color:#E2E8F0}
   .to-top{position:fixed;right:22px;bottom:22px;width:46px;height:46px;border-radius:50%;border:none;
-    background:var(--primary);color:#fff;font-size:20px;cursor:pointer;box-shadow:0 8px 20px rgba(21,101,192,.4);
+    background:var(--primary);color:#fff;font-size:20px;cursor:pointer;box-shadow:0 8px 20px rgba(22,163,74,.4);
     opacity:0;pointer-events:none;transition:opacity .25s}
   .to-top.show{opacity:1;pointer-events:auto}
   .to-top:hover{background:var(--primary-dark)}
@@ -126,12 +126,12 @@
   <div class="wrap">
     <span class="badge">📱 Panduan Resmi Aplikasi Android</span>
     <h1>Panduan Penggunaan<br>Aplikasi Inspeksi Kebersihan<br>RSUD Ajibarang</h1>
-    <p>Panduan lengkap untuk Petugas Kebersihan: dari login, mengisi kuesioner inspeksi, memotret bukti, menyimpan draf, hingga sinkronisasi data ke server — lengkap dengan ilustrasi setiap layar.</p>
+    <p>Panduan lengkap untuk Petugas Kebersihan: dari login, mengenal navigasi 4 tab, mengisi kuesioner inspeksi, memotret bukti, menyimpan draf, memantau status per ruangan, hingga sinkronisasi data ke server — lengkap dengan ilustrasi setiap layar.</p>
     <div class="hero-meta">
       <span class="chip">⚡ Offline-first</span>
       <span class="chip">📷 Bukti Foto Wajib</span>
-      <span class="chip">🔄 Sinkronisasi Otomatis</span>
-      <span class="chip">🏥 RSUD Ajibarang</span>
+      <span class="chip">🧭 Navigasi 4 Tab</span>
+      <span class="chip">🟢 Warna Identitas RSUD</span>
     </div>
   </div>
 </header>
@@ -143,13 +143,14 @@
     <a href="#tentang">1. Tentang Aplikasi</a>
     <a href="#login">2. Login</a>
     <a href="#dashboard">3. Dashboard</a>
-    <a href="#ruangan">4. Pilih Ruangan</a>
-    <a href="#form">5. Form Inspeksi</a>
-    <a href="#draf">6. Draf Tersimpan</a>
-    <a href="#riwayat">7. Riwayat Inspeksi</a>
-    <a href="#detail">8. Detail Inspeksi</a>
-    <a href="#sync">9. Sinkronisasi &amp; Offline</a>
-    <a href="#tips">10. Tips &amp; Tanya Jawab</a>
+    <a href="#navigasi">4. Navigasi &amp; Profil</a>
+    <a href="#ruangan">5. Pilih Ruangan</a>
+    <a href="#form">6. Form Inspeksi</a>
+    <a href="#draf">7. Draf Tersimpan</a>
+    <a href="#riwayat">8. Riwayat Inspeksi</a>
+    <a href="#detail">9. Detail Inspeksi</a>
+    <a href="#sync">10. Sinkronisasi &amp; Offline</a>
+    <a href="#tips">11. Tips &amp; Tanya Jawab</a>
   </nav>
 
   <main>
@@ -158,17 +159,18 @@
       <div class="sec-head">
         <div class="kicker">Pengenalan</div>
         <h2>1. Tentang Aplikasi</h2>
-        <p>Aplikasi ini digunakan oleh <b>Petugas Kebersihan</b> untuk melakukan inspeksi kebersihan harian di setiap ruangan RSUD Ajibarang. Aplikasi dirancang <b>offline-first</b>: data disimpan dulu di perangkat, lalu disinkronkan otomatis saat jaringan tersedia — sangat tangguh untuk area rumah sakit yang sinyalnya tidak stabil.</p>
+        <p>Aplikasi ini digunakan oleh <b>Petugas Kebersihan</b> untuk melakukan inspeksi kebersihan harian di setiap ruangan RSUD Ajibarang. Aplikasi dirancang <b>offline-first</b>: data disimpan dulu di perangkat, lalu disinkronkan otomatis saat jaringan tersedia — sangat tangguh untuk area rumah sakit yang sinyalnya tidak stabil. Tampilan memakai <b>warna hijau medis</b> (identitas RSUD Ajibarang) yang konsisten di semua perangkat.</p>
       </div>
       <div class="card">
         <h3 style="font-size:17px;margin-bottom:8px">Fitur Utama</h3>
         <ul class="steps">
-          <li><div class="n">✓</div><div><b>Form Inspeksi Dinamis</b><span>Daftar item kebersihan diambil dari Master Data server dan dikelompokkan per kategori.</span></div></li>
+          <li><div class="n">✓</div><div><b>Form Inspeksi Dinamis</b><span>Daftar item kebersihan diambil dari Master Data server. Urutan item diatur oleh admin sehingga konsisten di semua perangkat.</span></div></li>
           <li><div class="n">✓</div><div><b>Sistem Skoring 0–2</b><span>Setiap item dinilai: <b>0 = Berisiko</b> (merah), <b>1 = Minor Defect</b> (kuning), <b>2 = Sesuai Standar</b> (hijau).</span></div></li>
-          <li><div class="n">✓</div><div><b>Bukti Foto Wajib</b><span>Jika memilih skor 0 (Berisiko), foto bukti <u>wajib</u> dilampirkan sebelum tombol Kirim bisa ditekan.</span></div></li>
+          <li><div class="n">✓</div><div><b>Bukti Foto Wajib</b><span>Skor <b>0 (Berisiko)</b> maupun <b>1 (Minor)</b> <u>wajib</u> menyertakan minimal satu foto bukti sebelum inspeksi bisa dikirim (maksimal 5 foto per item).</span></div></li>
           <li><div class="n">✓</div><div><b>Simpan Draf</b><span>Belum sempat menyelesaikan? Simpan sebagai draf dan lanjutkan kapan saja.</span></div></li>
+          <li><div class="n">✓</div><div><b>Status Per Ruangan</b><span>Dashboard menampilkan status tiap ruangan hari ini: Belum Diperiksa, Sedang Diperiksa, Menunggu Review, Selesai, atau Ditolak — lengkap dengan progres pengisian.</span></div></li>
           <li><div class="n">✓</div><div><b>Sinkronisasi Otomatis</b><span>Draf yang sudah lengkap otomatis dikirim ke server saat perangkat terhubung internet.</span></div></li>
-          <li><div class="n">✓</div><div><b>Riwayat &amp; Status</b><span>Pantau hasil inspeksi: status Pending, Disetujui (Approved), atau Ditolak (Rejected) beserta alasannya.</span></div></li>
+          <li><div class="n">✓</div><div><b>Riwayat &amp; Status</b><span>Pantau hasil inspeksi beserta ringkasan skor, status Pending/Menunggu Review, Disetujui (Approved), atau Ditolak (Rejected) dan alasannya.</span></div></li>
         </ul>
 
         <h3 style="font-size:17px;margin:22px 0 8px">Legenda Skor &amp; Status</h3>
@@ -177,16 +179,18 @@
           <span class="lg-chip"><span class="dot a"></span>1 · Minor</span>
           <span class="lg-chip"><span class="dot g"></span>2 · Sesuai</span>
           <span class="lg-chip"><span class="dot b"></span>Draf</span>
-          <span class="lg-chip"><span class="dot a"></span>Menunggu Kirim / Pending</span>
+          <span class="lg-chip"><span class="dot a"></span>Menunggu Kirim</span>
+          <span class="lg-chip"><span class="dot a"></span>Menunggu Review / Pending</span>
           <span class="lg-chip"><span class="dot g"></span>Terkirim / Disetujui</span>
           <span class="lg-chip"><span class="dot r"></span>Ditolak</span>
         </div>
 
         <table class="table">
           <tr><th>Status</th><th>Arti</th><th>Warna</th></tr>
-          <tr><td>Draf</td><td>Tersimpan di perangkat, belum dikirim</td><td><span class="dot b" style="display:inline-block"></span> Biru</td></tr>
+          <tr><td>Draf</td><td>Tersimpan di perangkat, belum dikirim</td><td><span class="dot b" style="display:inline-block"></span> Hijau</td></tr>
           <tr><td>Menunggu Kirim</td><td>Lengkap &amp; siap dikirim, menunggu koneksi</td><td><span class="dot a" style="display:inline-block"></span> Kuning</td></tr>
-          <tr><td>Terkirim / Pending</td><td>Sudah sampai ke server, menunggu peninjauan admin</td><td><span class="dot a" style="display:inline-block"></span> Kuning</td></tr>
+          <tr><td>Terkirim</td><td>Sudah sampai ke server</td><td><span class="dot g" style="display:inline-block"></span> Hijau muda</td></tr>
+          <tr><td>Menunggu Review (Pending)</td><td>Sudah dikirim, menunggu peninjauan admin</td><td><span class="dot a" style="display:inline-block"></span> Kuning</td></tr>
           <tr><td>Disetujui (Approved)</td><td>Hasil inspeksi diterima admin</td><td><span class="dot g" style="display:inline-block"></span> Hijau</td></tr>
           <tr><td>Ditolak (Rejected)</td><td>Ditolak admin — ada alasan yang bisa dilihat di detail</td><td><span class="dot r" style="display:inline-block"></span> Merah</td></tr>
         </table>
@@ -205,36 +209,16 @@
           <div>
             <ol class="steps">
               <li><div class="n">1</div><div><b>Buka aplikasi</b><span>Layar login tampil dengan judul <b>RSUD Ajibarang — Aplikasi Inspeksi Kebersihan</b>.</span></div></li>
-              <li><div class="n">2</div><div><b>Isi Username</b><span>Ketik nama pengguna akun petugas Anda (contoh: <span class="kbd">budi.ins</span>).</span></div></li>
+              <li><div class="n">2</div><div><b>Isi Username</b><span>Ketik nama pengguna akun petugas Anda (contoh: <span class="kbd">inspector</span>).</span></div></li>
               <li><div class="n">3</div><div><b>Isi Password</b><span>Ketik kata sandi. Tekan tombol <span class="kbd">Done</span> di keyboard atau langsung lanjut ke langkah berikutnya.</span></div></li>
-              <li><div class="n">4</div><div><b>Tekan tombol "Masuk"</b><span>Tombol biru besar di bawah kolom password. Jika berhasil, Anda diarahkan ke <b>Dashboard</b>.</span></div></li>
+              <li><div class="n">4</div><div><b>Tekan tombol "Masuk"</b><span>Tombol hijau besar di bawah kolom password. Jika berhasil, Anda diarahkan ke <b>Dashboard</b>.</span></div></li>
             </ol>
             <div class="note info"><b>💡 Sesi tetap aktif</b>Setelah login, aplikasi mengingat sesi Anda. Saat dibuka lagi, Anda langsung masuk tanpa perlu login ulang selama token masih berlaku.</div>
             <div class="note warn2"><b>⚠️ Login gagal?</b>Pastikan username dan password benar. Jika akun Anda berperan admin, aplikasi akan menolak — hubungi admin RSUD untuk akun petugas.</div>
           </div>
           <div class="phone-wrap">
             <div class="phone-shadow"></div>
-            <svg class="phone" viewBox="0 0 280 600" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI',system-ui,sans-serif" role="img" aria-label="Ilustrasi layar Login">
-              <rect x="3" y="3" width="274" height="594" rx="38" fill="#1c1f26"/>
-              <rect x="10" y="10" width="260" height="580" rx="32" fill="#ffffff"/>
-              <text x="24" y="32" font-size="11" font-weight="600" fill="#333">09:41</text>
-              <rect x="228" y="24" width="18" height="9" rx="2" fill="none" stroke="#333" stroke-width="1.5"/>
-              <rect x="230" y="26" width="11" height="5" rx="1" fill="#333"/>
-              <circle cx="212" cy="29" r="2.4" fill="#333"/>
-              <circle cx="219" cy="29" r="2.4" fill="#333" opacity=".45"/>
-              <circle cx="226" cy="29" r="2.4" fill="#333" opacity=".2"/>
-              <text x="140" y="205" text-anchor="middle" font-size="23" font-weight="800" fill="#1565C0">RSUD Ajibarang</text>
-              <text x="140" y="228" text-anchor="middle" font-size="11.5" fill="#777">Aplikasi Inspeksi Kebersihan</text>
-              <text x="52" y="280" font-size="9.5" fill="#64748B">Username</text>
-              <rect x="40" y="288" width="200" height="44" rx="9" fill="#fff" stroke="#CBD5E1" stroke-width="1.4"/>
-              <text x="52" y="316" font-size="12.5" fill="#111">budi.ins</text>
-              <text x="52" y="356" font-size="9.5" fill="#64748B">Password</text>
-              <rect x="40" y="364" width="200" height="44" rx="9" fill="#fff" stroke="#CBD5E1" stroke-width="1.4"/>
-              <text x="52" y="392" font-size="13" letter-spacing="2" fill="#333">••••••••••</text>
-              <rect x="40" y="430" width="200" height="48" rx="24" fill="#1565C0"/>
-              <text x="140" y="459" text-anchor="middle" font-size="14.5" font-weight="700" fill="#fff">Masuk</text>
-              <text x="140" y="505" text-anchor="middle" font-size="9.5" fill="#94A3B8">Login dengan akun petugas (inspector)</text>
-            </svg>
+            <img class="phone" src="screenshots/01-login.png" alt="Layar Login — masukkan username dan password">
             <div class="phone-cap">Layar Login</div>
           </div>
         </div>
@@ -246,440 +230,227 @@
       <div class="sec-head">
         <div class="kicker">Beranda</div>
         <h2>3. Dashboard</h2>
-        <p>Dashboard adalah halaman utama setelah login. Menampilkan ringkasan inspeksi, status ruangan hari ini, dan aktivitas terbaru. Banyak kartu yang bisa <b>diketuk</b> untuk membuka halaman terkait.</p>
+        <p>Dashboard adalah halaman utama setelah login. Menampilkan sapaan, ringkasan inspeksi, progres hari ini, dan <b>status tiap ruangan</b>. Banyak elemen yang bisa <b>diketuk</b> untuk membuka halaman terkait.</p>
       </div>
       <div class="card">
         <div class="showcase">
           <div>
             <ol class="steps">
-              <li><div class="n">1</div><div><b>Periksa status sinkronisasi</b><span>Baris di bagian atas menampilkan <i>"Terakhir sync: …"</i>, <i>"Menyinkronkan…"</i>, atau <i>"Sync gagal — ketuk untuk mencoba lagi"</i>.</span></div></li>
-              <li><div class="n">2</div><div><b>Ringkasan Inspeksi</b><span>Kartu <b>Draf</b> (ketuk → buka daftar draf), <b>Menunggu Kirim</b> (jumlah draf siap kirim), dan <b>Terkirim</b> (jumlah inspeksi yang sudah sampai server).</span></div></li>
-              <li><div class="n">3</div><div><b>Status Inspeksi Hari Ini</b><span>Kartu <b>Belum Diinspeksi</b> (ketuk → daftar ruangan yang belum diinspeksi hari ini) dan <b>Sudah Diinspeksi</b> (ketuk → riwayat inspeksi hari ini).</span></div></li>
-              <li><div class="n">4</div><div><b>Aktivitas Terbaru</b><span>Daftar draf terakhir yang Anda simpan — ketuk kartunya untuk melanjutkan.</span></div></li>
-              <li><div class="n">5</div><div><b>Tarik ke bawah untuk refresh</b><span>Gerakan pull-to-refresh akan memuat ulang data dari server.</span></div></li>
+              <li><div class="n">1</div><div><b>Kepala Dashboard (header hijau)</b><span>Berisi sapaan <b>"Selamat Datang 👋"</b>, judul <b>Dashboard PPI</b>, nama petugas, status sinkronisasi (chip <b>"Sinkron terakhir · jam WIB"</b>), dan tombol <b>Keluar</b>.</span></div></li>
+              <li><div class="n">2</div><div><b>Ringkasan Inspeksi</b><span>Tiga kartu: <b>Draf</b> (ketuk → daftar draf), <b>Menunggu Kirim</b> (jumlah draf siap kirim), dan <b>Terkirim</b> (ketuk → riwayat).</span></div></li>
+              <li><div class="n">3</div><div><b>Progress Hari Ini</b><span>Kartu menampilkan berapa ruangan yang sudah selesai, bar progres, dan persentase lingkaran (contoh <span class="kbd">1 dari 4 ruangan · 25%</span>).</span></div></li>
+              <li><div class="n">4</div><div><b>Status Inspeksi Hari Ini</b><span>Daftar per ruangan dengan badge status: <b>Belum Diperiksa</b> (aksi <i>Mulai</i>), <b>Sedang Diperiksa</b> (<i>Lanjutkan</i>), <b>Menunggu Review</b> / <b>Selesai</b> / <b>Ditolak</b> (<i>Lihat Hasil</i>). Setiap baris juga menampilkan progres item (contoh <span class="kbd">2/6</span>).</span></div></li>
+              <li><div class="n">5</div><div><b>Aktivitas Terbaru</b><span>Draf terakhir yang Anda simpan — ketuk kartunya untuk melanjutkan.</span></div></li>
+              <li><div class="n">6</div><div><b>Tombol "+ Mulai Inspeksi"</b><span>Tombol melayang (FAB) hijau di pojok kanan bawah untuk langsung membuka daftar ruangan.</span></div></li>
+              <li><div class="n">7</div><div><b>Tarik ke bawah untuk refresh</b><span>Gerakan pull-to-refresh akan memuat ulang data dari server.</span></div></li>
             </ol>
-            <div class="note tip"><b>✋ Logout</b>Tekan tombol <b>Keluar</b> di pojok kanan atas untuk keluar dari akun.</div>
+            <div class="note tip"><b>✋ Logout</b>Tekan tombol <b>Keluar</b> di pojok kanan atas header, atau lewat tab <b>Profil</b>.</div>
           </div>
           <div class="phone-wrap">
             <div class="phone-shadow"></div>
-            <svg class="phone" viewBox="0 0 280 664" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI',system-ui,sans-serif" role="img" aria-label="Ilustrasi layar Dashboard">
-              <rect x="3" y="3" width="274" height="658" rx="38" fill="#1c1f26"/>
-              <rect x="10" y="10" width="260" height="644" rx="32" fill="#F5F6F8"/>
-              <text x="24" y="32" font-size="11" font-weight="600" fill="#333">09:41</text>
-              <rect x="228" y="24" width="18" height="9" rx="2" fill="none" stroke="#333" stroke-width="1.5"/>
-              <rect x="230" y="26" width="11" height="5" rx="1" fill="#333"/>
-              <text x="24" y="62" font-size="16" font-weight="700" fill="#111">Dashboard</text>
-              <text x="24" y="78" font-size="10" fill="#64748B">Budi · budi.ins</text>
-              <rect x="192" y="48" width="70" height="27" rx="13.5" fill="#fff" stroke="#1565C0" stroke-width="1.5"/>
-              <text x="227" y="66" text-anchor="middle" font-size="10.5" font-weight="600" fill="#1565C0">Keluar</text>
-              <circle cx="26" cy="100" r="8" fill="#388E3C"/>
-              <path d="M22.5 100 l2.6 2.6 l4.8 -5.2" stroke="#fff" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <text x="40" y="104" font-size="9.5" fill="#64748B">Terakhir sync: 2026-08-02 07:30</text>
-              <text x="24" y="130" font-size="12" font-weight="700" fill="#1B2430">Ringkasan Inspeksi</text>
-              <rect x="20" y="140" width="116" height="66" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="42" cy="162" r="11" fill="#1565C0" opacity=".13"/>
-              <path d="M38 158 h8 v4 l-4 4 h4 M38 158 c2 4 2 7 0 10 h8 c-2 -3 -2 -6 0 -10" stroke="#1565C0" stroke-width="1.4" fill="none"/>
-              <text x="60" y="160" font-size="10" fill="#64748B">Draf</text>
-              <text x="60" y="178" font-size="17" font-weight="800" fill="#111">2</text>
-              <rect x="144" y="140" width="116" height="66" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="166" cy="162" r="11" fill="#F9A825" opacity=".15"/>
-              <path d="M166 156 v6 M162 162 h8 M163 163 v3 h6 v-3" stroke="#F9A825" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-              <text x="184" y="157" font-size="9.5" fill="#64748B">Menunggu</text>
-              <text x="184" y="169" font-size="9.5" fill="#64748B">Kirim</text>
-              <text x="184" y="184" font-size="17" font-weight="800" fill="#111">1</text>
-              <rect x="20" y="216" width="240" height="60" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="42" cy="246" r="11" fill="#388E3C" opacity=".15"/>
-              <path d="M37 246 l4 4 l6 -7" stroke="#388E3C" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <text x="60" y="244" font-size="10" fill="#64748B">Terkirim</text>
-              <text x="60" y="262" font-size="17" font-weight="800" fill="#111">15</text>
-              <text x="24" y="304" font-size="12" font-weight="700" fill="#1B2430">Status Inspeksi Hari Ini</text>
-              <rect x="20" y="314" width="116" height="72" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="42" cy="336" r="11" fill="#D32F2F" opacity=".14"/>
-              <path d="M42 331 v10 M37 336 h10" stroke="#D32F2F" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-              <text x="60" y="333" font-size="9.5" fill="#64748B">Belum</text>
-              <text x="60" y="345" font-size="9.5" fill="#64748B">Diinspeksi</text>
-              <text x="60" y="362" font-size="17" font-weight="800" fill="#111">3</text>
-              <rect x="144" y="314" width="116" height="72" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="166" cy="336" r="11" fill="#388E3C" opacity=".15"/>
-              <path d="M161 336 l4 4 l6 -7" stroke="#388E3C" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <text x="184" y="333" font-size="9.5" fill="#64748B">Sudah</text>
-              <text x="184" y="345" font-size="9.5" fill="#64748B">Diinspeksi</text>
-              <text x="184" y="362" font-size="17" font-weight="800" fill="#111">9</text>
-              <text x="24" y="414" font-size="12" font-weight="700" fill="#1B2430">Aktivitas Terbaru</text>
-              <rect x="20" y="424" width="240" height="62" rx="12" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="46" cy="455" r="14" fill="#1565C0" opacity=".12"/>
-              <path d="M42 458 h8 M46 452 v11" stroke="#1565C0" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-              <text x="66" y="451" font-size="11.5" font-weight="700" fill="#111">Ruang Perawatan 1</text>
-              <circle cx="66" cy="466" r="4" fill="#F9A825"/>
-              <text x="74" y="469" font-size="9" fill="#B45309">Menunggu Kirim</text>
-              <text x="196" y="469" font-size="9" fill="#94A3B8">2026-08-02</text>
-              <rect x="20" y="496" width="240" height="62" rx="12" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="46" cy="527" r="14" fill="#1565C0" opacity=".12"/>
-              <path d="M42 530 h8 M46 524 v11" stroke="#1565C0" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-              <text x="66" y="523" font-size="11.5" font-weight="700" fill="#111">Kamar Operasi</text>
-              <circle cx="66" cy="538" r="4" fill="#1565C0"/>
-              <text x="74" y="541" font-size="9" fill="#1E40AF">Draf</text>
-              <text x="196" y="541" font-size="9" fill="#94A3B8">2026-08-01</text>
-              <path d="M110 578 h60" stroke="#E2E8F0" stroke-width="3" stroke-linecap="round"/>
-              <path d="M120 578 l10 -5 M120 578 l10 5" stroke="#E2E8F0" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-            </svg>
+            <img class="phone" src="screenshots/02-dashboard.png" alt="Layar Dashboard">
             <div class="phone-cap">Layar Dashboard</div>
+          </div>
+        </div>
+      </div>
+      <div class="showcase" style="margin-top:26px">
+        <div>
+          <ol class="steps">
+            <li><div class="n">↓</div><div><b>Gulir ke bawah</b><span>Bagian bawah Dashboard menampilkan status tiap ruangan dengan progres pengisiannya, serta bagian <b>Aktivitas Terbaru</b> berisi draf yang baru saja disimpan.</span></div></li>
+          </ol>
+          <div class="note tip"><b>📌 Ketuk baris ruangan</b>Kartu status langsung bisa diketuk: <b>Mulai</b> untuk ruangan yang belum diperiksa, <b>Lanjutkan</b> untuk draf, dan <b>Lihat Hasil</b> untuk inspeksi yang sudah dikirim.</div>
+        </div>
+        <div class="phone-wrap">
+          <div class="phone-shadow"></div>
+          <img class="phone" src="screenshots/03-dashboard-bawah.png" alt="Layar Dashboard bagian bawah — status per ruangan dan Aktivitas Terbaru">
+          <div class="phone-cap">Dashboard — status per ruangan &amp; Aktivitas Terbaru</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ 4. NAVIGASI & PROFIL ══════════════ -->
+    <section id="navigasi">
+      <div class="sec-head">
+        <div class="kicker">Berpindah Layar</div>
+        <h2>4. Navigasi &amp; Profil</h2>
+        <p>Setelah login, aplikasi memiliki <b>bilah navigasi bawah (bottom navigation)</b> dengan 4 tab utama. Halaman <b>Profil</b> menampilkan identitas akun dan menjadi salah satu tempat untuk keluar dari aplikasi.</p>
+      </div>
+      <div class="card">
+        <div class="showcase">
+          <div>
+            <table class="table">
+              <tr><th>Tab</th><th>Fungsi</th></tr>
+              <tr><td><b>Dashboard</b></td><td>Ringkasan inspeksi, progres hari ini, dan status tiap ruangan.</td></tr>
+              <tr><td><b>Inspeksi</b></td><td>Daftar ruangan untuk memulai inspeksi (sama dengan layar Pilih Ruangan).</td></tr>
+              <tr><td><b>Riwayat</b></td><td>Riwayat inspeksi yang sudah dikirim, lengkap dengan filter status &amp; tanggal.</td></tr>
+              <tr><td><b>Profil</b></td><td>Informasi akun petugas dan tombol <b>Keluar</b>.</td></tr>
+            </table>
+            <ol class="steps">
+              <li><div class="n">1</div><div><b>Berpindah tab</b><span>Ketuk ikon tab di bagian bawah layar untuk berpindah antar halaman utama.</span></div></li>
+              <li><div class="n">2</div><div><b>Buka Profil</b><span>Tab paling kanan menampilkan avatar lingkaran, nama lengkap, dan username (contoh <span class="kbd">@inspector</span>).</span></div></li>
+              <li><div class="n">3</div><div><b>Informasi Akun</b><span>Kartu menampilkan <b>Role</b> (inspector) dan versi aplikasi <b>RSUD Ajibarang Mobile v1.0.0</b>.</span></div></li>
+              <li><div class="n">4</div><div><b>Keluar dari akun</b><span>Tekan tombol merah <b>Keluar</b> — sesi berakhir dan Anda kembali ke layar Login. Keluar juga bisa lewat tombol <b>Keluar</b> di header Dashboard.</span></div></li>
+            </ol>
+            <div class="note info"><b>💡 Bilah navigasi selalu terlihat</b>Di layar lain (Pilih Ruangan, Draf, dll.) Anda kembali dengan tombol panah balik <b>←</b> di pojok kiri atas.</div>
+          </div>
+          <div class="phone-wrap">
+            <div class="phone-shadow"></div>
+            <img class="phone" src="screenshots/09-profil.png" alt="Layar Profil">
+            <div class="phone-cap">Layar Profil (tab terpilih: Profil)</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ══════════════ 4. PILIH RUANGAN ══════════════ -->
+    <!-- ══════════════ 5. PILIH RUANGAN ══════════════ -->
     <section id="ruangan">
       <div class="sec-head">
         <div class="kicker">Langkah Pertama</div>
-        <h2>4. Pilih Ruangan</h2>
+        <h2>5. Pilih Ruangan</h2>
         <p>Untuk memulai inspeksi, pilih ruangan yang akan diperiksa. Daftar ruangan hanya menampilkan ruangan yang menjadi tanggung jawab Anda.</p>
       </div>
       <div class="card">
         <div class="showcase">
           <div>
             <ol class="steps">
-              <li><div class="n">1</div><div><b>Buka daftar ruangan</b><span>Dari Dashboard, ketuk kartu <b>Belum Diinspeksi</b> untuk melihat ruangan yang belum diperiksa hari ini, atau buka daftar lengkap lewat menu terkait.</span></div></li>
-              <li><div class="n">2</div><div><b>Perhatikan informasi ruangan</b><span>Setiap kartu menampilkan nama ruangan, lantai, dan jumlah item kebersihan yang harus diperiksa (misal <span class="kbd">12 item</span>).</span></div></li>
+              <li><div class="n">1</div><div><b>Buka daftar ruangan</b><span>Ketuk tab <b>Inspeksi</b> di bilah bawah, tombol <b>+ Mulai Inspeksi</b> di Dashboard, atau kartu <b>Draf</b>/status ruangan terkait. Mode <i>"Ruangan yang belum diinspeksi hari ini"</i> bisa dibuka dari kartu status di Dashboard.</span></div></li>
+              <li><div class="n">2</div><div><b>Perhatikan informasi ruangan</b><span>Setiap kartu menampilkan nama ruangan dan jumlah item kebersihan yang harus diperiksa (misal <span class="kbd">10 item</span>).</span></div></li>
               <li><div class="n">3</div><div><b>Ketuk kartu ruangan</b><span>Anda langsung masuk ke <b>Form Inspeksi</b> untuk ruangan tersebut.</span></div></li>
-              <li><div class="n">4</div><div><b>Tarik ke bawah untuk refresh</b><span>Jika daftar ruangan kosong, pastikan perangkat terhubung internet lalu tarik layar ke bawah untuk memuat data.</span></div></li>
+              <li><div class="n">4</div><div><b>Tarik ke bawah untuk refresh</b><span>Jika daftar ruangan kosong, pastikan perangkat terhubung internet lalu tarik layar ke bawah, atau ketuk tombol <b>Coba Sync Ulang</b>.</span></div></li>
             </ol>
             <div class="note info"><b>💡 Mode "Belum Diinspeksi"</b>Ruangan yang sudah diinspeksi hari ini tidak akan muncul di daftar ini — hindari inspeksi ganda di hari yang sama.</div>
           </div>
           <div class="phone-wrap">
             <div class="phone-shadow"></div>
-            <svg class="phone" viewBox="0 0 280 620" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI',system-ui,sans-serif" role="img" aria-label="Ilustrasi layar Pilih Ruangan">
-              <rect x="3" y="3" width="274" height="614" rx="38" fill="#1c1f26"/>
-              <rect x="10" y="10" width="260" height="600" rx="32" fill="#F5F6F8"/>
-              <text x="24" y="32" font-size="11" font-weight="600" fill="#333">09:41</text>
-              <path d="M30 62 h-12 M24 56 l-6 6 l6 6 M18 62 h12" stroke="#1B2430" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <text x="52" y="66" font-size="15" font-weight="700" fill="#111">Pilih Ruangan</text>
-              <text x="52" y="81" font-size="9.5" fill="#64748B">Pilih ruangan untuk memulai inspeksi</text>
-              <rect x="20" y="98" width="240" height="70" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="46" cy="133" r="15" fill="#1565C0" opacity=".12"/>
-              <path d="M42 133 h8 M46 128 v9 M43 137 h6 M41 140 h10" stroke="#1565C0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-              <text x="68" y="129" font-size="12" font-weight="700" fill="#111">Ruang Perawatan 1</text>
-              <text x="68" y="144" font-size="9.5" fill="#64748B">Lantai 1</text>
-              <text x="68" y="157" font-size="9.5" fill="#1565C0">✓ 12 item</text>
-              <rect x="20" y="180" width="240" height="70" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="46" cy="215" r="15" fill="#1565C0" opacity=".12"/>
-              <path d="M42 215 h8 M46 210 v9 M43 219 h6 M41 222 h10" stroke="#1565C0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-              <text x="68" y="211" font-size="12" font-weight="700" fill="#111">Kamar Operasi</text>
-              <text x="68" y="226" font-size="9.5" fill="#64748B">Lantai 2</text>
-              <text x="68" y="239" font-size="9.5" fill="#1565C0">✓ 8 item</text>
-              <rect x="20" y="262" width="240" height="70" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="46" cy="297" r="15" fill="#1565C0" opacity=".12"/>
-              <path d="M42 297 h8 M46 292 v9 M43 301 h6 M41 304 h10" stroke="#1565C0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-              <text x="68" y="293" font-size="12" font-weight="700" fill="#111">Ruang Rawat Inap</text>
-              <text x="68" y="308" font-size="9.5" fill="#64748B">Lantai 1</text>
-              <text x="68" y="321" font-size="9.5" fill="#1565C0">✓ 10 item</text>
-              <rect x="20" y="344" width="240" height="70" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="46" cy="379" r="15" fill="#1565C0" opacity=".12"/>
-              <path d="M42 379 h8 M46 374 v9 M43 383 h6 M41 386 h10" stroke="#1565C0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-              <text x="68" y="375" font-size="12" font-weight="700" fill="#111">Poliklinik Umum</text>
-              <text x="68" y="390" font-size="9.5" fill="#64748B">Lantai 1</text>
-              <text x="68" y="403" font-size="9.5" fill="#1565C0">✓ 6 item</text>
-              <text x="24" y="448" font-size="9.5" fill="#94A3B8">Belum ada data ruangan?</text>
-              <text x="24" y="462" font-size="9.5" fill="#94A3B8">Tarik ke bawah untuk refresh ↓</text>
-            </svg>
+            <img class="phone" src="screenshots/04-inspeksi.png" alt="Layar Pilih Ruangan">
             <div class="phone-cap">Layar Pilih Ruangan</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ══════════════ 5. FORM INSPEKSI ══════════════ -->
+    <!-- ══════════════ 6. FORM INSPEKSI ══════════════ -->
     <section id="form">
       <div class="sec-head">
         <div class="kicker">Inti Aplikasi</div>
-        <h2>5. Form Inspeksi</h2>
-        <p>Di sinilah Anda menilai kebersihan setiap item. Form memuat daftar item yang dikelompokkan per kategori, lengkap dengan skor, foto bukti, dan catatan.</p>
+        <h2>6. Form Inspeksi</h2>
+        <p>Di sinilah Anda menilai kebersihan setiap item. Setiap item tampil sebagai <b>kartu putih bernomor</b> sesuai urutan yang diatur admin, lengkap dengan skor, foto bukti, dan catatan.</p>
       </div>
       <div class="card">
         <div class="showcase">
           <div>
             <h3 style="font-size:16px">Menilai Setiap Item</h3>
             <ol class="steps">
-              <li><div class="n">1</div><div><b>Pilih skor</b><span>Ketuk salah satu tombol: <b>Berisiko (0, merah)</b>, <b>Minor (1, kuning)</b>, atau <b>Sesuai (2, hijau)</b>. Ketuk lagi skor yang sama untuk membatalkan pilihan.</span></div></li>
-              <li><div class="n">2</div><div><b>Ambil foto bukti (wajib jika skor 0)</b><span>Ketuk tombol <b>Tambah</b> di bawah "Foto Bukti" untuk membuka kamera. Jika skor <b>Berisiko</b> tanpa foto, muncul peringatan merah: <i>"Skor Berisiko wajib menyertakan foto bukti"</i> dan tombol Kirim terkunci.</span></div></li>
-              <li><div class="n">3</div><div><b>Isi catatan (opsional)</b><span>Tulis keterangan tambahan seperti lokasi temuan atau penyebab, misalnya <i>"Genangan air di pojok ruangan"</i>.</span></div></li>
-              <li><div class="n">4</div><div><b>Pantau progres</b><span>Bar progres di bawah menampilkan jumlah item valid vs total (contoh <span class="kbd">5/6</span>). Tombol <b>Kirim</b> baru aktif jika semua item sudah dinilai valid.</span></div></li>
-              <li><div class="n">5</div><div><b>Simpan Draf atau Kirim</b><span>Belum selesai? Ketuk <b>Simpan Draf</b> — data tersimpan di perangkat, bisa dilanjutkan lagi. Sudah yakin semua benar? Ketuk <b>Kirim</b>.</span></div></li>
+              <li><div class="n">1</div><div><b>Baca petunjuk skor</b><span>Kartu kecil di atas daftar mengingatkan: <i>"Skor: 0 = Berisiko (wajib foto) · 1 = Minor · 2 = Sesuai"</i>.</span></div></li>
+              <li><div class="n">2</div><div><b>Pilih skor</b><span>Ketuk salah satu tombol: <b>Berisiko (0, merah)</b>, <b>Minor (1, kuning)</b>, atau <b>Sesuai (2, hijau)</b>. Ketuk lagi skor yang sama untuk membatalkan pilihan. Item yang sudah dinilai diberi badge <b>Selesai</b> (hijau).</span></div></li>
+              <li><div class="n">3</div><div><b>Ambil foto bukti (wajib jika skor 0 atau 1)</b><span>Ketuk kotak <b>Tambah</b> untuk membuka kamera. Jika skor <b>Berisiko</b> atau <b>Minor</b> tanpa foto, muncul peringatan merah <i>"Wajib diisi jika skor 0 atau 1"</i> dan tombol Kirim terkunci.</span></div></li>
+              <li><div class="n">4</div><div><b>Isi catatan (opsional)</b><span>Tulis keterangan tambahan seperti lokasi temuan atau penyebab, misalnya <i>"Genangan air di pojok ruangan"</i>. Kolom menampilkan jumlah karakter (maksimal 300).</span></div></li>
+              <li><div class="n">5</div><div><b>Pantau progres</b><span>Header hijau dan bar di bawah menampilkan jumlah item valid vs total (contoh <span class="kbd">2/6 item valid</span>). Tombol <b>Kirim</b> baru aktif jika semua item sudah dinilai valid.</span></div></li>
+              <li><div class="n">6</div><div><b>Simpan Draf atau Kirim</b><span>Belum selesai? Ketuk <b>Simpan Draf</b> — data tersimpan di perangkat, bisa dilanjutkan lagi. Sudah yakin semua benar? Ketuk <b>Kirim</b>.</span></div></li>
             </ol>
-            <div class="note warn"><b>🔒 Aturan penting</b>Item dengan skor <b>0 (Berisiko)</b> <u>wajib</u> memiliki minimal satu foto bukti. Tanpa foto, item dianggap belum valid dan inspeksi tidak bisa dikirim.</div>
-            <div class="note tip"><b>📸 Beberapa foto</b>Setiap item mendukung lebih dari satu foto. Foto otomatis dikompresi di perangkat (maksimal ±300 KB) agar cepat dikirim meski jaringan lambat.</div>
+            <div class="note warn"><b>🔒 Aturan penting</b>Item dengan skor <b>0 (Berisiko)</b> atau <b>1 (Minor)</b> <u>wajib</u> memiliki minimal satu foto bukti. Tanpa foto, item dianggap belum valid dan inspeksi tidak bisa dikirim.</div>
+            <div class="note tip"><b>📸 Beberapa foto</b>Setiap item mendukung hingga 5 foto. Foto otomatis dikompresi di perangkat (maksimal ±300 KB) agar cepat dikirim meski jaringan lambat.</div>
           </div>
           <div class="phone-wrap">
             <div class="phone-shadow"></div>
-            <svg class="phone" viewBox="0 0 280 664" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI',system-ui,sans-serif" role="img" aria-label="Ilustrasi layar Form Inspeksi">
-              <rect x="3" y="3" width="274" height="658" rx="38" fill="#1c1f26"/>
-              <rect x="10" y="10" width="260" height="644" rx="32" fill="#F5F6F8"/>
-              <text x="24" y="32" font-size="11" font-weight="600" fill="#333">09:41</text>
-              <path d="M30 60 h-12 M24 54 l-6 6 l6 6 M18 60 h12" stroke="#1B2430" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <text x="52" y="64" font-size="15" font-weight="700" fill="#111">Form Inspeksi</text>
-              <text x="52" y="79" font-size="9.5" fill="#64748B">Ruang Perawatan 1</text>
-              <rect x="16" y="92" width="248" height="34" rx="10" fill="#D1E4FF"/>
-              <text x="30" y="114" font-size="11.5" font-weight="700" fill="#0D47A1">Kebersihan Lantai (3)</text>
-              <rect x="16" y="134" width="248" height="252" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <text x="32" y="156" font-size="12" font-weight="700" fill="#111">Lantai &amp; dinding</text>
-              <text x="32" y="170" font-size="9" fill="#64748B">Permukaan lantai harus bersih, kering, tidak licin</text>
-              <text x="32" y="186" font-size="9.5" fill="#64748B">Skor</text>
-              <rect x="32" y="194" width="70" height="26" rx="13" fill="#D32F2F" fill-opacity=".16" stroke="#D32F2F" stroke-width="1.3"/>
-              <text x="67" y="211" text-anchor="middle" font-size="9.5" font-weight="700" fill="#D32F2F">Berisiko</text>
-              <rect x="108" y="194" width="60" height="26" rx="13" fill="#fff" stroke="#CBD5E1"/>
-              <text x="138" y="211" text-anchor="middle" font-size="9.5" fill="#64748B">Minor</text>
-              <rect x="174" y="194" width="70" height="26" rx="13" fill="#fff" stroke="#CBD5E1"/>
-              <text x="209" y="211" text-anchor="middle" font-size="9.5" fill="#64748B">Sesuai</text>
-              <text x="32" y="244" font-size="9" font-weight="600" fill="#D32F2F">⚠ Skor Berisiko wajib menyertakan foto bukti</text>
-              <text x="32" y="262" font-size="9.5" fill="#64748B">Foto Bukti (1)</text>
-              <rect x="32" y="270" width="40" height="40" rx="8" fill="#E8EEF7"/>
-              <path d="M42 288 h-8 v-12 h8 z" fill="#90A4AE" opacity="0"/>
-              <rect x="36" y="276" width="32" height="28" rx="3" fill="#BBDEFB"/>
-              <circle cx="42" cy="283" r="3" fill="#64B5F6"/>
-              <path d="M36 300 l9 -9 l6 6 l7 -7 l8 10 h-30 z" fill="#42A5F5"/>
-              <rect x="80" y="270" width="40" height="40" rx="8" fill="#fff" stroke="#1565C0" stroke-dasharray="4 3"/>
-              <text x="100" y="287" text-anchor="middle" font-size="13" fill="#1565C0">+</text>
-              <text x="100" y="300" text-anchor="middle" font-size="7.5" fill="#1565C0">Tambah</text>
-              <rect x="32" y="322" width="216" height="50" rx="9" fill="#fff" stroke="#CBD5E1"/>
-              <text x="44" y="340" font-size="9" fill="#64748B">Catatan (opsional)</text>
-              <text x="44" y="356" font-size="9" fill="#94A3B8">Genangan air di pojok ruangan…</text>
-              <rect x="16" y="398" width="248" height="140" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <text x="32" y="420" font-size="12" font-weight="700" fill="#111">Tempat tidur</text>
-              <text x="32" y="436" font-size="9.5" fill="#64748B">Skor</text>
-              <rect x="32" y="444" width="70" height="26" rx="13" fill="#fff" stroke="#CBD5E1"/>
-              <text x="67" y="461" text-anchor="middle" font-size="9.5" fill="#64748B">Berisiko</text>
-              <rect x="108" y="444" width="60" height="26" rx="13" fill="#fff" stroke="#CBD5E1"/>
-              <text x="138" y="461" text-anchor="middle" font-size="9.5" fill="#64748B">Minor</text>
-              <rect x="174" y="444" width="70" height="26" rx="13" fill="#388E3C" fill-opacity=".16" stroke="#388E3C" stroke-width="1.3"/>
-              <text x="209" y="461" text-anchor="middle" font-size="9.5" font-weight="700" fill="#388E3C">Sesuai</text>
-              <text x="32" y="494" font-size="9.5" fill="#64748B">Foto Bukti (1)</text>
-              <rect x="32" y="502" width="40" height="40" rx="8" fill="#BBDEFB"/>
-              <circle cx="38" cy="509" r="3" fill="#64B5F6"/>
-              <path d="M32 538 l9 -9 l6 6 l7 -7 l8 10 h-30 z" fill="#42A5F5"/>
-              <rect x="16" y="552" width="248" height="82" rx="0" fill="#FFFFFF"/>
-              <rect x="16" y="556" width="248" height="5" rx="2.5" fill="#E2E8F0"/>
-              <rect x="16" y="556" width="206" height="5" rx="2.5" fill="#1565C0"/>
-              <text x="236" y="563" font-size="8.5" font-weight="700" fill="#1565C0">5/6</text>
-              <rect x="30" y="578" width="108" height="42" rx="21" fill="#fff" stroke="#1565C0" stroke-width="1.5"/>
-              <text x="84" y="603" text-anchor="middle" font-size="12" font-weight="700" fill="#1565C0">Simpan Draf</text>
-              <rect x="150" y="578" width="108" height="42" rx="21" fill="#1565C0"/>
-              <text x="204" y="603" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">Kirim</text>
-            </svg>
+            <img class="phone" src="screenshots/05-form.png" alt="Layar Form Inspeksi">
             <div class="phone-cap">Layar Form Inspeksi</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ══════════════ 6. DRAF ══════════════ -->
+    <!-- ══════════════ 7. DRAF ══════════════ -->
     <section id="draf">
       <div class="sec-head">
         <div class="kicker">Lanjutkan</div>
-        <h2>6. Draf Tersimpan</h2>
+        <h2>7. Draf Tersimpan</h2>
         <p>Semua inspeksi yang belum dikirim tersimpan sebagai draf. Dari sini Anda bisa melanjutkan pengerjaan atau menghapus draf yang tidak diperlukan.</p>
       </div>
       <div class="card">
         <div class="showcase">
           <div>
             <ol class="steps">
-              <li><div class="n">1</div><div><b>Buka Draf Tersimpan</b><span>Dari Dashboard, ketuk kartu <b>Draf</b> di Ringkasan Inspeksi.</span></div></li>
-              <li><div class="n">2</div><div><b>Kenali status draf</b><span>Setiap kartu menampilkan status: <b>Draf</b> (biru, masih dikerjakan), <b>Menunggu Kirim</b> (kuning, lengkap &amp; siap dikirim), atau <b>Terkirim</b> (hijau).</span></div></li>
-              <li><div class="n">3</div><div><b>Lanjutkan draf</b><span>Ketuk ikon <b>📄 Lanjutkan</b> di sisi kanan kartu untuk membuka kembali form beserta semua skor dan foto yang sudah diisi.</span></div></li>
+              <li><div class="n">1</div><div><b>Buka Draf Tersimpan</b><span>Dari Dashboard, ketuk kartu <b>Draf</b> atau <b>Menunggu Kirim</b> di Ringkasan Inspeksi.</span></div></li>
+              <li><div class="n">2</div><div><b>Kenali status draf</b><span>Setiap kartu menampilkan status: <b>Draf</b> (hijau, masih dikerjakan), <b>Menunggu Kirim</b> (kuning, lengkap &amp; siap dikirim), atau <b>Terkirim</b> (hijau muda).</span></div></li>
+              <li><div class="n">3</div><div><b>Lanjutkan draf</b><span>Ketuk ikon <b>📄</b> di sisi kanan kartu untuk membuka kembali form beserta semua skor dan foto yang sudah diisi.</span></div></li>
               <li><div class="n">4</div><div><b>Hapus draf</b><span>Ketuk ikon <b>🗑️</b> lalu konfirmasi di dialog <i>"Hapus Draf?"</i>. Data tidak bisa dikembalikan.</span></div></li>
               <li><div class="n">5</div><div><b>Sinkronkan manual</b><span>Jika ada draf berstatus <b>Menunggu Kirim</b>, ikon sinkronisasi muncul di pojok kanan atas — ketuk untuk memicu pengiriman.</span></div></li>
+              <li><div class="n">6</div><div><b>Draf kosong?</b><span>Layar menampilkan pesan <i>"Belum ada draf tersimpan"</i> dengan tombol <b>Mulai Inspeksi</b> untuk langsung memilih ruangan.</span></div></li>
             </ol>
             <div class="note info"><b>💡 Draf tidak hilang</b>Draf tersimpan di database lokal perangkat. Saat aplikasi dibuka kembali, draf Anda tetap ada dan bisa dilanjutkan.</div>
           </div>
           <div class="phone-wrap">
             <div class="phone-shadow"></div>
-            <svg class="phone" viewBox="0 0 280 600" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI',system-ui,sans-serif" role="img" aria-label="Ilustrasi layar Draf Tersimpan">
-              <rect x="3" y="3" width="274" height="594" rx="38" fill="#1c1f26"/>
-              <rect x="10" y="10" width="260" height="580" rx="32" fill="#F5F6F8"/>
-              <text x="24" y="32" font-size="11" font-weight="600" fill="#333">09:41</text>
-              <path d="M30 62 h-12 M24 56 l-6 6 l6 6 M18 62 h12" stroke="#1B2430" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <text x="52" y="66" font-size="15" font-weight="700" fill="#111">Draf Tersimpan</text>
-              <text x="52" y="81" font-size="9.5" fill="#64748B">2 draf</text>
-              <circle cx="238" cy="66" r="12" fill="#1565C0" opacity=".12"/>
-              <path d="M230 60 a10 10 0 1 1 -1 14" stroke="#1565C0" stroke-width="2" fill="none" stroke-linecap="round"/>
-              <path d="M228 60 h6 v-6" stroke="#1565C0" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <rect x="20" y="100" width="240" height="78" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="46" cy="139" r="15" fill="#1565C0" opacity=".12"/>
-              <path d="M42 139 h8 M46 134 v9 M43 143 h6 M41 146 h10" stroke="#1565C0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-              <text x="68" y="130" font-size="12" font-weight="700" fill="#111">Ruang Perawatan 1</text>
-              <circle cx="70" cy="150" r="5" fill="#F9A825"/>
-              <text x="80" y="154" font-size="9" fill="#B45309">Menunggu Kirim</text>
-              <text x="152" y="154" font-size="9" fill="#94A3B8">2026-08-02</text>
-              <circle cx="216" cy="139" r="11" fill="#1565C0" opacity=".12"/>
-              <path d="M213 141 h6 M216 136 v10" stroke="#1565C0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-              <circle cx="240" cy="139" r="11" fill="#D32F2F" opacity=".12"/>
-              <path d="M237 141 h6 M240 136 v8 M239.2 147 a.9 .9 0 1 0 .1 0" stroke="#D32F2F" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-              <rect x="20" y="190" width="240" height="78" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="46" cy="229" r="15" fill="#1565C0" opacity=".12"/>
-              <path d="M42 229 h8 M46 224 v9 M43 233 h6 M41 236 h10" stroke="#1565C0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-              <text x="68" y="220" font-size="12" font-weight="700" fill="#111">Kamar Operasi</text>
-              <circle cx="70" cy="240" r="5" fill="#1565C0"/>
-              <text x="80" y="244" font-size="9" fill="#1E40AF">Draf</text>
-              <text x="152" y="244" font-size="9" fill="#94A3B8">2026-08-01</text>
-              <circle cx="216" cy="229" r="11" fill="#1565C0" opacity=".12"/>
-              <path d="M213 231 h6 M216 226 v10" stroke="#1565C0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-              <circle cx="240" cy="229" r="11" fill="#D32F2F" opacity=".12"/>
-              <path d="M237 231 h6 M240 226 v8 M239.2 237 a.9 .9 0 1 0 .1 0" stroke="#D32F2F" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-              <text x="24" y="312" font-size="9.5" fill="#94A3B8">📄 = Lanjutkan pengerjaan&#160;&#160;🗑 = Hapus draf</text>
-            </svg>
+            <img class="phone" src="screenshots/06-draf.png" alt="Layar Draf Tersimpan">
             <div class="phone-cap">Layar Draf Tersimpan</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ══════════════ 7. RIWAYAT ══════════════ -->
+    <!-- ══════════════ 8. RIWAYAT ══════════════ -->
     <section id="riwayat">
       <div class="sec-head">
         <div class="kicker">Pantau</div>
-        <h2>7. Riwayat Inspeksi</h2>
+        <h2>8. Riwayat Inspeksi</h2>
         <p>Lihat semua hasil inspeksi yang sudah terkirim ke server. Filter berdasarkan status atau tanggal untuk menemukan data dengan cepat.</p>
       </div>
       <div class="card">
         <div class="showcase">
           <div>
             <ol class="steps">
-              <li><div class="n">1</div><div><b>Buka Riwayat Inspeksi</b><span>Dari Dashboard, ketuk kartu <b>Sudah Diinspeksi</b> untuk melihat riwayat hari ini, atau buka halaman riwayat lengkap.</span></div></li>
+              <li><div class="n">1</div><div><b>Buka Riwayat Inspeksi</b><span>Ketuk tab <b>Riwayat</b> di bilah bawah, atau kartu <b>Terkirim</b> di Dashboard.</span></div></li>
               <li><div class="n">2</div><div><b>Filter status</b><span>Gunakan chip filter: <b>Semua</b>, <b>Pending</b>, <b>Disetujui</b>, atau <b>Ditolak</b>.</span></div></li>
               <li><div class="n">3</div><div><b>Filter tanggal</b><span>Ketuk bar tanggal untuk memilih tanggal tertentu; ketuk <b>✕</b> untuk menghapus filter tanggal.</span></div></li>
-              <li><div class="n">4</div><div><b>Lihat detail</b><span>Ketuk salah satu kartu riwayat untuk membuka <b>Detail Inspeksi</b>.</span></div></li>
-              <li><div class="n">5</div><div><b>Gulir untuk memuat lebih banyak</b><span>Daftar dimuat bertahap (pagination). Geser ke bawah untuk memuat halaman berikutnya atau tarik layar untuk refresh.</span></div></li>
+              <li><div class="n">4</div><div><b>Kenali status di kartu</b><span>Setiap kartu menampilkan ikon <b>dan label teks</b>: ⏳ kuning <b>Menunggu Review</b> = Pending, ✅ hijau <b>Disetujui</b>, ⚠ merah <b>Ditolak</b>.</span></div></li>
+              <li><div class="n">5</div><div><b>Lihat detail</b><span>Ketuk salah satu kartu riwayat untuk membuka <b>Detail Inspeksi</b>.</span></div></li>
+              <li><div class="n">6</div><div><b>Gulir untuk memuat lebih banyak</b><span>Daftar dimuat bertahap (pagination). Geser ke bawah untuk memuat halaman berikutnya atau tarik layar untuk refresh.</span></div></li>
             </ol>
-            <div class="note tip"><b>👁️ Status di kartu</b>Ikon di sisi kanan kartu menunjukkan status: ⏳ kuning = Pending, ✅ hijau = Disetujui, ⚠ merah = Ditolak.</div>
+            <div class="note tip"><b>👁️ Status di kartu</b>Ikon di sisi kanan kartu menunjukkan status: ⏳ kuning = Pending (Menunggu Review), ✅ hijau = Disetujui, ⚠ merah = Ditolak.</div>
           </div>
           <div class="phone-wrap">
             <div class="phone-shadow"></div>
-            <svg class="phone" viewBox="0 0 280 640" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI',system-ui,sans-serif" role="img" aria-label="Ilustrasi layar Riwayat Inspeksi">
-              <rect x="3" y="3" width="274" height="634" rx="38" fill="#1c1f26"/>
-              <rect x="10" y="10" width="260" height="620" rx="32" fill="#F5F6F8"/>
-              <text x="24" y="32" font-size="11" font-weight="600" fill="#333">09:41</text>
-              <path d="M30 62 h-12 M24 56 l-6 6 l6 6 M18 62 h12" stroke="#1B2430" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <text x="52" y="66" font-size="15" font-weight="700" fill="#111">Riwayat Inspeksi</text>
-              <text x="52" y="81" font-size="9.5" fill="#64748B">5 inspeksi</text>
-              <rect x="20" y="94" width="56" height="28" rx="14" fill="#D1E4FF" stroke="#1565C0" stroke-width="1.2"/>
-              <text x="48" y="112" text-anchor="middle" font-size="9.5" font-weight="700" fill="#0D47A1">Semua</text>
-              <rect x="84" y="94" width="60" height="28" rx="14" fill="#fff" stroke="#CBD5E1"/>
-              <text x="114" y="112" text-anchor="middle" font-size="9.5" fill="#64748B">Pending</text>
-              <rect x="152" y="94" width="66" height="28" rx="14" fill="#fff" stroke="#CBD5E1"/>
-              <text x="185" y="112" text-anchor="middle" font-size="9.5" fill="#64748B">Disetujui</text>
-              <rect x="226" y="94" width="52" height="28" rx="14" fill="#fff" stroke="#CBD5E1"/>
-              <text x="252" y="112" text-anchor="middle" font-size="9.5" fill="#64748B">Ditolak</text>
-              <rect x="20" y="132" width="240" height="32" rx="10" fill="#EFF6FF" stroke="#BFDBFE"/>
-              <text x="34" y="152" font-size="9.5" font-weight="600" fill="#1E40AF">📅 2026-08-02 &#160;<tspan fill="#94A3B8">✕ hapus</tspan></text>
-              <rect x="20" y="176" width="240" height="66" rx="12" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="46" cy="209" r="14" fill="#1565C0" opacity=".12"/>
-              <path d="M42 209 h8 M46 204 v9 M43 213 h6 M41 216 h10" stroke="#1565C0" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-              <text x="66" y="203" font-size="11.5" font-weight="700" fill="#111">Ruang Perawatan 1</text>
-              <text x="66" y="218" font-size="9" fill="#64748B">12 item · 2026-08-02</text>
-              <circle cx="238" cy="209" r="9" fill="#388E3C" opacity=".14"/>
-              <path d="M234 209 l3 3 l5 -6" stroke="#388E3C" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <rect x="20" y="254" width="240" height="66" rx="12" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="46" cy="287" r="14" fill="#1565C0" opacity=".12"/>
-              <path d="M42 287 h8 M46 282 v9 M43 291 h6 M41 294 h10" stroke="#1565C0" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-              <text x="66" y="281" font-size="11.5" font-weight="700" fill="#111">Kamar Operasi</text>
-              <text x="66" y="296" font-size="9" fill="#64748B">8 item · 2026-08-02</text>
-              <circle cx="238" cy="287" r="9" fill="#F9A825" opacity=".18"/>
-              <path d="M238 283 v7 M235.5 284.5 a3 3 0 0 0 0 6 M240.5 284.5 a3 3 0 0 1 0 6" stroke="#F9A825" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-              <rect x="20" y="332" width="240" height="66" rx="12" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="46" cy="365" r="14" fill="#1565C0" opacity=".12"/>
-              <path d="M42 365 h8 M46 360 v9 M43 369 h6 M41 372 h10" stroke="#1565C0" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-              <text x="66" y="359" font-size="11.5" font-weight="700" fill="#111">Ruang Rawat Inap</text>
-              <text x="66" y="374" font-size="9" fill="#64748B">10 item · 2026-08-01</text>
-              <circle cx="238" cy="365" r="9" fill="#D32F2F" opacity=".13"/>
-              <path d="M235 363 l6 6 M241 363 l-6 6" stroke="#D32F2F" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-              <rect x="20" y="410" width="240" height="66" rx="12" fill="#fff" stroke="#E2E8F0"/>
-              <circle cx="46" cy="443" r="14" fill="#1565C0" opacity=".12"/>
-              <path d="M42 443 h8 M46 438 v9 M43 447 h6 M41 450 h10" stroke="#1565C0" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-              <text x="66" y="437" font-size="11.5" font-weight="700" fill="#111">Poliklinik Umum</text>
-              <text x="66" y="452" font-size="9" fill="#64748B">6 item · 2026-08-01</text>
-              <circle cx="238" cy="443" r="9" fill="#388E3C" opacity=".14"/>
-              <path d="M234 443 l3 3 l5 -6" stroke="#388E3C" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <text x="140" y="510" text-anchor="middle" font-size="9" fill="#94A3B8">Semua data sudah dimuat</text>
-            </svg>
+            <img class="phone" src="screenshots/07-riwayat.png" alt="Layar Riwayat Inspeksi">
             <div class="phone-cap">Layar Riwayat Inspeksi</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ══════════════ 8. DETAIL ══════════════ -->
+    <!-- ══════════════ 9. DETAIL ══════════════ -->
     <section id="detail">
       <div class="sec-head">
         <div class="kicker">Verifikasi</div>
-        <h2>8. Detail Inspeksi</h2>
-        <p>Klik kartu riwayat untuk melihat rincian satu inspeksi: status, petugas, tanggal, hasil penilaian tiap item, dan foto bukti. Jika inspeksi ditolak, alasan penolakan juga ditampilkan di sini.</p>
+        <h2>9. Detail Inspeksi</h2>
+        <p>Klik kartu riwayat untuk melihat rincian satu inspeksi: status, petugas, tanggal, <b>ringkasan skor</b>, hasil penilaian tiap item, dan foto bukti. Jika inspeksi ditolak, alasan penolakan juga ditampilkan di sini.</p>
       </div>
       <div class="card">
         <div class="showcase">
           <div>
             <ol class="steps">
-              <li><div class="n">1</div><div><b>Baca status &amp; info umum</b><span>Kartu bagian atas menampilkan status (Pending / Disetujui / Ditolak), nama petugas, tanggal inspeksi, dan nama ruangan.</span></div></li>
-              <li><div class="n">2</div><div><b>Periksa alasan penolakan</b><span>Jika status <b>Ditolak</b>, alasan dari admin ditampilkan dengan teks merah, misal <i>"Foto bukti kurang jelas"</i>.</span></div></li>
-              <li><div class="n">3</div><div><b>Lihat hasil tiap item</b><span>Setiap item menampilkan label skor berwarna: <b>Berisiko</b> (merah), <b>Minor</b> (kuning), <b>Sesuai</b> (hijau), beserta foto buktinya.</span></div></li>
-              <li><div class="n">4</div><div><b>Inspeksi Ulang</b><span>Ketuk tombol <b>Inspeksi Ulang</b> untuk membuka form <u>kosong</u> bagi ruangan yang sama — berguna jika inspeksi sebelumnya ditolak.</span></div></li>
+              <li><div class="n">1</div><div><b>Baca status &amp; info umum</b><span>Kartu bagian atas menampilkan status (<b>Menunggu Review</b> / <b>Disetujui</b> / <b>Ditolak</b>), nama petugas, tanggal inspeksi, dan nama ruangan.</span></div></li>
+              <li><div class="n">2</div><div><b>Lihat ringkasan skor</b><span>Kartu menampilkan hitungan <b>X Berisiko · Y Minor · Z Sesuai</b> plus bar progres dan kalimat <i>"Z dari N item sesuai standar"</i>.</span></div></li>
+              <li><div class="n">3</div><div><b>Periksa alasan penolakan</b><span>Jika status <b>Ditolak</b>, alasan dari admin ditampilkan dengan teks merah, misal <i>"Foto bukti kurang jelas"</i>.</span></div></li>
+              <li><div class="n">4</div><div><b>Lihat hasil tiap item</b><span>Setiap item menampilkan label skor berwarna: <b>Berisiko</b> (merah), <b>Minor</b> (kuning), <b>Sesuai</b> (hijau), beserta foto buktinya.</span></div></li>
+              <li><div class="n">5</div><div><b>Inspeksi Ulang</b><span>Ketuk tombol <b>Inspeksi Ulang</b> untuk membuka form <u>kosong</u> bagi ruangan yang sama — berguna jika inspeksi sebelumnya ditolak.</span></div></li>
             </ol>
             <div class="note info"><b>🖼️ Foto dari backup lokal</b>Foto inspeksi ditampilkan dari cadangan lokal terlebih dahulu (lebih cepat), dengan fallback dari server. Jika backup masih ada, ikon <b>↻</b> di pojok thumbnail bisa dipakai untuk re-upload foto.</div>
           </div>
           <div class="phone-wrap">
             <div class="phone-shadow"></div>
-            <svg class="phone" viewBox="0 0 280 660" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI',system-ui,sans-serif" role="img" aria-label="Ilustrasi layar Detail Inspeksi">
-              <rect x="3" y="3" width="274" height="654" rx="38" fill="#1c1f26"/>
-              <rect x="10" y="10" width="260" height="640" rx="32" fill="#F5F6F8"/>
-              <text x="24" y="32" font-size="11" font-weight="600" fill="#333">09:41</text>
-              <path d="M30 62 h-12 M24 56 l-6 6 l6 6 M18 62 h12" stroke="#1B2430" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <text x="52" y="66" font-size="15" font-weight="700" fill="#111">Detail Inspeksi</text>
-              <rect x="16" y="84" width="248" height="104" rx="13" fill="#F0FAF0" stroke="#CDE8CD"/>
-              <circle cx="40" cy="112" r="12" fill="#388E3C" opacity=".16"/>
-              <path d="M34.5 112 l4 4 l7 -8" stroke="#388E3C" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <text x="58" y="110" font-size="11.5" font-weight="800" fill="#166534">Status: APPROVED</text>
-              <text x="58" y="125" font-size="9" fill="#64748B">Budi · budi.ins</text>
-              <text x="30" y="150" font-size="9.5" fill="#64748B">2026-08-02</text>
-              <text x="104" y="150" font-size="9.5" fill="#64748B">Room: Ruang Perawatan 1</text>
-              <text x="30" y="168" font-size="9" fill="#166534">✓ Disetujui oleh admin</text>
-              <rect x="16" y="200" width="248" height="44" rx="22" fill="#E3F2FD" stroke="#90CAF9"/>
-              <path d="M120 216 a7 7 0 1 1 14 0 l-1 4 h-12 z" fill="none" stroke="#1565C0" stroke-width="1.6" transform="translate(-4,-4)"/>
-              <path d="M130 226 h4" stroke="#1565C0" stroke-width="2" stroke-linecap="round"/>
-              <text x="146" y="227" font-size="12" font-weight="700" fill="#1565C0">Inspeksi Ulang</text>
-              <text x="24" y="272" font-size="12" font-weight="700" fill="#1B2430">Item Inspeksi (2)</text>
-              <rect x="16" y="284" width="248" height="148" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <text x="32" y="308" font-size="11.5" font-weight="700" fill="#111">Lantai &amp; dinding</text>
-              <text x="196" y="308" font-size="10" font-weight="800" fill="#388E3C">Sesuai</text>
-              <text x="32" y="328" font-size="9" fill="#64748B">Foto Bukti (2)</text>
-              <rect x="32" y="336" width="48" height="48" rx="8" fill="#BBDEFB"/>
-              <circle cx="39" cy="344" r="3.5" fill="#64B5F6"/>
-              <path d="M32 380 l11 -11 l7 7 l8 -8 l10 12 h-36 z" fill="#42A5F5"/>
-              <rect x="88" y="336" width="48" height="48" rx="8" fill="#C8E6C9"/>
-              <circle cx="95" cy="344" r="3.5" fill="#81C784"/>
-              <path d="M88 380 l11 -11 l7 7 l8 -8 l10 12 h-36 z" fill="#66BB6A"/>
-              <rect x="144" y="336" width="48" height="48" rx="8" fill="#FFE0B2"/>
-              <circle cx="151" cy="344" r="3.5" fill="#FFB74D"/>
-              <path d="M144 380 l11 -11 l7 7 l8 -8 l10 12 h-36 z" fill="#FFA726"/>
-              <text x="32" y="412" font-size="9" fill="#64748B">Catatan: Genangan air dibersihkan saat inspeksi</text>
-              <rect x="16" y="444" width="248" height="132" rx="13" fill="#fff" stroke="#E2E8F0"/>
-              <text x="32" y="468" font-size="11.5" font-weight="700" fill="#111">Tempat tidur</text>
-              <text x="196" y="468" font-size="10" font-weight="800" fill="#F9A825">Minor</text>
-              <text x="32" y="488" font-size="9" fill="#64748B">Foto Bukti (1)</text>
-              <rect x="32" y="496" width="48" height="48" rx="8" fill="#BBDEFB"/>
-              <circle cx="39" cy="504" r="3.5" fill="#64B5F6"/>
-              <path d="M32 540 l11 -11 l7 7 l8 -8 l10 12 h-36 z" fill="#42A5F5"/>
-              <text x="32" y="560" font-size="9" fill="#64748B">Catatan: Sprei sedikit kusut</text>
-            </svg>
+            <img class="phone" src="screenshots/08-detail.png" alt="Layar Detail Inspeksi">
             <div class="phone-cap">Layar Detail Inspeksi</div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ══════════════ 9. SYNC ══════════════ -->
+    <!-- ══════════════ 10. SYNC ══════════════ -->
     <section id="sync">
       <div class="sec-head">
         <div class="kicker">Di Balik Layar</div>
-        <h2>9. Sinkronisasi &amp; Mode Offline</h2>
+        <h2>10. Sinkronisasi &amp; Mode Offline</h2>
         <p>Aplikasi bekerja <b>offline-first</b>. Anda bisa mengisi inspeksi penuh tanpa internet sama sekali — data tersimpan aman di perangkat dan dikirim otomatis begitu jaringan tersedia.</p>
       </div>
       <div class="card">
@@ -688,27 +459,27 @@
           <svg viewBox="0 0 920 300" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI',system-ui,sans-serif" role="img" aria-label="Diagram alur sinkronisasi data">
             <defs>
               <marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-                <path d="M0,0 L8,3 L0,6 z" fill="#1565C0"/>
+                <path d="M0,0 L8,3 L0,6 z" fill="#16A34A"/>
               </marker>
               <marker id="arrD" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-                <path d="M0,0 L8,3 L0,6 z" fill="#00897B"/>
+                <path d="M0,0 L8,3 L0,6 z" fill="#22C55E"/>
               </marker>
             </defs>
             <!-- Row 1 -->
             <g>
-              <rect x="20" y="20" width="190" height="96" rx="14" fill="#EFF6FF" stroke="#BFDBFE"/>
+              <rect x="20" y="20" width="190" height="96" rx="14" fill="#E6FFFA" stroke="#99F6E4"/>
               <text x="115" y="50" text-anchor="middle" font-size="24">📝</text>
-              <text x="115" y="78" text-anchor="middle" font-size="13" font-weight="700" fill="#1E40AF">1. Isi Form &amp; Foto</text>
+              <text x="115" y="78" text-anchor="middle" font-size="13" font-weight="700" fill="#115E59">1. Isi Form &amp; Foto</text>
               <text x="115" y="96" text-anchor="middle" font-size="10" fill="#64748B">Petugas menilai &amp; memotret bukti</text>
             </g>
-            <line x1="212" y1="68" x2="268" y2="68" stroke="#1565C0" stroke-width="2.5" marker-end="url(#arr)"/>
+            <line x1="212" y1="68" x2="268" y2="68" stroke="#16A34A" stroke-width="2.5" marker-end="url(#arr)"/>
             <g>
               <rect x="272" y="20" width="190" height="96" rx="14" fill="#ECFDF5" stroke="#A7F3D0"/>
               <text x="367" y="50" text-anchor="middle" font-size="24">💾</text>
               <text x="367" y="78" text-anchor="middle" font-size="13" font-weight="700" fill="#065F46">2. Simpan Draf Lokal</text>
               <text x="367" y="96" text-anchor="middle" font-size="10" fill="#64748B">Tersimpan di database perangkat</text>
             </g>
-            <line x1="464" y1="68" x2="520" y2="68" stroke="#1565C0" stroke-width="2.5" marker-end="url(#arr)"/>
+            <line x1="464" y1="68" x2="520" y2="68" stroke="#16A34A" stroke-width="2.5" marker-end="url(#arr)"/>
             <g>
               <rect x="524" y="20" width="190" height="96" rx="14" fill="#FFFBEB" stroke="#FDE68A"/>
               <text x="619" y="50" text-anchor="middle" font-size="24">🌐</text>
@@ -716,22 +487,22 @@
               <text x="619" y="96" text-anchor="middle" font-size="10" fill="#64748B">WorkManager menunggu jaringan</text>
             </g>
             <!-- connector down -->
-            <path d="M619 118 v26 h-252 v18" stroke="#00897B" stroke-width="2.5" fill="none" marker-end="url(#arrD)"/>
+            <path d="M619 118 v26 h-252 v18" stroke="#22C55E" stroke-width="2.5" fill="none" marker-end="url(#arrD)"/>
             <!-- Row 2 -->
             <g>
-              <rect x="367" y="180" width="190" height="96" rx="14" fill="#EFF6FF" stroke="#BFDBFE"/>
+              <rect x="367" y="180" width="190" height="96" rx="14" fill="#E6FFFA" stroke="#99F6E4"/>
               <text x="462" y="210" text-anchor="middle" font-size="24">📤</text>
-              <text x="462" y="238" text-anchor="middle" font-size="13" font-weight="700" fill="#1E40AF">4. Upload Foto</text>
+              <text x="462" y="238" text-anchor="middle" font-size="13" font-weight="700" fill="#115E59">4. Upload Foto</text>
               <text x="462" y="256" text-anchor="middle" font-size="10" fill="#64748B">Foto dikompres ≤ 300 KB</text>
             </g>
-            <line x1="559" y1="228" x2="615" y2="228" stroke="#1565C0" stroke-width="2.5" marker-end="url(#arr)"/>
+            <line x1="559" y1="228" x2="615" y2="228" stroke="#16A34A" stroke-width="2.5" marker-end="url(#arr)"/>
             <g>
-              <rect x="619" y="180" width="190" height="96" rx="14" fill="#EFF6FF" stroke="#BFDBFE"/>
+              <rect x="619" y="180" width="190" height="96" rx="14" fill="#E6FFFA" stroke="#99F6E4"/>
               <text x="714" y="210" text-anchor="middle" font-size="24">📦</text>
-              <text x="714" y="238" text-anchor="middle" font-size="13" font-weight="700" fill="#1E40AF">5. Kirim Data Inspeksi</text>
+              <text x="714" y="238" text-anchor="middle" font-size="13" font-weight="700" fill="#115E59">5. Kirim Data Inspeksi</text>
               <text x="714" y="256" text-anchor="middle" font-size="10" fill="#64748B">JSON + nama file foto</text>
             </g>
-            <line x1="811" y1="228" x2="862" y2="228" stroke="#1565C0" stroke-width="2.5" marker-end="url(#arr)"/>
+            <line x1="811" y1="228" x2="862" y2="228" stroke="#16A34A" stroke-width="2.5" marker-end="url(#arr)"/>
             <g>
               <rect x="866" y="180" width="40" height="96" rx="14" fill="#ECFDF5" stroke="#A7F3D0"/>
               <text x="886" y="210" text-anchor="middle" font-size="22">✅</text>
@@ -743,9 +514,9 @@
               <text x="195" y="210" text-anchor="middle" font-size="13" font-weight="700" fill="#334155">6. Draf Lokal Dihapus</text>
               <text x="195" y="230" text-anchor="middle" font-size="10" fill="#64748B">Setelah server menerima (200 OK),</text>
               <text x="195" y="246" text-anchor="middle" font-size="10" fill="#64748B">draf otomatis dihapus dari perangkat</text>
-              <text x="195" y="264" text-anchor="middle" font-size="9.5" fill="#388E3C" font-weight="600">Status berubah → Terkirim</text>
+              <text x="195" y="264" text-anchor="middle" font-size="9.5" fill="#16A34A" font-weight="600">Status berubah → Terkirim</text>
             </g>
-            <path d="M367 180 v-24 h-76 v18" stroke="#00897B" stroke-width="2.5" fill="none" marker-end="url(#arrD)" stroke-dasharray="4 3"/>
+            <path d="M367 180 v-24 h-76 v18" stroke="#22C55E" stroke-width="2.5" fill="none" marker-end="url(#arrD)" stroke-dasharray="4 3"/>
           </svg>
         </div>
         <h3 style="font-size:16px;margin:24px 0 8px">Yang Perlu Diketahui</h3>
@@ -757,20 +528,20 @@
         </div>
         <table class="table">
           <tr><th>Indikator</th><th>Artinya</th><th>Tindakan</th></tr>
-          <tr><td><b>Terakhir sync: …</b></td><td>Data terakhir berhasil disinkronkan</td><td>—</td></tr>
+          <tr><td><b>Sinkron terakhir: jam WIB</b></td><td>Data terakhir berhasil disinkronkan (chip di header Dashboard)</td><td>—</td></tr>
           <tr><td><b>Menyinkronkan…</b></td><td>Proses kirim/terima data sedang berjalan</td><td>Biarkan, jangan matikan aplikasi</td></tr>
-          <tr><td><b>Sync gagal — ketuk untuk mencoba lagi</b></td><td>Gagal mengirim (mis. jaringan bermasalah)</td><td>Ketuk baris tersebut untuk mencoba ulang</td></tr>
+          <tr><td><b>Sync gagal — ketuk untuk mencoba lagi</b></td><td>Gagal mengirim (mis. jaringan bermasalah)</td><td>Ketuk baris/chip tersebut untuk mencoba ulang</td></tr>
           <tr><td><b>Menunggu Kirim (kuning)</b></td><td>Draf lengkap menunggu jaringan tersedia</td><td>Tidak perlu apa-apa — kirim otomatis</td></tr>
         </table>
         <div class="note warn2"><b>🔐 Keamanan sesi</b>Aplikasi menukar token secara otomatis di latar belakang. Jika token tidak bisa diperbarui, aplikasi akan <b>keluar otomatis</b> dan mengembalikan Anda ke layar Login — cukup login kembali.</div>
       </div>
     </section>
 
-    <!-- ══════════════ 10. TIPS ══════════════ -->
+    <!-- ══════════════ 11. TIPS ══════════════ -->
     <section id="tips">
       <div class="sec-head">
         <div class="kicker">Ringkasan</div>
-        <h2>10. Tips &amp; Tanya Jawab</h2>
+        <h2>11. Tips &amp; Tanya Jawab</h2>
       </div>
       <div class="card">
         <h3 style="font-size:16px;margin-bottom:8px">✅ Tips Agar Inspeksi Cepat &amp; Lancar</h3>
@@ -779,24 +550,24 @@
           <li><div class="n">✦</div><div><b>Simpan draf secara berkala</b><span>Jangan khawatir kehilangan data — ketuk <b>Simpan Draf</b> sesering yang Anda mau; semua tersimpan di perangkat.</span></div></li>
           <li><div class="n">✦</div><div><b>Foto di area cukup terang</b><span>Foto yang jelas mempercepat peninjauan admin dan mengurangi risiko penolakan.</span></div></li>
           <li><div class="n">✦</div><div><b>Isi catatan untuk temuan penting</b><span>Misalnya lokasi persis temuan — sangat membantu admin memahami kondisi.</span></div></li>
-          <li><div class="n">✦</div><div><b>Jangan inspeksi ruangan dua kali</b><span>Gunakan kartu <b>Belum Diinspeksi</b> di Dashboard agar tidak melewatkan atau mengulang ruangan.</span></div></li>
+          <li><div class="n">✦</div><div><b>Jangan inspeksi ruangan dua kali</b><span>Gunakan daftar status per ruangan di Dashboard agar tidak melewatkan atau mengulang ruangan.</span></div></li>
         </ul>
 
         <h3 style="font-size:16px;margin:26px 0 8px">❓ Tanya Jawab Singkat</h3>
         <table class="table">
           <tr><th>Pertanyaan</th><th>Jawaban</th></tr>
           <tr><td>Apakah bisa mengisi inspeksi tanpa internet?</td><td><b>Bisa.</b> Semua data disimpan lokal sebagai draf dan dikirim otomatis saat online.</td></tr>
-          <tr><td>Kenapa tombol "Kirim" tidak bisa ditekan?</td><td>Masih ada item yang belum dinilai, atau item <b>Berisiko</b> belum dilampiri foto bukti. Periksa bar progres di bawah form.</td></tr>
+          <tr><td>Kenapa tombol "Kirim" tidak bisa ditekan?</td><td>Masih ada item yang belum dinilai, atau item <b>Berisiko (0)</b> / <b>Minor (1)</b> belum dilampiri foto bukti. Periksa bar progres di bawah form.</td></tr>
           <tr><td>Apa bedanya "Simpan Draf" dan "Kirim"?</td><td><b>Simpan Draf</b> hanya menyimpan di perangkat (belum dikirim). <b>Kirim</b> menyimpan sekaligus mengirim ke server saat jaringan tersedia.</td></tr>
           <tr><td>Inspeksi saya ditolak, apa yang harus dilakukan?</td><td>Buka <b>Detail Inspeksi</b>, baca alasan penolakan, lalu ketuk <b>Inspeksi Ulang</b> untuk mengisi form baru pada ruangan yang sama.</td></tr>
           <tr><td>Foto hasil kamera kok cepat dikirim?</td><td>Foto dikompres otomatis di perangkat (maks ±300 KB) sebelum diunggah — hemat kuota dan lebih tahan terhadap jaringan lambat.</td></tr>
-          <tr><td>Bisa pakai beberapa foto per item?</td><td><b>Bisa.</b> Setiap item mendukung beberapa foto bukti.</td></tr>
-          <tr><td>Bagaimana cara keluar dari akun?</td><td>Ketuk tombol <b>Keluar</b> di pojok kanan atas Dashboard.</td></tr>
+          <tr><td>Bisa pakai beberapa foto per item?</td><td><b>Bisa.</b> Setiap item mendukung hingga 5 foto bukti.</td></tr>
+          <tr><td>Bagaimana cara keluar dari akun?</td><td>Ketuk tombol <b>Keluar</b> di pojok kanan atas Dashboard, atau lewat tab <b>Profil</b> di bilah bawah.</td></tr>
         </table>
 
         <div class="note tip" style="margin-top:24px">
           <b>🎉 Selamat bekerja!</b>
-          Dengan memahami alur <b>Login → Pilih Ruangan → Form Inspeksi → Kirim → Pantau Riwayat</b>, Anda siap menggunakan aplikasi inspeksi kebersihan RSUD Ajibarang. Data yang akurat dan foto yang jelas membuat laporan Anda lebih cepat disetujui.
+          Dengan memahami alur <b>Login → Dashboard → Pilih Ruangan → Form Inspeksi → Kirim → Pantau Riwayat</b>, Anda siap menggunakan aplikasi inspeksi kebersihan RSUD Ajibarang. Data yang akurat dan foto yang jelas membuat laporan Anda lebih cepat disetujui.
         </div>
       </div>
     </section>
@@ -805,7 +576,7 @@
 
 <footer>
   <b>Panduan Penggunaan — Aplikasi Inspeksi Kebersihan RSUD Ajibarang</b><br>
-  Dokumen dibuat dari kode sumber aplikasi (Kotlin · Jetpack Compose · Room · WorkManager) · Agustus 2026
+  Dokumen dibuat dari kode sumber aplikasi (Kotlin · Jetpack Compose · Room · WorkManager) dengan tangkapan layar asli dari emulator Android · Agustus 2026
 </footer>
 
 <button class="to-top" id="toTop" aria-label="Kembali ke atas">↑</button>

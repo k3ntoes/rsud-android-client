@@ -23,7 +23,10 @@ import my.id.kentoes.rsudajibarangapp.core.model.draftStatusColor
 import my.id.kentoes.rsudajibarangapp.core.model.toStatusDisplay
 
 @Composable
-fun RecentDraftCard(draft: DrafInspeksi) {
+fun RecentDraftCard(
+    draft: DrafInspeksi,
+    roomName: String? = null
+) {
     val display = draft.status.toStatusDisplay()
     val statusColor = draftStatusColor(draft.status)
 
@@ -46,7 +49,7 @@ fun RecentDraftCard(draft: DrafInspeksi) {
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "Ruangan #${draft.roomId}",
+                    text = roomName ?: "Ruangan #${draft.roomId}",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,

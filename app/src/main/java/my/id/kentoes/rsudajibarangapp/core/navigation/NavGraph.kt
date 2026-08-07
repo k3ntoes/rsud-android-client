@@ -113,8 +113,8 @@ fun NavGraph(
                         navController.navigate(Routes.inspectionForm(roomId.toString(), roomName))
                     }
                 },
-                onResumeDraft = { draftId ->
-                    navController.navigate(Routes.inspectionForm("0", "Resume Draft", draftId))
+                onResumeDraft = { draftId, roomName ->
+                    navController.navigate(Routes.inspectionForm("0", roomName, draftId))
                 },
                 onInspectionClick = { inspectionId ->
                     navController.navigate(Routes.inspectionDetail(inspectionId))
@@ -178,8 +178,8 @@ fun NavGraph(
         composable(Routes.DRAFT_LIST) {
             DaftarDrafScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onResumeDraft = { draftId ->
-                    navController.navigate(Routes.inspectionForm("0", "Resume Draft", draftId))
+                onResumeDraft = { draftId, roomName ->
+                    navController.navigate(Routes.inspectionForm("0", roomName, draftId))
                 },
                 // UX-06: CTA empty state → pilih ruangan
                 onStartInspection = {
