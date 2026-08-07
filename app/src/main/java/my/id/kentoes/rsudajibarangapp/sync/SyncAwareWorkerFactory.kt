@@ -28,17 +28,17 @@ class SyncAwareWorkerFactory @Inject constructor(
     override fun createWorker(
         appContext: Context,
         workerClassName: String,
-        workParameters: WorkerParameters
+        workerParameters: WorkerParameters
     ): ListenableWorker? {
         // Worker dibuat manual karena @HiltWorker tidak diproses oleh KSP
         return when (workerClassName) {
             SyncWorker::class.java.name ->
-                SyncWorker(appContext, workParameters, syncManager)
+                SyncWorker(appContext, workerParameters, syncManager)
             DraftPhotoCleanupWorker::class.java.name ->
-                DraftPhotoCleanupWorker(appContext, workParameters, draftPhotoCleaner)
+                DraftPhotoCleanupWorker(appContext, workerParameters, draftPhotoCleaner)
             else ->
                 // Untuk worker lain, delegasikan ke HiltWorkerFactory
-                hiltWorkerFactory.createWorker(appContext, workerClassName, workParameters)
+                hiltWorkerFactory.createWorker(appContext, workerClassName, workerParameters)
         }
     }
 }
