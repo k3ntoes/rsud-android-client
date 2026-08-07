@@ -36,9 +36,9 @@ fun StatCard(
     val cardModifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier
     Card(
         modifier = cardModifier,
-        // Depth via surfaceContainerHigh (bukan tint alpha 8% yang wash-out)
+        // Card putih di atas page abu — depth dari kontras, bukan tint wash-out
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {

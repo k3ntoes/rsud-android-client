@@ -1,14 +1,20 @@
 package my.id.kentoes.rsudajibarangapp.inspection.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
@@ -44,15 +50,31 @@ fun ItemCard(
     onCatatanChanged: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Aksen status: garis vertikal di sisi kiri kartu mengikuti skor — peta visual
+    // sekilas (belum diskor = netral, Berisiko = error, Minor = tertiary, Sesuai = secondary).
+    // Kartu PUTIH (surface) di atas page abu → kontras, bukan abu di atas abu.
+    val accentColor = when (currentScore) {
+        0 -> MaterialTheme.colorScheme.error
+        1 -> MaterialTheme.colorScheme.tertiary
+        2 -> MaterialTheme.colorScheme.secondary
+        else -> MaterialTheme.colorScheme.surfaceVariant
+    }
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(accentColor)
+            )
+            Column(modifier = Modifier.padding(16.dp)) {
             // Nama item
             Text(
                 text = nama,
@@ -150,13 +172,18 @@ fun ItemCard(
                 maxLines = 4,
                 singleLine = false,
                 shape = RoundedCornerShape(8.dp),
+                // Fill surfaceContainerHighest kontras dengan card putih → jelas input area.
+                // Border outline (gelap) + label normal → tidak lagi terbaca disabled.
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                     focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface
                 )
             )
+            }
         }
     }
 }

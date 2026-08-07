@@ -120,13 +120,13 @@ fun InspectionDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize().padding(padding)
                 ) {
-                    // Header card — status, room, inspector, date. Depth via surfaceContainerHigh
-                    // + chip status berwarna (bukan tint alpha 8% yang wash-out).
+                    // Header card — status, room, inspector, date. Card putih + chip status
+                    // berwarna (bukan tint alpha 8% yang wash-out).
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                                containerColor = MaterialTheme.colorScheme.surface
                             )
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
@@ -228,7 +228,7 @@ fun InspectionDetailScreen(
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                                containerColor = MaterialTheme.colorScheme.surface
                             )
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
