@@ -11,15 +11,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 // Palet RSUD yang DIKUNCI (keputusan 2026-08): dynamic color / Material You dimatikan
-// agar biru/teal/amber konsisten di semua device — warna status harus bisa diprediksi
-// di aplikasi kerja lapangan. Seed: biru (primary), teal (secondary), amber hangat
-// (tertiary — pending/menunggu/minor). Semua container role + surfaceContainer diisi
-// agar depth kartu terlihat & kontras aman light/dark.
+// agar warna konsisten di semua device — warna status harus bisa diprediksi di aplikasi
+// kerja lapangan. Seed: HIJAU (primary — identitas RSUD Ajibarang), teal (secondary —
+// Sesuai/approved), amber hangat (tertiary — pending/menunggu/minor), merah (error).
+// Semua container role + surfaceContainer diisi agar depth kartu terlihat & kontras
+// aman light/dark.
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF1565C0),
+    primary = Color(0xFF2E7D32),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFD1E4FF),
-    onPrimaryContainer = Color(0xFF001B3F),
+    primaryContainer = Color(0xFFC8E6C9),
+    onPrimaryContainer = Color(0xFF00300C),
     secondary = Color(0xFF00897B),
     onSecondary = Color.White,
     secondaryContainer = Color(0xFFB2DFDB),
@@ -48,10 +49,10 @@ private val LightColors = lightColorScheme(
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFF90CAF9),
-    onPrimary = Color(0xFF0D47A1),
-    primaryContainer = Color(0xFF1565C0),
-    onPrimaryContainer = Color(0xFFD1E4FF),
+    primary = Color(0xFF81C784),
+    onPrimary = Color(0xFF00390A),
+    primaryContainer = Color(0xFF1B5E20),
+    onPrimaryContainer = Color(0xFFC8E6C9),
     secondary = Color(0xFF80CBC4),
     onSecondary = Color(0xFF00332E),
     secondaryContainer = Color(0xFF00695C),
