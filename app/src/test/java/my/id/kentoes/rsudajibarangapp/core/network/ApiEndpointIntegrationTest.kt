@@ -7,9 +7,7 @@ import my.id.kentoes.rsudajibarangapp.auth.api.ChangePasswordRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.LoginRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.LogoutRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.RefreshRequest
-import my.id.kentoes.rsudajibarangapp.master.api.ItemOut
 import my.id.kentoes.rsudajibarangapp.master.api.MasterDataApi
-import my.id.kentoes.rsudajibarangapp.master.api.RoomOut
 import my.id.kentoes.rsudajibarangapp.sync.api.DetailSubmit
 import my.id.kentoes.rsudajibarangapp.sync.api.InspectionSubmit
 import my.id.kentoes.rsudajibarangapp.sync.api.PhotoSubmit

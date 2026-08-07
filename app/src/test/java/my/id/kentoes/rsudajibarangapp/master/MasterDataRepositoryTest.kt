@@ -211,8 +211,8 @@ class MasterDataRepositoryTest {
     fun `syncRoomItems clears then inserts mapped items`() = runTest {
         val apiResult = SyncResponse(
             data = listOf(
-                RoomItemDto(id = 1, roomId = 10, itemId = 100, createdAt = "2026-01-01T00:00:00Z"),
-                RoomItemDto(id = 2, roomId = 10, itemId = 200),
+                RoomItemDto(id = 1, roomId = 10, itemId = 100, sortOrder = 3, createdAt = "2026-01-01T00:00:00Z"),
+                RoomItemDto(id = 2, roomId = 10, itemId = 200, sortOrder = 1),
             )
         )
         coEvery { api.getRoomItems(any()) } returns apiResult
@@ -229,10 +229,13 @@ class MasterDataRepositoryTest {
                         items[0].id == 1L &&
                         items[0].roomId == 10L &&
                         items[0].itemId == 100L &&
+                        // Kontrak §2.2 (ADR-0013): sort_order ikut disimpan — tidak dibuang
+                        items[0].sortOrder == 3 &&
                         items[0].createdAt == "2026-01-01T00:00:00Z" &&
                         items[1].id == 2L &&
                         items[1].roomId == 10L &&
                         items[1].itemId == 200L &&
+                        items[1].sortOrder == 1 &&
                         items[1].createdAt == null
             })
         }

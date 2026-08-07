@@ -10,74 +10,79 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-// Palet RSUD yang DIKUNCI (keputusan 2026-08): dynamic color / Material You dimatikan
+// Palet RSUD Medical Green — DIKUNCI (keputusan 2026-08): dynamic color / Material You dimatikan
 // agar warna konsisten di semua device — warna status harus bisa diprediksi di aplikasi
-// kerja lapangan. Seed: HIJAU (primary — identitas RSUD Ajibarang), teal (secondary —
-// Sesuai/approved), amber hangat (tertiary — pending/menunggu/minor), merah (error).
-// Semua container role + surfaceContainer diisi agar depth kartu terlihat & kontras
-// aman light/dark.
+// kerja lapangan. Seed: HIJAU MEDIS (primary — identitas RSUD Ajibarang, #16A34A),
+// hijau muda (secondary — sesuai/approved), kuning (tertiary — pending/menunggu),
+// merah (error/danger). Background #F5FAF7 (light green-white).
+// Semua container role + surfaceContainer diisi agar depth kartu terlihat & kontras aman light/dark.
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF2E7D32),
+    primary = Color(0xFF16A34A),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFC8E6C9),
-    onPrimaryContainer = Color(0xFF00300C),
-    secondary = Color(0xFF00897B),
+    primaryContainer = Color(0xFFBBF7D0),
+    onPrimaryContainer = Color(0xFF002106),
+    secondary = Color(0xFF22C55E),
     onSecondary = Color.White,
-    secondaryContainer = Color(0xFFB2DFDB),
-    onSecondaryContainer = Color(0xFF00201D),
-    tertiary = Color(0xFF8A5C00),
+    secondaryContainer = Color(0xFFA7F3D0),
+    onSecondaryContainer = Color(0xFF002109),
+    tertiary = Color(0xFFF59E0B),
     onTertiary = Color.White,
-    tertiaryContainer = Color(0xFFFFE082),
-    onTertiaryContainer = Color(0xFF2B1F00),
-    error = Color(0xFFD32F2F),
+    tertiaryContainer = Color(0xFFFEF3C7),
+    onTertiaryContainer = Color(0xFF451A03),
+    error = Color(0xFFEF4444),
     onError = Color.White,
-    errorContainer = Color(0xFFFFDAD6),
-    onErrorContainer = Color(0xFF410002),
-    background = Color(0xFFF5F5F5),
-    onBackground = Color(0xFF1A1C1E),
+    errorContainer = Color(0xFFFEE2E2),
+    onErrorContainer = Color(0xFF450A0A),
+    background = Color(0xFFF5FAF7),
+    onBackground = Color(0xFF1F2937),
     surface = Color.White,
-    onSurface = Color(0xFF1A1C1E),
-    surfaceVariant = Color(0xFFDEE2E7),
-    onSurfaceVariant = Color(0xFF44474E),
-    outline = Color(0xFF74777F),
-    outlineVariant = Color(0xFFC4C6D0),
+    onSurface = Color(0xFF1F2937),
+    surfaceVariant = Color(0xFFE8F5E9),
+    onSurfaceVariant = Color(0xFF6B7280),
+    outline = Color(0xFF9CA3AF),
+    outlineVariant = Color(0xFFD1D5DB),
     surfaceContainerLowest = Color.White,
-    surfaceContainerLow = Color(0xFFF2F2F5),
-    surfaceContainer = Color(0xFFECECEF),
-    surfaceContainerHigh = Color(0xFFE6E6EA),
-    surfaceContainerHighest = Color(0xFFE0E0E4)
+    surfaceContainerLow = Color(0xFFF0FDF4),
+    surfaceContainer = Color(0xFFECFDF5),
+    surfaceContainerHigh = Color(0xFFD1FAE5),
+    surfaceContainerHighest = Color(0xFFA7F3D0)
 )
 
+/** Warna sukses khusus — tidak ada role resmi M3, tapi dipakai untuk badge "Selesai". */
+val SuccessGreen = Color(0xFF10B981)
+val SuccessGreenLight = Color(0xFFD1FAE5)
+val SuccessGreenDark = Color(0xFF065F46)
+
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFF81C784),
+    primary = Color(0xFF4ADE80),
     onPrimary = Color(0xFF00390A),
-    primaryContainer = Color(0xFF1B5E20),
-    onPrimaryContainer = Color(0xFFC8E6C9),
-    secondary = Color(0xFF80CBC4),
-    onSecondary = Color(0xFF00332E),
-    secondaryContainer = Color(0xFF00695C),
-    onSecondaryContainer = Color(0xFFB2DFDB),
-    tertiary = Color(0xFFFFD166),
-    onTertiary = Color(0xFF3F2E00),
-    tertiaryContainer = Color(0xFF6D5100),
-    onTertiaryContainer = Color(0xFFFFE082),
-    error = Color(0xFFEF5350),
-    onError = Color(0xFF690005),
-    errorContainer = Color(0xFF93000A),
-    onErrorContainer = Color(0xFFFFDAD6),
-    background = Color(0xFF121212),
-    onBackground = Color(0xFFE2E2E6),
-    surface = Color(0xFF1E1E1E),
-    onSurface = Color(0xFFE2E2E6),
-    surfaceVariant = Color(0xFF44474E),
-    onSurfaceVariant = Color(0xFFC4C6D0),
-    outline = Color(0xFF8E9099),
-    outlineVariant = Color(0xFF44474E),
-    surfaceContainerLowest = Color(0xFF141414),
-    surfaceContainerLow = Color(0xFF1D1D1D),
-    surfaceContainer = Color(0xFF222222),
-    surfaceContainerHigh = Color(0xFF292929),
-    surfaceContainerHighest = Color(0xFF303030)
+    primaryContainer = Color(0xFF15803D),
+    onPrimaryContainer = Color(0xFFBBF7D0),
+    secondary = Color(0xFF86EFAC),
+    onSecondary = Color(0xFF002109),
+    secondaryContainer = Color(0xFF15803D),
+    onSecondaryContainer = Color(0xFFA7F3D0),
+    tertiary = Color(0xFFFCD34D),
+    onTertiary = Color(0xFF451A03),
+    tertiaryContainer = Color(0xFF92400E),
+    onTertiaryContainer = Color(0xFFFEF3C7),
+    error = Color(0xFFFCA5A5),
+    onError = Color(0xFF450A0A),
+    errorContainer = Color(0xFF991B1B),
+    onErrorContainer = Color(0xFFFEE2E2),
+    background = Color(0xFF0F172A),
+    onBackground = Color(0xFFE2E8F0),
+    surface = Color(0xFF1E293B),
+    onSurface = Color(0xFFE2E8F0),
+    surfaceVariant = Color(0xFF1E3A2F),
+    onSurfaceVariant = Color(0xFF9CA3AF),
+    outline = Color(0xFF6B7280),
+    outlineVariant = Color(0xFF374151),
+    surfaceContainerLowest = Color(0xFF0F172A),
+    surfaceContainerLow = Color(0xFF162032),
+    surfaceContainer = Color(0xFF1E293B),
+    surfaceContainerHigh = Color(0xFF263244),
+    surfaceContainerHighest = Color(0xFF334155)
 )
 
 /**

@@ -33,6 +33,8 @@ data class RoomItemDto(
     val roomId: Long,
     @SerialName("item_id")
     val itemId: Long,
+    @SerialName("sort_order")
+    val sortOrder: Int = 0,
     @SerialName("is_active")
     val isActive: Boolean = true,
     @SerialName("created_at")

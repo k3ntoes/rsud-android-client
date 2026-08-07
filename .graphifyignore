@@ -1,0 +1,51 @@
+# .graphifyignore — artefak & mirror yang TIDAK di-index ke knowledge graph
+#
+# Sintaks: gitignore-style (# komentar, ! negasi, glob **, trailing slash = direktori).
+# Diproses SETELAH .gitignore dengan last-match-wins, jadi hanya bisa
+# mengecualikan LEBIH banyak — tidak bisa me-reinclude apa yang sudah di-ignore.
+#
+# Catatan: direktori berikut sudah otomatis di-skip oleh graphify dan TIDAK
+# perlu ditulis ulang di sini: .git, build, dist, node_modules, .idea, .venv,
+# __pycache__, .gradle cache global, *.egg-info, graphify-out, coverage, dll.
+# Baris di bawah ini hanya untuk yang BELUM tercakup default.
+
+# ---------------------------------------------------------------- Build cache
+# Gradle/Kotlin project cache & build output (bukan source, selalu regenerated)
+.gradle/
+.kotlin/
+/captures
+/externalNativeBuild
+/.cxx
+
+# APK hasil build (task buildApk) — binary, tidak relevan untuk graph
+/apk/
+
+# ------------------------------------------------------------- Config lokal
+# Secrets & config machine-specific (juga ada di .gitignore)
+/.env
+/.mcp.json
+/local.properties
+
+# ------------------------------------------- Issue tracker state (.beads)
+# Machine state & log interaksi agent — noise, bukan konten project
+/.beads/
+
+# ------------------------------------------------------- Test log sementara
+# Output redirect saat menjalankan gradle test di terminal
+/test_output.txt
+/test_err.txt
+
+# ----------------------------------------------- HTML generated (dari .md)
+# Source-nya adalah .md/.py di docs/ — HTML hasil generate tidak di-index
+/docs/flow-diagrams.html
+/docs/TUTORIAL-PENGGUNAAN.html
+
+# ----------------------- Mirror dokumentasi backend (repo terpisah)
+# docs/BE/ adalah mirror dari rsud-server-stack — graph ini khusus Android client
+/docs/BE/
+
+# -------------------------------------------- AI agent tooling skills
+# Skill agent (graphify, ponytail, gitnexus, dll) — instruksi tooling, bukan
+# arsitektur aplikasi. Graph tetap berisi kode + docs project ini.
+/.claude/
+/.agents/

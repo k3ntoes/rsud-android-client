@@ -137,6 +137,9 @@ dependencies {
     // Room 3.0 — KSP only
     implementation(libs.room3.runtime)
     ksp(libs.room3.compiler)
+    // KSP di unit test — Room memproses @Database/@Dao/@Entity di test source
+    // (dipakai AppDatabaseMigrationTest untuk membangun schema v7 lama).
+    kspTest(libs.room3.compiler)
 
     // DataStore + Tink
     implementation(libs.datastore)

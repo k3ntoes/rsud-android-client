@@ -16,6 +16,7 @@ import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafFoto
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafItem
+import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.sync.SyncWorker
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -27,7 +28,6 @@ data class InspectionFormUiState(
     val roomName: String = "",
     val isLoading: Boolean = false,
     val items: List<ItemState> = emptyList(),
-    val groupedItems: Map<String, List<ItemState>> = emptyMap(),
     val totalItems: Int = 0,
     val scoredItems: Int = 0,
     val validItems: Int = 0,
@@ -66,9 +66,9 @@ class InspectionFormViewModel @Inject constructor(
 
             // Filter items by room: ambil mapping room→itemIds, filter hanya item yang terasosiasi dengan room ini.
             // Pivot KOSONG = form kosong (keputusan review 2026-08) — TIDAK ada fallback "tampilkan semua".
+            // Urutan checklist = (sort_order ASC, item_id ASC) dari pivot room_items (ADR-0019 Android,
+            // kontrak BE ADR-0013) — bukan urutan abjad. Lihat orderByChecklist().
             val roomItems = masterDataDao.getAllRoomItems()
-            val itemIdsForRoom = roomItems.filter { it.roomId == roomId }.map { it.itemId }.toSet()
-            val filteredItems = allMasterItems.filter { it.id in itemIdsForRoom }
 
             val states = if (draftId != null && draftId > 0) {
                 resumeDraftId = draftId
@@ -77,31 +77,55 @@ class InspectionFormViewModel @Inject constructor(
                 // saat pivot kosong (resume tetap jalan walau mapping room belum di-sync).
                 val (draftRoomId, draftStates) = inspectionRepository.draftToItemStates(draftId, allMasterItems)
                 _uiState.value = _uiState.value.copy(roomId = draftRoomId)
-                draftStates
+                // Sort ulang pakai pivot TERBARU: item yang masih di pivot diurutkan
+                // (sort_order, item_id) di depan; item yang tidak lagi di pivot (dilepas admin /
+                // pivot belum ter-sync) TETAP dipertahankan di akhir — tidak di-drop.
+                orderByChecklist(draftStates, sortMapForRoom(roomItems, draftRoomId))
             } else {
-                filteredItems.map { entity ->
-                    ItemState(
-                        itemId = entity.id,
-                        nama = entity.nama,
-                        kategori = entity.kategori,
-                        deskripsi = entity.deskripsi,
-                        skor = -1,
-                        fotoPaths = emptyList(),
-                        catatan = null
-                    )
-                }
+                // Filter hanya item yang terasosiasi dengan room ini (dari pivot), lalu urutkan.
+                val sortMap = sortMapForRoom(roomItems, roomId)
+                orderByChecklist(
+                    allMasterItems.filter { it.id in sortMap.keys }.map { entity ->
+                        ItemState(
+                            itemId = entity.id,
+                            nama = entity.nama,
+                            kategori = entity.kategori,
+                            deskripsi = entity.deskripsi,
+                            skor = -1,
+                            fotoPaths = emptyList(),
+                            catatan = null
+                        )
+                    },
+                    sortMap
+                )
             }
 
             states.forEach { itemStates[it.itemId] = it }
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
-                items = states,
-                groupedItems = states.groupBy { it.kategori }
+                items = states
             )
             updateCounts()
         }
     }
+
+    /** Map itemId → sortOrder untuk satu room dari pivot room_items (ADR-0019). */
+    private fun sortMapForRoom(roomItems: List<RoomItemEntity>, roomId: Long): Map<Long, Int> =
+        roomItems.filter { it.roomId == roomId }.associate { it.itemId to it.sortOrder }
+
+    /**
+     * Urutan checklist (ADR-0019): item di pivot diurutkan (sort_order ASC, item_id ASC).
+     * Item yang tidak lagi di pivot (resume draft) tetap tampil di akhir, urut item_id.
+     */
+    private fun orderByChecklist(states: List<ItemState>, sortMap: Map<Long, Int>): List<ItemState> =
+        states.sortedWith(
+            compareBy(
+                { if (it.itemId in sortMap) 0 else 1 },
+                { sortMap[it.itemId] ?: Int.MAX_VALUE },
+                { it.itemId }
+            )
+        )
 
     /** Update skor untuk item tertentu */
     fun updateScore(itemId: Long, skor: Int) {
@@ -206,10 +230,7 @@ class InspectionFormViewModel @Inject constructor(
 
     private fun emitItems() {
         val states = itemStates.values.toList()
-        _uiState.value = _uiState.value.copy(
-            items = states,
-            groupedItems = states.groupBy { it.kategori }
-        )
+        _uiState.value = _uiState.value.copy(items = states)
         updateCounts()
     }
 

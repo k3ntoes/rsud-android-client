@@ -2,6 +2,7 @@ package my.id.kentoes.rsudajibarangapp.sync.api
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import my.id.kentoes.rsudajibarangapp.core.model.PaginatedResponse
 import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -11,7 +12,6 @@ import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
-import my.id.kentoes.rsudajibarangapp.core.model.PaginatedResponse
 
 @Serializable
 data class UploadPhotoResponse(

@@ -200,13 +200,16 @@ GET /api/room-items?since=2026-07-28T00:00:00Z
 ```json
 {
   "data": [
-    { "id": 1, "room_id": 1, "item_id": 1, "created_at": "2026-07-28T10:00:00Z" },
-    { "id": 2, "room_id": 1, "item_id": 2, "created_at": "2026-07-28T10:00:00Z" },
-    { "id": 3, "room_id": 2, "item_id": 1, "created_at": "2026-07-28T10:00:00Z" }
+    { "id": 1, "room_id": 1, "item_id": 1, "sort_order": 1, "is_active": true,  "created_at": "2026-07-28T10:00:00Z" },
+    { "id": 2, "room_id": 1, "item_id": 2, "sort_order": 0, "is_active": true,  "created_at": "2026-07-28T10:00:00Z" },
+    { "id": 3, "room_id": 2, "item_id": 1, "sort_order": 0, "is_active": true,  "created_at": "2026-07-28T10:00:00Z" },
+    { "id": 4, "room_id": 1, "item_id": 3, "sort_order": 0, "is_active": false, "created_at": "2026-07-20T09:00:00Z" }
   ],
   "synced_at": "2026-07-29T12:00:00Z"
 }
 ```
+
+> `id=4` adalah **tombstone** (`is_active=false`) — relasi SUDAH dilepas, jangan masuk mapping lokal.
 
 **Schema:**
 | Field | Tipe | Deskripsi |
@@ -214,6 +217,8 @@ GET /api/room-items?since=2026-07-28T00:00:00Z
 | `id` | int | Primary key relasi |
 | `room_id` | int | ID Room |
 | `item_id` | int | ID Inspection Item |
+| `sort_order` | int | **Urutan tampilan item dalam checklist ruangan (ADR-0013)** — urutkan ascending; tie-breaker: `item_id` ASC |
+| `is_active` | bool | `true` = ter-assign, `false` = tombstone (jangan diinsert) |
 | `created_at` | string (ISO 8601) | Waktu assignment |
 
 #### B. GET /api/rooms/{roomId}/items — Items per room
@@ -249,16 +254,20 @@ GET /api/inspection-items/1/rooms
 
 **Step 2: Bangun struktur data lokal**
 ```kotlin
-// Data class untuk RoomItem
+// Data class untuk RoomItem — wajib simpan sort_order (ADR-0013 / ADR-0019)
 data class RoomItemDto(
     val id: Int,
     val roomId: Int,
     val itemId: Int,
-    val createdAt: String
+    @SerializedName("sort_order") val sortOrder: Int = 0,
+    @SerializedName("is_active") val isActive: Boolean = true,
+    @SerializedName("created_at") val createdAt: String? = null
 )
 
-// Build mapping roomId → list of itemIds
+// Build mapping roomId → list of itemIds (URUTAN = sort_order ASC, item_id ASC)
 val roomItemMap: Map<Int, List<Int>> = roomItems
+    .filter { it.isActive }                 // tombstone (is_active=false) TIDAK masuk mapping
+    .sortedWith(compareBy({ it.sortOrder }, { it.itemId }))
     .groupBy({ it.roomId }, { it.itemId })
 
 // Build lookup item name
@@ -342,7 +351,7 @@ data class ItemEntity(
     @ColumnInfo(name = "updated_at") val updatedAt: String?
 )
 
-// Tabel pivot RoomItem
+// Tabel pivot RoomItem — wajib simpan sort_order untuk urutan checklist (ADR-0013 / ADR-0019)
 @Entity(
     tableName = "room_items",
     foreignKeys = [
@@ -355,6 +364,7 @@ data class RoomItemEntity(
     @PrimaryKey val id: Int,
     @ColumnInfo(name = "room_id") val roomId: Int,
     @ColumnInfo(name = "item_id") val itemId: Int,
+    @ColumnInfo(name = "sort_order") val sortOrder: Int = 0,
     @ColumnInfo(name = "created_at") val createdAt: String
 )
 ```

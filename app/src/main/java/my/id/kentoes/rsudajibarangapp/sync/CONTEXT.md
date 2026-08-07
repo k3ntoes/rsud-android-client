@@ -41,7 +41,7 @@ Waktu dalam format UTC ISO 8601 yang digenerate saat data disimpan di perangkat.
 _Avoid_: Waktu lokal, timestamp
 
 **Pemetaan Ruangan-Item**: 
-Struktur data lokal `Map<Long, List<Long>>` (key: roomId, value: list of itemIds) yang dibangun dari hasil sync `room-items`. Digunakan untuk validasi offline: hanya items yang terasosiasi dengan room yang wajib di-score saat submit.
+Struktur data lokal `Map<Long, List<Long>>` (key: roomId, value: list of itemIds) yang dibangun dari hasil sync `room-items`. Digunakan untuk validasi offline (hanya items yang terasosiasi dengan room yang wajib di-score saat submit) dan item count per room. Map ini TIDAK membawa urutan — urutan checklist form inspeksi diambil langsung dari pivot dengan aturan `(sort_order ASC, item_id ASC)` (ADR-0019).
 _Avoid_: Room-item map, pivot mapping
 
 **Pemetaan Pengguna-Ruangan**: 

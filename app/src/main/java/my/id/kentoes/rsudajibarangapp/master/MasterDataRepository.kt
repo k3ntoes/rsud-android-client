@@ -130,6 +130,9 @@ class MasterDataRepository @Inject constructor(
                     id = dto.id,
                     roomId = dto.roomId,
                     itemId = dto.itemId,
+                    // Kontrak §2.2 (ADR-0013): sort_order menentukan urutan checklist —
+                    // jangan dibuang saat parse (ADR-0019 Android).
+                    sortOrder = dto.sortOrder,
                     createdAt = dto.createdAt
                 )
             })

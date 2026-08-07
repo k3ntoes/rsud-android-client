@@ -2,7 +2,6 @@ package my.id.kentoes.rsudajibarangapp.inspection
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionDetailEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionEntity

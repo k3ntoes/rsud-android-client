@@ -19,9 +19,6 @@ import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
 import my.id.kentoes.rsudajibarangapp.master.MasterDataRepository
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import my.id.kentoes.rsudajibarangapp.master.SyncState
 import my.id.kentoes.rsudajibarangapp.master.SyncStateStore
 import my.id.kentoes.rsudajibarangapp.sync.MasterDataSyncResult
@@ -33,6 +30,9 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class DashboardViewModelTest {
 
@@ -56,6 +56,7 @@ class DashboardViewModelTest {
         coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns emptySet()
         // UX-01: query detail per-room (status list) — default kosong
         coEvery { masterDataDao.getAllRoomItems() } returns emptyList()
+        coEvery { drafDao.getItemsForDraft(any()) } returns emptyList()
         coEvery { masterDataDao.getInspectionsByDate(any()) } returns MutableStateFlow(emptyList())
         // Default: cache terisi → auto-sync TIDAK jalan; lastSyncAt dibaca dari store
         coEvery { masterDataRepository.isCacheAvailable() } returns true

@@ -1,5 +1,6 @@
 package my.id.kentoes.rsudajibarangapp.auth
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,7 +11,6 @@ import my.id.kentoes.rsudajibarangapp.auth.api.LogoutRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.RefreshRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.TokenResponse
 import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
-import kotlinx.coroutines.CancellationException
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.datastore.TokenManager
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionRepository

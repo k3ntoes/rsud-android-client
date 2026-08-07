@@ -32,6 +32,7 @@ data class RoomStatusItem(
     val roomId: Long,
     val roomName: String,
     val itemCount: Int,
+    val scoredItems: Int = 0,
     val status: RoomStatus,
     val draftId: Long? = null,
     val inspectionId: Long? = null
@@ -156,9 +157,18 @@ class DashboardViewModel @Inject constructor(
             val inspectedInScope = scopeRooms.count { it.id in inspectedIds }
             // Daftar per-room (UX-01): status + id untuk navigasi. Semua data lokal/ter-sync
             // dari BE — tanpa endpoint baru (keputusan Q5 grill 2026-08).
-            val draftsToday = drafDao.getAllDrafts().first().filter { it.businessDate == date }
+            val draftsToday = drafDao.getAllDrafts().first().filter { draft ->
+                val draftDate = draft.businessDate ?: if (draft.localTimestamp.length >= 10) draft.localTimestamp.take(10) else ""
+                draftDate == date
+            }
             val inspectionsToday = masterDataDao.getInspectionsByDate(date).first()
             val itemCounts = masterDataDao.getAllRoomItems().groupingBy { it.roomId }.eachCount()
+            // Hitung jumlah item yang sudah di-score per room (dari draf hari ini)
+            val scoredCounts = mutableMapOf<Long, Int>()
+            draftsToday.forEach { draft ->
+                val items = drafDao.getItemsForDraft(draft.id)
+                scoredCounts[draft.roomId] = items.count { it.skor >= 0 }
+            }
             val statuses = scopeRooms.map { room ->
                 // Precedence: inspection (kebenaran server) > draf (lokal) > BELUM.
                 val inspection = inspectionsToday
@@ -179,10 +189,17 @@ class DashboardViewModel @Inject constructor(
                     }
                     else -> Triple(RoomStatus.BELUM, null, null)
                 }
+                // Jika inspeksi sudah disetujui, semua item dianggap scored
+                val scoredItems = if (status == RoomStatus.DISETUJUI) {
+                    itemCounts[room.id] ?: 0
+                } else {
+                    scoredCounts[room.id] ?: 0
+                }
                 RoomStatusItem(
                     roomId = room.id,
                     roomName = room.nama,
                     itemCount = itemCounts[room.id] ?: 0,
+                    scoredItems = scoredItems,
                     status = status,
                     draftId = draftId,
                     inspectionId = inspectionId

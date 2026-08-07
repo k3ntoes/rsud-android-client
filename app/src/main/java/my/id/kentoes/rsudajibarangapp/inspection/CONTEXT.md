@@ -13,11 +13,11 @@ Satu baris parameter dalam form inspeksi. Didapat dari Master Data yang disimpan
 _Avoid_: Pertanyaan, parameter, indikator
 
 **Skor**:
-Nilai item: 0 (Berisiko — **wajib foto**), 1 (Minor Defect — foto opsional), 2 (Sesuai Standar — tidak perlu foto).
+Nilai item: 0 (Berisiko — **wajib foto**), 1 (Minor Defect — **wajib foto**), 2 (Sesuai Standar — tidak perlu foto). Keputusan UI-Form redesign 2026-08 (ADR-0020): skor 1 dinaikkan menjadi wajib foto agar temuan Minor terdokumentasi — konsisten dengan praktik audit lapangan RSUD Ajibarang.
 _Avoid_: Nilai, rating, grade
 
 **Bukti Foto**:
-Foto yang diambil Petugas sebagai bukti temuan. Multi-foto per item (unlimited). **Minimal 1 foto wajib** jika Skor = 0. Format: diupload ke server → dapat `photo_file_name` → dikirim sebagai referensi di payload inspeksi.
+Foto yang diambil Petugas sebagai bukti temuan. Multi-foto per item, **maksimal 5 foto per item** (batas UI, ADR-0020). **Minimal 1 foto wajib** jika Skor = 0 atau Skor = 1. Skor = 2 tidak memerlukan foto. Format: diupload ke server → dapat `photo_file_name` → dikirim sebagai referensi di payload inspeksi.
 _Avoid_: Evidence, lampiran, gambar bukti
 
 **Draf**:
@@ -43,7 +43,7 @@ Urutan tampilan item dalam form inspeksi suatu room. Diatur Admin PPI per ruanga
 _Avoid_: Sort order, sequence, urutan abjad
 
 **Kirim**:
-Aksi mengirim inspeksi ke server. Validasi: **semua item yang terasosiasi dengan room harus valid** (skor terisi + foto jika skor 0). Data masuk ke WorkManager untuk dikirim saat jaringan tersedia.
+Aksi mengirim inspeksi ke server. Validasi: **semua item yang terasosiasi dengan room harus valid** (skor terisi + foto jika skor 0 atau 1). Data masuk ke WorkManager untuk dikirim saat jaringan tersedia.
 _Avoid_: Submit, upload
 
 **Catatan Item**:
@@ -90,7 +90,8 @@ _Avoid_: Synced, sent count
 - Scope: 1 hari (businessDate = today) · **hanya room yang di-assign** (`isMyRoom`) — inspector-only (ADR-0017).
 - Definisi "selesai": memiliki catatan di `DrafInspeksi` (DRAFT/PENDING_SYNC) ATAU `InspectionEntity` dengan `businessDate` hari ini — dihitung dari `RoomStatusItem.status != BELUM`.
 - **Analytics dashboard (Skor Terendah, Temuan Paling Sering) tidak ada di Android** — web dashboard adalah tempatnya (supervisor/admin_ppi, ADR-0017).
-- **Inspeksi Ulang**: aksi di halaman detail inspeksi (terkirim) → membuka form inspeksi kosong untuk room yang sama. Draf yang belum terkirim dilanjutkan via "Draf" → Resume. Keputusan review 2026-08: tidak ada tombol "Inspeksi Baru" di dashboard; jalur masuk inspeksi ulang = daftar per-room (status terkirim) → detail → "Inspeksi Ulang".
+- **Inspeksi Ulang**: aksi di halaman detail inspeksi (terkirim) → membuka form inspeksi kosong untuk room yang sama. Draf yang belum terkirim dilanjutkan via "Draf" → Resume.
+- **Phase 9 Dashboard Redesign**: Gradient header dengan WIB sinkron timestamp, 3 stat cards dalam 1 baris, Progress Hari Ini card (linear + circular progress), status per-room dengan progress bar + badge, FloatingActionButton ("+ Mulai Inspeksi" override cepat ke room selection), Bottom Navigation 4 tab (Dashboard, Inspeksi, Riwayat, Profil), Skeleton loading, dan ProfileScreen.
 _Avoid_: Daily stats, hari ini, status cards
 
 **Retensi Data**:

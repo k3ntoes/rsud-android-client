@@ -111,16 +111,35 @@ class InspectionFormViewModelTest {
     }
 
     @Test
-    fun `init groups items by kategori`() = runTest(testDispatcher) {
+    fun `init orders items by sort_order then item_id (ADR-0019)`() = runTest(testDispatcher) {
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        // Pivot room 1: item 3 (sort 0) → item 1 (sort 1) → item 2 (sort 2) — BUKAN urutan abjad
+        coEvery { masterDataDao.getAllRoomItems() } returns listOf(
+            RoomItemEntity(id = 1, roomId = 1, itemId = 3, sortOrder = 0),
+            RoomItemEntity(id = 2, roomId = 1, itemId = 1, sortOrder = 1),
+            RoomItemEntity(id = 3, roomId = 1, itemId = 2, sortOrder = 2),
+        )
 
         viewModel.init(roomId = 1, roomName = "Test")
         advanceUntilIdle()
 
-        val grouped = viewModel.uiState.value.groupedItems
-        assertEquals(2, grouped.size)
-        assertEquals(2, grouped["Furnitur"]?.size) // Meja, Kursi
-        assertEquals(1, grouped["Struktur"]?.size)  // Lantai
+        assertEquals(listOf(3L, 1L, 2L), viewModel.uiState.value.items.map { it.itemId })
+    }
+
+    @Test
+    fun `init breaks sort_order ties by item_id`() = runTest(testDispatcher) {
+        coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        // Item 2 & 3 sama-sama sort 0 → tie-breaker item_id ASC: item 2 dulu, lalu item 3
+        coEvery { masterDataDao.getAllRoomItems() } returns listOf(
+            RoomItemEntity(id = 1, roomId = 1, itemId = 1, sortOrder = 5),
+            RoomItemEntity(id = 2, roomId = 1, itemId = 2, sortOrder = 0),
+            RoomItemEntity(id = 3, roomId = 1, itemId = 3, sortOrder = 0),
+        )
+
+        viewModel.init(roomId = 1, roomName = "Test")
+        advanceUntilIdle()
+
+        assertEquals(listOf(2L, 3L, 1L), viewModel.uiState.value.items.map { it.itemId })
     }
 
     @Test
@@ -142,6 +161,28 @@ class InspectionFormViewModelTest {
         assertEquals("Meja kayu", state.items.find { it.itemId == 1L }?.deskripsi)
         assertEquals(0, state.items.find { it.itemId == 2L }?.skor)
         assertEquals(listOf("/photo1.jpg"), state.items.find { it.itemId == 2L }?.fotoPaths)
+    }
+
+    @Test
+    fun `resume reorders draft items by current pivot and keeps non-pivot items last`() = runTest(testDispatcher) {
+        coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
+        val draftStates = listOf(
+            ItemState(itemId = 1, nama = "Meja", kategori = "Furnitur", skor = 2),
+            ItemState(itemId = 2, nama = "Kursi", kategori = "Furnitur", skor = 2),
+            ItemState(itemId = 3, nama = "Lantai", kategori = "Struktur", skor = 2),
+        )
+        coEvery { inspectionRepository.draftToItemStates(5L, any()) } returns (10L to draftStates)
+        // Pivot room 10 saat ini: item 3 (sort 0) & item 1 (sort 1); item 2 sudah dilepas admin.
+        coEvery { masterDataDao.getAllRoomItems() } returns listOf(
+            RoomItemEntity(id = 1, roomId = 10, itemId = 3, sortOrder = 0),
+            RoomItemEntity(id = 2, roomId = 10, itemId = 1, sortOrder = 1),
+        )
+
+        viewModel.init(roomId = 0, roomName = "", draftId = 5L)
+        advanceUntilIdle()
+
+        // Item di pivot diurutkan (sort_order, item_id) → 3, 1. Item non-pivot (2) TETAP di akhir.
+        assertEquals(listOf(3L, 1L, 2L), viewModel.uiState.value.items.map { it.itemId })
     }
 
     // ── updateScore() ──
@@ -466,7 +507,6 @@ class InspectionFormViewModelTest {
         assertEquals(0, state.items.size)
         assertEquals(0, state.totalItems)
         assertFalse(state.submitEnabled)
-        assertTrue(state.groupedItems.isEmpty())
     }
 
     // ── Pivot kosong = form kosong (keputusan review 2026-08) ──

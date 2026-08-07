@@ -6,24 +6,23 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import kotlinx.coroutines.test.runTest
-import okhttp3.ResponseBody.Companion.toResponseBody
-import retrofit2.HttpException
-import retrofit2.Response
-import java.io.IOException
 import my.id.kentoes.rsudajibarangapp.auth.api.AuthApi
 import my.id.kentoes.rsudajibarangapp.auth.api.LogoutRequest
-import my.id.kentoes.rsudajibarangapp.auth.api.RefreshRequest
 import my.id.kentoes.rsudajibarangapp.auth.api.TokenResponse
 import my.id.kentoes.rsudajibarangapp.auth.api.UserOut
 import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.datastore.TokenManager
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionRepository
 import my.id.kentoes.rsudajibarangapp.master.SyncStateStore
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
+import java.io.IOException
 
 class AuthRepositoryTest {
 

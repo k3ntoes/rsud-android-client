@@ -9,5 +9,7 @@ data class RoomItemEntity(
     val id: Long,
     val roomId: Long,
     val itemId: Long,
+    /** Urutan tampilan item dalam checklist ruangan — kontrak BE ADR-0013 (ADR-0019 Android). */
+    val sortOrder: Int = 0,
     val createdAt: String? = null
 )

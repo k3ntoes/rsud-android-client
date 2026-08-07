@@ -24,8 +24,39 @@
       "input_tokens": 27187,
       "output_tokens": 1618,
       "files": 15
+    },
+    {
+      "date": "2026-08-07T11:47:44.643654+00:00",
+      "input_tokens": 140455,
+      "output_tokens": 6709,
+      "files": 46
+    },
+    {
+      "date": "2026-08-07T11:48:11.280921+00:00",
+      "input_tokens": 140455,
+      "output_tokens": 6709,
+      "files": 46
+    },
+    {
+      "date": "2026-08-07T12:03:00.019893+00:00",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "files": 1
+    },
+    {
+      "date": "2026-08-07T12:03:57.361869+00:00",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "files": 0
+    },
+    {
+      "date": "2026-08-07T12:07:30.612486+00:00",
+      "input_tokens": 130433,
+      "output_tokens": 7023,
+      "files": 161,
+      "note": "full rebuild graphify extract --force (backend/web-admin residu cleanup)"
     }
   ],
-  "total_input_tokens": 244524,
-  "total_output_tokens": 19281
+  "total_input_tokens": 655867,
+  "total_output_tokens": 39722
 }

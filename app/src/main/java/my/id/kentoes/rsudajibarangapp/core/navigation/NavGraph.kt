@@ -18,6 +18,7 @@ import androidx.navigation.navArgument
 import my.id.kentoes.rsudajibarangapp.auth.AuthState
 import my.id.kentoes.rsudajibarangapp.auth.AuthViewModel
 import my.id.kentoes.rsudajibarangapp.auth.ui.LoginScreen
+import my.id.kentoes.rsudajibarangapp.auth.ui.ProfileScreen
 import my.id.kentoes.rsudajibarangapp.dashboard.DashboardScreen
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionFormScreen
 import my.id.kentoes.rsudajibarangapp.inspection.ui.DaftarDrafScreen
@@ -33,6 +34,7 @@ object Routes {
     const val DRAFT_LIST = "draft_list"
     const val INSPECTION_HISTORY = "inspection_history?filterDate={filterDate}"
     const val INSPECTION_DETAIL = "inspection_detail/{inspectionId}"
+    const val PROFILE = "profile"
 
     fun inspectionForm(roomId: String, roomName: String, draftId: Long? = null): String {
         return if (draftId != null) {
@@ -100,9 +102,16 @@ fun NavGraph(
                 onNavigateToDrafts = {
                     navController.navigate(Routes.DRAFT_LIST)
                 },
+                onNavigateToHistory = {
+                    navController.navigate(Routes.inspectionHistory())
+                },
                 // UX-02: klik baris status per-room → navigasi sesuai status
                 onOpenRoomForm = { roomId, roomName ->
-                    navController.navigate(Routes.inspectionForm(roomId.toString(), roomName))
+                    if (roomId == 0L && roomName.isEmpty()) {
+                        navController.navigate(Routes.inspectionList())
+                    } else {
+                        navController.navigate(Routes.inspectionForm(roomId.toString(), roomName))
+                    }
                 },
                 onResumeDraft = { draftId ->
                     navController.navigate(Routes.inspectionForm("0", "Resume Draft", draftId))
@@ -210,6 +219,16 @@ fun NavGraph(
                 onReinspection = { roomId, roomName ->
                     // Inspeksi Ulang — form KOSONG untuk room yang sama (bukan resume draf)
                     navController.navigate(Routes.inspectionForm(roomId.toString(), roomName))
+                }
+            )
+        }
+        composable(Routes.PROFILE) {
+            ProfileScreen(
+                onLogout = {
+                    authViewModel.logout()
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
