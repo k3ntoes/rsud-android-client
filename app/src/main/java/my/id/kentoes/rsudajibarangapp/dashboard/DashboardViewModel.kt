@@ -88,6 +88,10 @@ class DashboardViewModel @Inject constructor(
                     lastSyncAt = _uiState.value.lastSyncAt,
                     syncError = _uiState.value.syncError
                 )
+                // Status per-room wajib segar saat draf/inspeksi berubah (mis. user kembali
+                // dari form setelah menyimpan draf) — bukan hanya saat init/refresh.
+                // .first() = one-shot read, tidak memicu re-emisi → tidak ada loop.
+                computeInspectionStatus()
             }
         }
 
@@ -185,6 +189,8 @@ class DashboardViewModel @Inject constructor(
                 )
             }.sortedWith(
                 compareBy(
+                    // Urut: BELUM (ordinal 0) paling atas — jangan ubah urutan enum tanpa
+                    // menyesuaikan prioritas tampilan di sini.
                     { it.status.ordinal },
                     { it.roomName }
                 )

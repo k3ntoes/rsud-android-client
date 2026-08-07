@@ -477,6 +477,33 @@ class DashboardViewModelTest {
     }
 
     @Test
+    fun `roomStatuses refresh when drafts flow re-emits after save`() = runTest {
+        // Regresi reviewer: status per-room harus segar saat user kembali dari form
+        // setelah menyimpan draf — bukan hanya saat init/refresh.
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val rooms = listOf(RuangEntity(id = 1, nama = "Ruang A", isMyRoom = true))
+        val draftsFlow = MutableStateFlow(emptyList<DrafInspeksi>())
+        every { drafDao.getAllDrafts() } returns draftsFlow
+        every { masterDataDao.getAllRooms() } returns MutableStateFlow(rooms)
+        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllInspections() } returns MutableStateFlow(emptyList())
+        coEvery { masterDataDao.getAllRoomsOnce() } returns rooms
+        coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns emptySet()
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertEquals(RoomStatus.BELUM, viewModel.uiState.value.roomStatuses.first().status)
+
+        // User menyimpan draf → flow draf re-emit → status harus jadi DRAF tanpa refresh manual
+        draftsFlow.value = listOf(
+            DrafInspeksi(id = 11, roomId = 1, localTimestamp = "T", status = "DRAFT", businessDate = today)
+        )
+        advanceUntilIdle()
+
+        assertEquals(RoomStatus.DRAF, viewModel.uiState.value.roomStatuses.first().status)
+    }
+
+    @Test
     fun `init calls computeInspectionStatus with today date`() = runTest {
         every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
         every { masterDataDao.getAllRooms() } returns MutableStateFlow(emptyList())
