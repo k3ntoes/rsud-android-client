@@ -1,22 +1,20 @@
 package my.id.kentoes.rsudajibarangapp.core.ui.theme
 
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
-// Palet fallback RSUD (device tanpa dynamic color, API < 31). Seed: biru (primary),
-// teal (secondary), amber hangat (tertiary — pending/menunggu/minor). Semua container
-// role + surfaceContainer diisi agar depth kartu terlihat & kontras aman light/dark.
+// Palet RSUD yang DIKUNCI (keputusan 2026-08): dynamic color / Material You dimatikan
+// agar biru/teal/amber konsisten di semua device — warna status harus bisa diprediksi
+// di aplikasi kerja lapangan. Seed: biru (primary), teal (secondary), amber hangat
+// (tertiary — pending/menunggu/minor). Semua container role + surfaceContainer diisi
+// agar depth kartu terlihat & kontras aman light/dark.
 private val LightColors = lightColorScheme(
     primary = Color(0xFF1565C0),
     onPrimary = Color.White,
@@ -95,20 +93,10 @@ private val RsuShapes = Shapes(
 @Composable
 fun RsuAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColors
-        else -> LightColors
-    }
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = if (darkTheme) DarkColors else LightColors,
         shapes = RsuShapes,
         content = content
     )
