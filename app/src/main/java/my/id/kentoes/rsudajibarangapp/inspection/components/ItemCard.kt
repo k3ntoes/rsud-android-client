@@ -1,6 +1,8 @@
 package my.id.kentoes.rsudajibarangapp.inspection.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +40,7 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ItemCard(
+    itemNumber: Int,
     itemId: Long,
     nama: String,
     deskripsi: String?,
@@ -61,20 +64,48 @@ fun ItemCard(
     }
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+        Row(modifier = Modifier.padding(16.dp)) {
             Box(
                 modifier = Modifier
-                    .width(4.dp)
-                    .fillMaxHeight()
-                    .background(accentColor)
-            )
-            Column(modifier = Modifier.padding(16.dp)) {
+                    .size(32.dp)
+                    .background(MaterialTheme.colorScheme.primary, androidx.compose.foundation.shape.CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = itemNumber.toString(),
+                    color = androidx.compose.ui.graphics.Color.White,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+            // Header logic untuk badge
+            val badgeColor = when {
+                (currentScore == 0 || currentScore == 1) && fotoPaths.isEmpty() -> MaterialTheme.colorScheme.error
+                (currentScore == 0 || currentScore == 1) && fotoPaths.isNotEmpty() -> androidx.compose.ui.graphics.Color(0xFF22C55E)
+                currentScore == 2 -> androidx.compose.ui.graphics.Color(0xFF22C55E)
+                else -> androidx.compose.ui.graphics.Color.Transparent
+            }
+            val badgeText = when {
+                (currentScore == 0 || currentScore == 1) && fotoPaths.isEmpty() -> "Wajib Foto"
+                (currentScore == 0 || currentScore == 1) && fotoPaths.isNotEmpty() -> "Selesai"
+                currentScore == 2 -> "Selesai"
+                else -> ""
+            }
+            if (currentScore != -1) {
+                Text(
+                    text = badgeText,
+                    color = badgeColor,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+            }
             // Nama item
             Text(
                 text = nama,
@@ -99,10 +130,10 @@ fun ItemCard(
             )
 
             // Validasi: skor 0 wajib foto
-            if (currentScore == 0 && fotoPaths.isEmpty()) {
+            if ((currentScore == 0 || currentScore == 1) && fotoPaths.isEmpty()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Skor Berisiko wajib menyertakan foto bukti",
+                    text = "Wajib diisi jika skor 0 atau 1",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -129,26 +160,18 @@ fun ItemCard(
                     )
                 }
 
-                // Tombol tambah foto
-                IconButton(
-                    onClick = onAddPhoto,
-                    modifier = Modifier.size(80.dp)
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+                if (fotoPaths.size < 5) {
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                            .clickable(onClick = onAddPhoto),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.CameraAlt,
-                            contentDescription = "Ambil foto",
-                            modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Tambah",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.CameraAlt, contentDescription = "Ambil foto", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
+                            Text("Tambah", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                        }
                     }
                 }
             }
@@ -172,6 +195,7 @@ fun ItemCard(
                 maxLines = 4,
                 singleLine = false,
                 shape = RoundedCornerShape(8.dp),
+                supportingText = { Text("${catatanText.length}/300") },
                 // Fill surfaceContainerHighest kontras dengan card putih → jelas input area.
                 // Border outline (gelap) + label normal → tidak lagi terbaca disabled.
                 colors = OutlinedTextFieldDefaults.colors(

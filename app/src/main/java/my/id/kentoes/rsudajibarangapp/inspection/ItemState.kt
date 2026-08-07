@@ -22,10 +22,10 @@ data class ItemState(
 
     /** Apakah item valid untuk dikirim:
      *  - skor sudah diisi (0, 1, atau 2)
-     *  - Jika skor 0 (Berisiko), wajib minimal 1 foto */
+     *  - Jika skor 0 (Berisiko) atau 1 (Minor), wajib minimal 1 foto */
     val isValid: Boolean get() = when {
         !isScored -> false
-        skor == 0 -> fotoPaths.isNotEmpty()
+        skor == 0 || skor == 1 -> fotoPaths.isNotEmpty()
         else -> true
     }
 }

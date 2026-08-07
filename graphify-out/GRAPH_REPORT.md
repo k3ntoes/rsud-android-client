@@ -1,17 +1,13 @@
 # Graph Report - .  (2026-08-07)
 
 ## Corpus Check
-- cluster-only mode — file stats not available
+- 44 files · ~126,886 words
+- Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1006 nodes · 1644 edges · 70 communities (38 shown, 32 thin omitted)
-- Extraction: 78% EXTRACTED · 22% INFERRED · 0% AMBIGUOUS · INFERRED: 366 edges (avg confidence: 0.8)
-- Token cost: 0 input · 0 output
-
-## Graph Freshness
-- Built from commit: `a1c420a2`
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
-- Run `graphify update .` after code changes (no API cost).
+- 1364 nodes · 2006 edges · 100 communities (45 shown, 55 thin omitted)
+- Extraction: 85% EXTRACTED · 15% INFERRED · 0% AMBIGUOUS · INFERRED: 293 edges (avg confidence: 0.8)
+- Token cost: 24,364 input · 1,688 output
 
 ## Community Hubs (Navigation)
 - DashboardViewModelTest
@@ -53,16 +49,19 @@
 - UiState
 - SyncWorkerTest
 - EPIC-4: Auth Login
+- AGENTS.md
 - LogoutRequest
 - Project Structure
 - ADR-0011: Single Module Architecture
 - gradlew
+- app/build.gradle.kts
 - ExampleInstrumentedTest
 - ExampleUnitTest
 - context7.sh
 - App Icon (MDPI)
 - App Icon Round (XHDPI)
 - App Icon (XHDPI)
+- build.gradle.kts
 - CORE PROMPT
 - ADR-0003: Offline-First Inspection Submission Model
 - ADR-0004: Jetpack Compose + Modern Android Stack
@@ -72,7 +71,6 @@
 - Triage Labels
 - Android → Backend API Contract
 - Spec: Dashboard Inspection Status Cards (Inspector Role)
-- Detail Screenshot
 - Draf Screenshot
 - Form Inspeksi Screenshot
 - Pilih Ruangan Screenshot
@@ -80,201 +78,256 @@
 - EPIC-8: Sinkronisasi
 - Media Handling & Auth Logic
 - PRD Android Client
+- settings.gradle.kts
+- Community 70
+- Community 71
+- Community 72
+- Community 73
+- Community 74
+- Community 75
+- Community 76
+- Community 77
+- Community 78
+- Community 81
+- Community 82
+- Community 83
+- Community 84
+- Community 85
+- Community 86
+- Community 87
+- Community 88
+- Community 89
+- Community 90
+- Community 91
+- Community 92
+- Community 93
+- Community 94
+- Community 95
+- Community 96
+- Community 97
+- Community 98
+- Community 99
 
 ## God Nodes (most connected - your core abstractions)
 1. `MasterDataRepositoryTest` - 51 edges
 2. `InspectionFormViewModelTest` - 43 edges
-3. `SyncManagerTest` - 42 edges
-4. `MasterDataDao` - 39 edges
-5. `SyncResponse` - 36 edges
+3. `InspectionFormViewModelTest` - 43 edges
+4. `SyncManagerTest` - 42 edges
+5. `MasterDataDao` - 37 edges
 6. `InspectionHistoryViewModelTest` - 36 edges
-7. `InspectionHistoryRepositoryTest` - 33 edges
-8. `AuthRepositoryTest` - 30 edges
-9. `DashboardViewModelTest` - 30 edges
-10. `MasterDataViewModel` - 29 edges
+7. `DashboardViewModelTest` - 34 edges
+8. `DashboardViewModelTest` - 34 edges
+9. `InspectionHistoryRepositoryTest` - 33 edges
+10. `InspectionHistoryRepositoryTest` - 33 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `App Icon Round (HDPI)` --participate_in--> `Project Structure`  [INFERRED]
-  app/src/main/res/mipmap-hdpi/ic_launcher_round.webp → docs/03-directory-structure.md
-- `App Icon (HDPI)` --participate_in--> `Project Structure`  [INFERRED]
-  app/src/main/res/mipmap-hdpi/ic_launcher.webp → docs/03-directory-structure.md
-- `Implementation Phase 3` --references--> `Core Context`  [INFERRED]
-  docs/IMPLEMENTATION-CLAIM-ORDER-PHASE3.md → app/src/main/java/my/id/kentoes/rsudajibarangapp/core/CONTEXT.md
-- `Implementation Phase 4` --references--> `Inspections Context`  [INFERRED]
-  docs/IMPLEMENTATION-CLAIM-ORDER-PHASE4.md → app/src/main/java/my/id/kentoes/rsudajibarangapp/inspection/CONTEXT.md
-- `Implementation Phase 5` --references--> `Sync Context`  [INFERRED]
-  docs/IMPLEMENTATION-CLAIM-ORDER-PHASE5.md → app/src/main/java/my/id/kentoes/rsudajibarangapp/sync/CONTEXT.md
+- `Phase 6: UI/UX Refresh Inspector` --references--> `DashboardScreen`  [EXTRACTED]
+  docs/IMPLEMENTATION-CLAIM-ORDER-PHASE6.md → dashboard/DashboardScreen.kt
+- `Phase 6: UI/UX Refresh Inspector` --references--> `DashboardViewModel`  [EXTRACTED]
+  docs/IMPLEMENTATION-CLAIM-ORDER-PHASE6.md → dashboard/DashboardViewModel.kt
+- `Phase 7-8: Riwayat/Detail Informatif` --references--> `StatusDisplay`  [EXTRACTED]
+  docs/IMPLEMENTATION-CLAIM-ORDER-PHASE7-8.md → core/model/StatusDisplay.kt
+- `Phase 7-8: Riwayat/Detail Informatif` --references--> `Theme`  [EXTRACTED]
+  docs/IMPLEMENTATION-CLAIM-ORDER-PHASE7-8.md → core/ui/theme/Theme.kt
+- `ADR-0020: UI Form Redesign Rules` --references--> `ItemState`  [EXTRACTED]
+  docs/adr/0020-ui-form-inspection-redesign.md → inspection/ItemState.kt
 
 ## Import Cycles
 - None detected.
 
 ## Hyperedges (group relationships)
-- **Documentation Hierarchy** — claude_md, agents_md, coding_rules_md, knowledge_md [EXTRACTED 1.00]
-- **Domain Contexts** — app_src_main_java_my_id_kentoes_rsudajibarangapp_auth_context_md, inspections_context_md, app_src_main_java_my_id_kentoes_rsudajibarangapp_sync_context_md, app_src_main_java_my_id_kentoes_rsudajibarangapp_core_context_md [EXTRACTED 1.00]
-- **Implementation Phases** — implementation_phase2_md, implementation_phase3_md, implementation_phase4_md, implementation_phase5_md [EXTRACTED 1.00]
-- **Core Infrastructure Epics** — epic_0, epic_1, epic_2, epic_3 [EXTRACTED 1.00]
-- **Photo Storage Strategy Evolution** — docs_adr_0014, docs_adr_0016, docs_adr_0018 [INFERRED 0.85]
-- **Synchronization Strategy ADRs** — docs_adr_0012, docs_adr_0013, docs_adr_0019 [INFERRED 0.80]
-- **System Domain Contexts** — auth_context, inspections_context, sync_context, core_context [EXTRACTED 1.00]
-- **ADR-0017 Implementation Tasks** — docs_agents_claim_order_dashboard_inspector_only, adr_0017, docs_tutorial_preview_dashboard [INFERRED 0.80]
+- **UI Redesign Implementation Flow** — docs_implementation_claim_order_phase6_md, docs_implementation_claim_order_phase7_8_md, docs_implementation_claim_order_phase9_md, docs_ui_form_redesign_checklist_md [EXTRACTED 1.00]
+- **Inspection Domain Logic & Validation** — app_src_main_java_my_id_kentoes_rsudajibarangapp_inspection_context_md, docs_adr_0020_ui_form_inspection_redesign_md, inspection_itemstate [EXTRACTED 0.95]
 
-## Communities (70 total, 32 thin omitted)
+## Communities (100 total, 55 thin omitted)
 
 ### Community 0 - "DashboardViewModelTest"
-Cohesion: 0.05
-Nodes (9): DashboardComposablesTest, DrafInspeksi, RuangEntity, RecentDraftCard(), Flow, MasterDataRepository, MasterDataSyncResult, DashboardViewModelTest (+1 more)
+Cohesion: 0.06
+Nodes (18): InspectionDetailItem, InspectionHistoryItem, InspectionHistoryRepository, PaginatedResult, PhotoDetail, InspectionHistoryCard(), InspectionListScreen(), DetailSubmit (+10 more)
 
 ### Community 1 - "Inspection History & Pagination"
-Cohesion: 0.06
-Nodes (9): UserRoomDto, SyncResponse, ItemOut, MasterDataApi, RoomItemDto, RoomOut, SyncState, SyncStateStore (+1 more)
+Cohesion: 0.05
+Nodes (24): DrafDao, MasterDataRepository, DashboardHeader(), DashboardScreen(), UserOut, ProgressTodayCard(), Quadruple, RoomStatusRow() (+16 more)
 
 ### Community 2 - "InspectionHistoryRepositoryTest"
-Cohesion: 0.06
-Nodes (15): ApiResponse, PaginatedResponse, InspectionHistoryRepository, DetailSubmit, InspectionDetailOutDto, InspectionListItemDto, InspectionOutDto, InspectionSubmit (+7 more)
+Cohesion: 0.07
+Nodes (13): ImageCompressor, DraftSummary, DraftWithItems, InspectionPayload, InspectionRepository, Flow, ItemState, MasterDataItem (+5 more)
 
 ### Community 3 - "AuthViewModel"
 Cohesion: 0.05
-Nodes (23): AuthViewModel, StateFlow, ViewModel, LoginUiState, LoginScreen(), NavGraph(), Routes, DaftarDrafUiState (+15 more)
+Nodes (16): Aead, Serializer, AppDatabase, create(), Context, DrafDao, RoomDatabase, DatabaseModule (+8 more)
 
 ### Community 4 - "SyncManagerTest"
-Cohesion: 0.08
-Nodes (8): DraftWithItems, InspectionPayload, InspectionRepository, Flow, PayloadItem, UploadPhotoResponse, SentPhotoStorage, SyncManagerTest
+Cohesion: 0.05
+Nodes (9): Authenticated, AuthRepository, AuthState, Error, StateFlow, UserOut, Loading, Unauthenticated (+1 more)
 
 ### Community 5 - "TokenManagerTest"
 Cohesion: 0.05
-Nodes (15): Aead, AppDatabase, create(), Context, RoomDatabase, DatabaseModule, Context, DataStore (+7 more)
+Nodes (9): Authenticated, AuthRepository, AuthState, Error, StateFlow, UserOut, Loading, Unauthenticated (+1 more)
 
 ### Community 6 - "InspectionHistoryViewModelTest"
-Cohesion: 0.11
-Nodes (6): InspectionDetailItem, InspectionHistoryItem, Flow, PaginatedResult, PhotoDetail, InspectionHistoryViewModelTest
+Cohesion: 0.05
+Nodes (32): Color, Modifier, StatCard(), DashboardHeader(), DashboardScreen(), UserOut, ProgressTodayCard(), Quadruple (+24 more)
 
 ### Community 7 - "DrafDao"
-Cohesion: 0.08
-Nodes (5): DrafDao, Flow, DrafFoto, DrafItem, DrafDaoTest
+Cohesion: 0.05
+Nodes (3): ItemState, InspectionFormViewModelTest, InspectionFormViewModel
 
 ### Community 8 - "MasterDataDao"
-Cohesion: 0.08
-Nodes (6): Flow, MasterDataDao, InspectionDetailEntity, InspectionEntity, InspectionPhotoEntity, UserRoomEntity
+Cohesion: 0.05
+Nodes (3): ItemState, InspectionFormViewModelTest, InspectionFormViewModel
 
 ### Community 9 - "DashboardViewModel"
-Cohesion: 0.07
-Nodes (20): StatusDisplay, toStatusDisplay(), StateFlow, NetworkConnectivityObserver, MainActivity, RsuAppTheme(), Modifier, StatCard() (+12 more)
+Cohesion: 0.11
+Nodes (7): ApiEndpointIntegrationTest, AuthApi, Json, MasterDataApi, MockWebServer, RecordedRequest, ApiEndpointIntegrationTest
 
 ### Community 10 - "DraftPhotoCleanupWorker"
-Cohesion: 0.07
-Nodes (19): App, DraftPhotoCleanupWorker, Context, CoroutineWorker, Result, schedule(), Context, SyncAwareWorkerFactory (+11 more)
+Cohesion: 0.09
+Nodes (5): DashboardViewModelTest, MasterDataDao, DrafInspeksi, RuangEntity, InspectionRepositoryTest
 
 ### Community 11 - "graphify_update.py"
-Cohesion: 0.11
-Nodes (29): Path, add_heading_ids(), build(), Render full markdown (with mermaid placeholders) to HTML via marked., GitHub-style anchor slug: lowercase, strip punctuation, spaces -> '-'., Inject GitHub-style id attributes into <h1>-<h4> rendered by marked., Hapus <h1> pertama (judul md) — template hero sudah punya h1 sendiri., Wrap the '## Daftar Isi' heading + its <ol> in <nav class='toc'>. (+21 more)
+Cohesion: 0.06
+Nodes (28): draftStatusColor(), Color, StatusDisplay, toStatusDisplay(), RecentDraftCard(), DaftarDrafScreen(), DraftCard(), AuthViewModel (+20 more)
 
 ### Community 12 - "AuthRepositoryTest"
-Cohesion: 0.08
-Nodes (3): TokenResponse, UserOut, AuthRepositoryTest
+Cohesion: 0.09
+Nodes (6): DrafFoto, DrafItem, DrafDao, DrafInspeksi, Flow, DrafDaoTest
 
 ### Community 13 - "MasterDataViewModel"
-Cohesion: 0.11
-Nodes (5): StateFlow, ViewModel, MasterDataUiState, MasterDataViewModel, MasterDataViewModelTest
+Cohesion: 0.08
+Nodes (15): InspectionHistoryUiState, InspectionHistoryViewModel, StateFlow, ViewModel, InspectionDetailScreen(), Color, PhotoThumbnailCard(), ScoreCountText() (+7 more)
+
+### Community 14 - "InspectionFormViewModelTest"
+Cohesion: 0.10
+Nodes (6): RuangEntity, StateFlow, ViewModel, MasterDataUiState, MasterDataViewModel, MasterDataViewModelTest
 
 ### Community 15 - "DateUtilsTest"
-Cohesion: 0.11
-Nodes (7): formatMillisToDate(), parseDateToMillis(), InspectionDatePickerDialog(), DateUtilsTest, TimeZone, DateUtilsTimezoneTest, TimeZone
-
-### Community 16 - "AppModule"
-Cohesion: 0.11
-Nodes (12): AppModule, Json, AuthInterceptor, Response, Response, TokenAuthenticator, Authenticator, Interceptor (+4 more)
+Cohesion: 0.07
+Nodes (19): Application, Configuration, CoroutineWorker, ListenableWorker, Result, App, DraftPhotoCleanupWorker, Context (+11 more)
 
 ### Community 17 - "ApiEndpointIntegrationTest"
-Cohesion: 0.20
-Nodes (5): LoginRequest, ApiEndpointIntegrationTest, Json, MockWebServer, RecordedRequest
+Cohesion: 0.08
+Nodes (21): AuthViewModel, ProfileInfoRow(), ProfileScreen(), AuthViewModel, NavGraph(), Routes, ItemCard(), Modifier (+13 more)
 
 ### Community 18 - "InspectionFormViewModel"
-Cohesion: 0.18
-Nodes (4): InspectionFormUiState, InspectionFormViewModel, StateFlow, ViewModel
-
-### Community 19 - "InspectionHistoryViewModel"
-Cohesion: 0.17
-Nodes (7): InspectionHistoryUiState, InspectionHistoryViewModel, StateFlow, ViewModel, InspectionDetailScreen(), PhotoThumbnailCard(), Job
+Cohesion: 0.07
+Nodes (17): BottomNavBar(), BottomTab, DASHBOARD, HISTORY, INSPECTION, PROFILE, StateFlow, NetworkConnectivityObserver (+9 more)
 
 ### Community 20 - "AuthRepository"
-Cohesion: 0.20
-Nodes (7): Authenticated, AuthRepository, AuthState, Error, StateFlow, Loading, Unauthenticated
+Cohesion: 0.13
+Nodes (5): PaginatedResponse, SentPhotoStorage, InspectionListItemDto, InspectionHistoryRepositoryTest, MasterDataDao
 
 ### Community 21 - "ItemCard"
-Cohesion: 0.12
-Nodes (11): createTempPhotoUri(), Context, ItemCard(), Modifier, Modifier, PhotoThumbnail(), Modifier, ScoreIndicator() (+3 more)
+Cohesion: 0.17
+Nodes (6): MultipartBody, InspectionDetailOutDto, InspectionOutDto, InspectionSubmit, PhotoOutDto, SyncApi
+
+### Community 22 - "ApiErrorUtilTest"
+Cohesion: 0.13
+Nodes (9): AuthApi, ChangePasswordRequest, SyncResponse, LoginRequest, LogoutRequest, RefreshRequest, TokenResponse, UserOut (+1 more)
+
+### Community 23 - "DraftPhotoCleanerTest"
+Cohesion: 0.14
+Nodes (10): Authenticator, AuthInterceptor, OkHttpClient, Request, Retrofit, Route, AppModule, Json (+2 more)
 
 ### Community 24 - "AuthApi"
-Cohesion: 0.18
-Nodes (3): AuthApi, ChangePasswordRequest, RefreshRequest
+Cohesion: 0.13
+Nodes (3): InspectionPhotoEntity, RuangEntity, MasterDataDao
 
 ### Community 25 - "ImageCompressorTest"
+Cohesion: 0.12
+Nodes (6): AuthViewModel, StateFlow, ViewModel, LoginUiState, LoginScreen(), AuthViewModelTest
+
+### Community 26 - "ApiResponseSerializationTest"
+Cohesion: 0.18
+Nodes (5): InspectionFormUiState, InspectionFormViewModel, ItemState, StateFlow, ViewModel
+
+### Community 29 - "CONTEXT-MAP.md"
+Cohesion: 0.22
+Nodes (4): Flow, MasterDataItem, RuangEntity, MasterDataRepository
+
+### Community 30 - "ItemState"
+Cohesion: 0.21
+Nodes (5): ApiErrorUtil, ApiErrorDto, Response, ApiErrorUtil, ApiErrorDto
+
+### Community 32 - "ApiErrorUtil"
+Cohesion: 0.21
+Nodes (5): Flow, InspectionDetailItem, InspectionHistoryItem, InspectionHistoryRepository, PhotoDetail
+
+### Community 33 - "Domain Docs"
 Cohesion: 0.19
 Nodes (3): ImageCompressor, ImageCompressorTest, Context
 
-### Community 27 - "AppDatabaseMigrationTest.kt"
+### Community 37 - "SyncWorkerTest"
+Cohesion: 0.29
+Nodes (5): DetailSubmit, PhotoSubmit, MasterDataSyncResult, SyncManager, SyncResult
+
+### Community 38 - "EPIC-4: Auth Login"
 Cohesion: 0.29
 Nodes (5): AppDatabaseMigrationTest, AppDatabaseV7, RoomDatabase, RoomItemEntityV7, RoomItemV7Dao
 
-### Community 29 - "CONTEXT-MAP.md"
+### Community 39 - "AGENTS.md"
+Cohesion: 0.22
+Nodes (10): Inspections Glossary, NavGraph, DashboardScreen, DashboardViewModel, ADR-0020: UI Form Redesign Rules, Phase 6: UI/UX Refresh Inspector, Form Inspeksi PRD, UI Form Redesign Checklist (+2 more)
+
+### Community 40 - "LogoutRequest"
+Cohesion: 0.27
+Nodes (3): SyncResponse, MasterDataApi, RoomItemDto
+
+### Community 42 - "ADR-0011: Single Module Architecture"
 Cohesion: 0.25
-Nodes (7): Auth Context, Core Context, Sync Context, Implementation Phase 3, Implementation Phase 4, Implementation Phase 5, Inspections Context
+Nodes (4): DaftarDrafUiState, DaftarDrafViewModel, StateFlow, ViewModel
 
-### Community 31 - "Panduan Implementasi Android — RSUD Ajibarang Server Stack"
-Cohesion: 0.25
-Nodes (8): ADR-0012: Dual Mode Response, ADR-0013: Hybrid Inspection History, ADR-0014: MediaStore Photo Storage, ADR-0016: Dual-Path Photo Storage, ADR-0017: Android Sebagai Klien Inspector-Only, ADR-0019: Urutan Checklist Inspeksi, Panduan Implementasi Android — RSUD Ajibarang Server Stack, Alur Sistem & Diagram — RSUD Ajibarang Android Client
-
-### Community 32 - "ApiErrorUtil"
-Cohesion: 0.38
-Nodes (3): ApiErrorUtil, Response, ApiErrorDto
-
-### Community 33 - "Domain Docs"
+### Community 46 - "ExampleUnitTest"
 Cohesion: 0.29
-Nodes (7): Auth Context, Core Context, Domain Docs, Login Screenshot, Sync Flow Diagram, Inspections Context, Sync Context
+Nodes (5): BottomTab, DASHBOARD, HISTORY, INSPECTION, PROFILE
 
-### Community 34 - "Claim Order — Dashboard Inspector-Only (ADR-0017)"
-Cohesion: 0.33
-Nodes (6): ADR-0008: Admin-only Auth Users, ADR-0017: Dashboard Inspector-Only, Beads CLI (bd), Claim Order — Dashboard Inspector-Only (ADR-0017), Issue tracker: Beads, Dashboard Screenshot
-
-### Community 36 - "UiState"
+### Community 48 - "App Icon (MDPI)"
 Cohesion: 0.33
 Nodes (5): Error, Loading, Success, UiState, T
 
-### Community 38 - "EPIC-4: Auth Login"
-Cohesion: 0.40
-Nodes (5): EPIC-0: Build System, EPIC-1: Core DI & Nav, EPIC-2: Network Layer, EPIC-3: Database & Token Store, EPIC-4: Auth Login
-
-### Community 41 - "Project Structure"
+### Community 50 - "App Icon (XHDPI)"
 Cohesion: 0.50
-Nodes (4): App Icon Round (HDPI), App Icon (HDPI), Project Structure, Implementation Phase 2
+Nodes (3): Interceptor, AuthInterceptor, Response
 
-### Community 42 - "ADR-0011: Single Module Architecture"
+### Community 51 - "build.gradle.kts"
 Cohesion: 0.50
-Nodes (4): ADR-0001: Multi-module Architecture, ADR-0002: Proto DataStore + Tink for Token Storage, ADR-0011: Single Module Architecture, Implementation Claim Order — RSUD Ajibarang Android Client
+Nodes (3): formatMillisToDate(), parseDateToMillis(), InspectionDatePickerDialog()
 
-### Community 43 - "gradlew"
-Cohesion: 0.83
-Nodes (3): gradlew script, die(), warn()
+### Community 55 - "ADR-0015: Draft Ownership per Akun"
+Cohesion: 0.67
+Nodes (3): AuthViewModel, ProfileInfoRow(), ProfileScreen()
+
+### Community 58 - "Triage Labels"
+Cohesion: 0.50
+Nodes (3): ApiResponse, PaginatedResponse, SyncResponse
+
+### Community 59 - "Android → Backend API Contract"
+Cohesion: 0.50
+Nodes (3): createTempPhotoUri(), Context, Uri
+
+### Community 62 - "Draf Screenshot"
+Cohesion: 0.67
+Nodes (3): StatusDisplay, Theme, Phase 7-8: Riwayat/Detail Informatif
 
 ## Knowledge Gaps
-- **52 isolated node(s):** `Loading`, `Unauthenticated`, `Error`, `ApiResponse`, `Loading` (+47 more)
+- **53 isolated node(s):** `DrafFoto`, `DrafInspeksi`, `DrafItem`, `InspectionDetailEntity`, `InspectionEntity` (+48 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **32 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **55 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `SyncManagerTest` connect `SyncManagerTest` to `DashboardViewModelTest`, `ImageCompressorTest`, `InspectionHistoryRepositoryTest`, `DrafDao`?**
-  _High betweenness centrality (0.145) - this node is a cross-community bridge._
-- **Why does `MasterDataDao` connect `MasterDataDao` to `DashboardViewModelTest`, `Inspection History & Pagination`, `InspectionHistoryRepositoryTest`, `MasterDataItem`, `TokenManagerTest`, `InspectionHistoryViewModelTest`, `RoomItemEntity`?**
-  _High betweenness centrality (0.113) - this node is a cross-community bridge._
-- **Why does `UserOut` connect `AuthRepositoryTest` to `AuthViewModel`, `TokenManagerTest`, `InspectionHistoryViewModelTest`, `DashboardViewModel`, `AuthRepository`, `AuthApi`?**
-  _High betweenness centrality (0.111) - this node is a cross-community bridge._
-- **Are the 30 inferred relationships involving `SyncResponse` (e.g. with `.`SyncResponse serializes back correctly`()` and `.`syncFromApi does not insert items when items list is empty`()`) actually correct?**
-  _`SyncResponse` has 30 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `Loading`, `Unauthenticated`, `Error` to the rest of the system?**
-  _52 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `SyncManagerTest` connect `InspectionHistoryRepositoryTest` to `ApiErrorUtil`, `ItemCard`, `SyncWorkerTest`, `CONTEXT-MAP.md`?**
+  _High betweenness centrality (0.178) - this node is a cross-community bridge._
+- **Why does `InspectionHistoryViewModelTest` connect `AppModule` to `AuthApi`, `ApiErrorUtil`, `ItemCard`, `TokenManagerTest`?**
+  _High betweenness centrality (0.148) - this node is a cross-community bridge._
+- **Why does `MasterDataDao` connect `AuthApi` to `AuthViewModel`, `Project Structure`, `context7.sh`, `AppModule`, `InspectionHistoryViewModel`, `ADR-0018: Inspection Submit Success and Notes`, `Checklist Claim Order — Implementasi Review 2026-08`, `Form Inspeksi Screenshot`?**
+  _High betweenness centrality (0.131) - this node is a cross-community bridge._
+- **What connects `DrafFoto`, `DrafInspeksi`, `DrafItem` to the rest of the system?**
+  _53 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `DashboardViewModelTest` be split into smaller, more focused modules?**
-  _Cohesion score 0.05201266395296246 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05683060109289618 - nodes in this community are weakly interconnected._
 - **Should `Inspection History & Pagination` be split into smaller, more focused modules?**
-  _Cohesion score 0.05920745920745921 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.054354178842782 - nodes in this community are weakly interconnected._
+- **Should `InspectionHistoryRepositoryTest` be split into smaller, more focused modules?**
+  _Cohesion score 0.07003367003367003 - nodes in this community are weakly interconnected._

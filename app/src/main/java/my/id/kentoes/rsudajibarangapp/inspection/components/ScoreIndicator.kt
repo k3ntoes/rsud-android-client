@@ -12,9 +12,14 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -58,40 +63,42 @@ fun ScoreIndicator(
             scoreOptions.forEach { option ->
                 val color = skorColor(option.value)
                 val isSelected = currentScore == option.value
-                FilterChip(
-                    selected = isSelected,
-                    onClick = {
-                        // Toggle: jika sudah dipilih → reset ke -1 (belum)
-                        if (isSelected) onScoreSelected(-1) else onScoreSelected(option.value)
-                    },
-                    label = {
+                
+                val bgColor by androidx.compose.animation.animateColorAsState(
+                    if (isSelected) color.copy(alpha = 0.15f) else Color.Transparent,
+                    animationSpec = androidx.compose.animation.core.tween(150), label = ""
+                )
+                
+                val icon = when (option.value) {
+                    0 -> Icons.Filled.Warning
+                    1 -> Icons.Filled.Info
+                    else -> Icons.Filled.Check
+                }
+
+                androidx.compose.material3.OutlinedCard(
+                    onClick = { if (isSelected) onScoreSelected(-1) else onScoreSelected(option.value) },
+                    modifier = Modifier.weight(1f).height(48.dp),
+                    colors = androidx.compose.material3.CardDefaults.outlinedCardColors(containerColor = bgColor),
+                    border = androidx.compose.foundation.BorderStroke(
+                        if (isSelected) 2.dp else 1.dp,
+                        if (isSelected) color else color.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().fillMaxHeight(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = option.label,
-                            style = MaterialTheme.typography.labelSmall
+                            style = MaterialTheme.typography.labelSmall,
+                            color = color,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                         )
-                    },
-                    leadingIcon = if (isSelected) {
-                        {
-                            Icon(
-                                imageVector = Icons.Filled.Check,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = color
-                            )
-                        }
-                    } else null,
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = color.copy(alpha = 0.15f),
-                        selectedLabelColor = color
-                    ),
-                    border = FilterChipDefaults.filterChipBorder(
-                        borderColor = color.copy(alpha = 0.5f),
-                        selectedBorderColor = color,
-                        enabled = true,
-                        selected = isSelected
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
+                    }
+                }
             }
         }
     }

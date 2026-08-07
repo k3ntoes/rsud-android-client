@@ -437,6 +437,7 @@ class InspectionFormViewModelTest {
 
         viewModel.updateScore(1, 2)
         viewModel.updateScore(2, 1)
+        viewModel.addPhoto(2, "/photo.jpg")
         viewModel.updateScore(3, 2)
         advanceUntilIdle()
 
@@ -823,16 +824,16 @@ class InspectionFormViewModelTest {
     }
 
     @Test
-    fun `score 1 and 2 are valid even without photos`() = runTest(testDispatcher) {
+    fun `score 2 is valid without photo, score 1 is invalid without photo`() = runTest(testDispatcher) {
         coEvery { masterDataDao.getAllItems() } returns flowOf(sampleItems)
         viewModel.init(roomId = 1, roomName = "Test")
         advanceUntilIdle()
 
-        viewModel.updateScore(1, 1) // Minor — no photo needed
+        viewModel.updateScore(1, 1) // Minor — needs photo
         viewModel.updateScore(2, 2) // Sesuai — no photo needed
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.value.items.find { it.itemId == 1L }?.isValid ?: false)
+        assertFalse(viewModel.uiState.value.items.find { it.itemId == 1L }?.isValid ?: true)
         assertTrue(viewModel.uiState.value.items.find { it.itemId == 2L }?.isValid ?: false)
     }
 

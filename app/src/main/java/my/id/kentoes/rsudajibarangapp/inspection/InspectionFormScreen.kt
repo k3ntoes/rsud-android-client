@@ -21,8 +21,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -95,9 +106,15 @@ fun InspectionFormScreen(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (!granted) {
-            Toast.makeText(context, "Izin kamera diperlukan untuk mengambil foto", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                context,
+                "Izin kamera diperlukan untuk mengambil foto",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
+
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
 
     // Variabel untuk menyimpan itemId yang sedang difoto
     val currentPhotoItemId = remember { mutableLongStateOf(-1L) }
@@ -138,89 +155,130 @@ fun InspectionFormScreen(
                 }.onFailure { e ->
                     // Jangan telan pembatalan coroutine (mis. user menekan back saat copy berjalan)
                     if (e is CancellationException) throw e
-                    Toast.makeText(context, "Gagal memproses foto: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        "Gagal memproses foto: ${e.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
     }
 
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets.safeDrawing,
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Form Inspeksi", fontWeight = FontWeight.Bold)
-                        Text(
-                            roomName,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color(0xFF16A34A), Color(0xFF22C55E))
                         )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Kembali"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    )
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Security,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.15f),
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 16.dp, bottom = 16.dp)
+                        .size(80.dp)
                 )
-            )
+
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(Alignment.BottomStart)
+                ) {
+                    Text(
+                        "Form Inspeksi",
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Text(
+                        roomName,
+                        color = Color.White,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        "Progress ${uiState.validItems}/${uiState.totalItems}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+
+                IconButton(
+                    onClick = onNavigateBack,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(top = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Kembali",
+                        tint = androidx.compose.ui.graphics.Color.White
+                    )
+                }
+            }
         },
         bottomBar = {
             // Bottom bar with progress + actions. UX-03: navigationBarsPadding() mencegah
             // tombol mepet frame handphone (edge-to-edge), imePadding() agar tidak tertutup
             // keyboard saat mengisi catatan item.
-            Column(
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .imePadding()
-                    .padding(16.dp)
+            androidx.compose.material3.Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shadowElevation = 8.dp
             ) {
-                // Progress bar
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+                Column(
+                    modifier = Modifier.padding(16.dp)
                 ) {
-                    LinearProgressIndicator(
-                        progress = {
-                            if (uiState.totalItems > 0) uiState.validItems.toFloat() / uiState.totalItems
-                            else 0f
-                        },
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "${uiState.validItems}/${uiState.totalItems} item valid",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    OutlinedButton(
-                        onClick = viewModel::saveDraft,
-                        modifier = Modifier.weight(1f)
+                    // Progress bar
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Simpan Draf")
-                    }
-                    Button(
-                        onClick = viewModel::submit,
-                        enabled = uiState.submitEnabled,
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
+                        LinearProgressIndicator(
+                            progress = {
+                                if (uiState.totalItems > 0) uiState.validItems.toFloat() / uiState.totalItems
+                                else 0f
+                            },
+                            modifier = Modifier.weight(1f)
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "${uiState.validItems}/${uiState.totalItems} item valid",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Kirim")
+                        OutlinedButton(
+                            onClick = viewModel::saveDraft,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Simpan Draf")
+                        }
+                        Button(
+                            onClick = viewModel::submit,
+                            enabled = uiState.submitEnabled,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            )
+                        ) {
+                            Text("Kirim")
+                        }
                     }
                 }
             }
@@ -254,26 +312,45 @@ fun InspectionFormScreen(
                     start = 16.dp,
                     end = 16.dp,
                     top = 8.dp,
-                    bottom = 160.dp // ruang untuk bottom bar
+                    bottom = 16.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier
                     .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTapGestures(onTap = { focusManager.clearFocus() })
+                    }
                     .padding(padding)
             ) {
                 // Legend skor — UX-03: bantu konsistensi penilaian tanpa membuka dokumentasi
                 item(key = "score_legend") {
-                    Text(
-                        "Skor: 0 = Berisiko (wajib foto) · 1 = Minor · 2 = Sesuai",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    androidx.compose.material3.Card(
+                        colors = androidx.compose.material3.CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                        ),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Filled.Info, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                "Skor: 0 = Berisiko (wajib foto) · 1 = Minor · 2 = Sesuai",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
 
                 // Urutan checklist mengikuti pivot room_items: (sort_order ASC, item_id ASC) —
                 // ADR-0019 Android (kontrak BE ADR-0013). Grouping kategori dihapus (vestigial).
-                items(uiState.items, key = { "item_${it.itemId}" }) { item ->
+                itemsIndexed(uiState.items, key = { _, it -> "item_${it.itemId}" }) { index, item ->
                     ItemCard(
+                        itemNumber = index + 1,
                         itemId = item.itemId,
                         nama = item.nama,
                         deskripsi = item.deskripsi,
@@ -281,6 +358,7 @@ fun InspectionFormScreen(
                         fotoPaths = item.fotoPaths,
                         currentCatatan = item.catatan,
                         onScoreSelected = { skor ->
+                            focusManager.clearFocus()
                             viewModel.updateScore(item.itemId, skor)
                         },
                         onAddPhoto = {

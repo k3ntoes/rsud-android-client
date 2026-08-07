@@ -55,8 +55,14 @@
       "output_tokens": 7023,
       "files": 161,
       "note": "full rebuild graphify extract --force (backend/web-admin residu cleanup)"
+    },
+    {
+      "date": "2026-08-07T15:32:19.456357+00:00",
+      "input_tokens": 24364,
+      "output_tokens": 1688,
+      "files": 44
     }
   ],
-  "total_input_tokens": 655867,
-  "total_output_tokens": 39722
+  "total_input_tokens": 680231,
+  "total_output_tokens": 41410
 }
