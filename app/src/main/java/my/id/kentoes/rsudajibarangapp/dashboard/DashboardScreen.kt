@@ -18,8 +18,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.HourglassEmpty
+import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.SyncProblem
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,7 +40,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -49,8 +53,9 @@ import my.id.kentoes.rsudajibarangapp.dashboard.components.StatCard
 fun DashboardScreen(
     currentUser: UserOut?,
     onNavigateToDrafts: () -> Unit,
-    onNavigateToUninspectedRooms: () -> Unit = {},
-    onNavigateToHistoryWithDate: () -> Unit = {},
+    onOpenRoomForm: (Long, String) -> Unit,
+    onResumeDraft: (Long) -> Unit,
+    onInspectionClick: (Long) -> Unit,
     onLogout: () -> Unit,
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
@@ -153,7 +158,7 @@ fun DashboardScreen(
                                 icon = Icons.Default.SyncProblem,
                                 label = "Menunggu Kirim",
                                 value = uiState.pendingSyncCount.toString(),
-                                color = Color(0xFFF9A825)
+                                color = MaterialTheme.colorScheme.tertiary
                             )
                         }
                     }
@@ -168,11 +173,11 @@ fun DashboardScreen(
                                 icon = Icons.Default.CheckCircle,
                                 label = "Terkirim",
                                 value = uiState.syncedCount.toString(),
-                                color = Color(0xFF388E3C)
+                                color = MaterialTheme.colorScheme.secondary
                             )
                         }
                     }
-                    // ── Status Inspeksi Hari Ini ──
+                    // ── Status Inspeksi Hari Ini — daftar per-room (UX-02, grill 2026-08) ──
                     item {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -180,28 +185,29 @@ fun DashboardScreen(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
+                        Text(
+                            "${uiState.inspectedRoomCount} dari ${uiState.roomStatuses.size} ruangan selesai",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
 
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            StatCard(
-                                modifier = Modifier.weight(1f),
-                                icon = Icons.Default.HourglassEmpty,
-                                label = "Belum Diinspeksi",
-                                value = uiState.uninspectedRoomCount.toString(),
-                                color = MaterialTheme.colorScheme.error,
-                                onClick = onNavigateToUninspectedRooms
+                    if (uiState.roomStatuses.isEmpty()) {
+                        item {
+                            Text(
+                                "Belum ada ruangan di-assign — tarik ke bawah untuk sync",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(vertical = 8.dp)
                             )
-                            StatCard(
-                                modifier = Modifier.weight(1f),
-                                icon = Icons.Default.CheckCircle,
-                                label = "Sudah Diinspeksi",
-                                value = uiState.inspectedRoomCount.toString(),
-                                color = Color(0xFF388E3C),
-                                onClick = onNavigateToHistoryWithDate
+                        }
+                    } else {
+                        items(uiState.roomStatuses, key = { it.roomId }) { status ->
+                            RoomStatusRow(
+                                item = status,
+                                onOpenForm = onOpenRoomForm,
+                                onResumeDraft = onResumeDraft,
+                                onInspectionClick = onInspectionClick
                             )
                         }
                     }
@@ -275,5 +281,94 @@ private fun SyncStatusBar(
             style = MaterialTheme.typography.bodySmall,
             color = color
         )
+    }
+}
+
+/**
+ * Satu baris status per-room di dashboard. Klik menyesuaikan status:
+ * BELUM → form baru; DRAF/MENUNGGU_KIRIM → resume draf; sisanya → detail inspeksi.
+ * Warna chip memakai token M3 (bukan hex) agar benar di light & dark mode.
+ */
+@Composable
+private fun RoomStatusRow(
+    item: RoomStatusItem,
+    onOpenForm: (Long, String) -> Unit,
+    onResumeDraft: (Long) -> Unit,
+    onInspectionClick: (Long) -> Unit
+) {
+    val (label, icon, color) = when (item.status) {
+        RoomStatus.BELUM -> Triple(
+            "Belum Diinspeksi", Icons.Default.HourglassEmpty, MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        RoomStatus.DRAF -> Triple(
+            "Draf", Icons.Default.Description, MaterialTheme.colorScheme.primary
+        )
+        RoomStatus.MENUNGGU_KIRIM -> Triple(
+            "Menunggu Kirim", Icons.Default.SyncProblem, MaterialTheme.colorScheme.tertiary
+        )
+        RoomStatus.MENUNGGU_REVIEW -> Triple(
+            "Menunggu Review", Icons.Default.HourglassEmpty, MaterialTheme.colorScheme.tertiary
+        )
+        RoomStatus.DISETUJUI -> Triple(
+            "Disetujui", Icons.Default.CheckCircle, MaterialTheme.colorScheme.secondary
+        )
+        RoomStatus.DITOLAK -> Triple(
+            "Ditolak", Icons.Default.Warning, MaterialTheme.colorScheme.error
+        )
+    }
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                when (item.status) {
+                    RoomStatus.BELUM -> onOpenForm(item.roomId, item.roomName)
+                    RoomStatus.DRAF, RoomStatus.MENUNGGU_KIRIM -> item.draftId?.let(onResumeDraft)
+                    else -> item.inspectionId?.let(onInspectionClick)
+                }
+            },
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.MeetingRoom,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.roomName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "${item.itemCount} item",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = color
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = color
+                )
+            }
+        }
     }
 }

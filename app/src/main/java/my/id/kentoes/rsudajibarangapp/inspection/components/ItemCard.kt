@@ -18,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -129,7 +130,9 @@ fun ItemCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Catatan
+            // Catatan — UX-04: OutlinedTextField default unfocused (border outline + label
+            // onSurfaceVariant + container transparan) terbaca sebagai DISABLED. Kasih fill
+            // surfaceContainerHighest + border outline tegas agar jelas interaktif.
             var catatanText by remember(currentCatatan) { mutableStateOf(currentCatatan ?: "") }
             OutlinedTextField(
                 value = catatanText,
@@ -138,11 +141,18 @@ fun ItemCard(
                     onCatatanChanged(it)
                 },
                 label = { Text("Catatan (opsional)") },
+                placeholder = { Text("Tulis detail temuan...") },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
                 maxLines = 4,
                 singleLine = false,
-                shape = RoundedCornerShape(8.dp)
+                shape = RoundedCornerShape(8.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                )
             )
         }
     }

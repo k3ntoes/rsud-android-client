@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -49,7 +50,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -177,6 +177,11 @@ fun InspectionListScreen(
                                 Text("Belum ada riwayat inspeksi",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                // UX-06: CTA empty state — muat ulang dari server
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Button(onClick = viewModel::refreshFromServer) {
+                                    Text("Muat Ulang")
+                                }
                             }
                         }
                     }
@@ -234,9 +239,10 @@ private fun InspectionHistoryCard(
     item: InspectionHistoryItem,
     onClick: () -> Unit
 ) {
+    // UX-05: warna keras → token M3 (benar di light & dark/dynamic color)
     val statusColor = when (item.status) {
-        "PENDING" -> Color(0xFFF9A825)
-        "APPROVED" -> Color(0xFF388E3C)
+        "PENDING" -> MaterialTheme.colorScheme.tertiary
+        "APPROVED" -> MaterialTheme.colorScheme.secondary
         "REJECTED" -> MaterialTheme.colorScheme.error
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }

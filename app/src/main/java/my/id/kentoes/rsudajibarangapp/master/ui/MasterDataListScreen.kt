@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Checklist
 import androidx.compose.material.icons.filled.MedicalServices
 import androidx.compose.material.icons.filled.MeetingRoom
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -152,6 +153,11 @@ fun MasterDataListScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        // UX-06: CTA empty state — sync ulang
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = viewModel::refresh) {
+                            Text("Coba Sync Ulang")
+                        }
                     }
                 }
             } else {

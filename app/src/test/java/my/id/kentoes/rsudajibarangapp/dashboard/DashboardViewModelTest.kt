@@ -16,8 +16,12 @@ import my.id.kentoes.rsudajibarangapp.core.database.dao.MasterDataDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
 import my.id.kentoes.rsudajibarangapp.core.database.entity.InspectionEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.MasterDataItem
+import my.id.kentoes.rsudajibarangapp.core.database.entity.RoomItemEntity
 import my.id.kentoes.rsudajibarangapp.core.database.entity.RuangEntity
 import my.id.kentoes.rsudajibarangapp.master.MasterDataRepository
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import my.id.kentoes.rsudajibarangapp.master.SyncState
 import my.id.kentoes.rsudajibarangapp.master.SyncStateStore
 import my.id.kentoes.rsudajibarangapp.sync.MasterDataSyncResult
@@ -50,6 +54,9 @@ class DashboardViewModelTest {
         // Default mocks for computeInspectionStatus() called in init
         coEvery { masterDataDao.getAllRoomsOnce() } returns emptyList()
         coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns emptySet()
+        // UX-01: query detail per-room (status list) — default kosong
+        coEvery { masterDataDao.getAllRoomItems() } returns emptyList()
+        coEvery { masterDataDao.getInspectionsByDate(any()) } returns MutableStateFlow(emptyList())
         // Default: cache terisi → auto-sync TIDAK jalan; lastSyncAt dibaca dari store
         coEvery { masterDataRepository.isCacheAvailable() } returns true
         every { syncStateStore.load() } returns SyncState()
@@ -370,6 +377,103 @@ class DashboardViewModelTest {
         advanceUntilIdle()
 
         assertEquals(0, viewModel.uiState.value.uninspectedRoomCount)
+    }
+
+    // ── Phase 6 (2026-08): UX-01 per-room status list ──
+
+    @Test
+    fun `roomStatuses derives status with precedence inspection over draft`() = runTest {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val rooms = listOf(
+            RuangEntity(id = 1, nama = "Ruang A", isMyRoom = true),
+            RuangEntity(id = 2, nama = "Ruang B", isMyRoom = true),
+            RuangEntity(id = 3, nama = "Ruang C", isMyRoom = true),
+        )
+        every { drafDao.getAllDrafts() } returns MutableStateFlow(
+            listOf(DrafInspeksi(id = 11, roomId = 1, localTimestamp = "T", status = "DRAFT", businessDate = today))
+        )
+        every { masterDataDao.getAllRooms() } returns MutableStateFlow(rooms)
+        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllInspections() } returns MutableStateFlow(emptyList())
+        coEvery { masterDataDao.getAllRoomsOnce() } returns rooms
+        coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns setOf(1L, 2L)
+        // Room 2 sudah APPROVED hari ini — precedence inspeksi menang atas draf
+        coEvery { masterDataDao.getInspectionsByDate(today) } returns MutableStateFlow(
+            listOf(InspectionEntity(id = 21, roomId = 2, inspectorId = 1, status = "APPROVED", businessDate = today))
+        )
+        // Room 1 punya 2 item dari pivot
+        coEvery { masterDataDao.getAllRoomItems() } returns listOf(
+            RoomItemEntity(id = 1, roomId = 1, itemId = 1, sortOrder = 0),
+            RoomItemEntity(id = 2, roomId = 1, itemId = 2, sortOrder = 1),
+        )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val statuses = viewModel.uiState.value.roomStatuses
+        assertEquals(3, statuses.size)
+        val room1 = statuses.first { it.roomId == 1L }
+        assertEquals(RoomStatus.DRAF, room1.status)
+        assertEquals(11L, room1.draftId)
+        assertEquals(2, room1.itemCount)
+        val room2 = statuses.first { it.roomId == 2L }
+        assertEquals(RoomStatus.DISETUJUI, room2.status)
+        assertEquals(21L, room2.inspectionId)
+        val room3 = statuses.first { it.roomId == 3L }
+        assertEquals(RoomStatus.BELUM, room3.status)
+        assertNull(room3.draftId)
+        assertNull(room3.inspectionId)
+    }
+
+    @Test
+    fun `roomStatuses maps PENDING_SYNC draft to MENUNGGU_KIRIM and REJECTED to DITOLAK`() = runTest {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val rooms = listOf(
+            RuangEntity(id = 1, nama = "Ruang A", isMyRoom = true),
+            RuangEntity(id = 2, nama = "Ruang B", isMyRoom = true),
+        )
+        every { drafDao.getAllDrafts() } returns MutableStateFlow(
+            listOf(DrafInspeksi(id = 11, roomId = 1, localTimestamp = "T", status = "PENDING_SYNC", businessDate = today))
+        )
+        every { masterDataDao.getAllRooms() } returns MutableStateFlow(rooms)
+        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllInspections() } returns MutableStateFlow(emptyList())
+        coEvery { masterDataDao.getAllRoomsOnce() } returns rooms
+        coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns setOf(1L, 2L)
+        coEvery { masterDataDao.getInspectionsByDate(today) } returns MutableStateFlow(
+            listOf(InspectionEntity(id = 21, roomId = 2, inspectorId = 1, status = "REJECTED", businessDate = today))
+        )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val statuses = viewModel.uiState.value.roomStatuses
+        assertEquals(RoomStatus.MENUNGGU_KIRIM, statuses.first { it.roomId == 1L }.status)
+        assertEquals(RoomStatus.DITOLAK, statuses.first { it.roomId == 2L }.status)
+    }
+
+    @Test
+    fun `roomStatuses sorts BELUM first then by name`() = runTest {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val rooms = listOf(
+            RuangEntity(id = 1, nama = "Zulu", isMyRoom = true),
+            RuangEntity(id = 2, nama = "Alpha", isMyRoom = true),
+        )
+        every { drafDao.getAllDrafts() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllRooms() } returns MutableStateFlow(rooms)
+        every { masterDataDao.getAllItems() } returns MutableStateFlow(emptyList())
+        every { masterDataDao.getAllInspections() } returns MutableStateFlow(emptyList())
+        coEvery { masterDataDao.getAllRoomsOnce() } returns rooms
+        coEvery { masterDataRepository.getInspectedRoomIdsForDate(any()) } returns setOf(2L)
+        coEvery { masterDataDao.getInspectionsByDate(today) } returns MutableStateFlow(
+            listOf(InspectionEntity(id = 21, roomId = 2, inspectorId = 1, status = "PENDING", businessDate = today))
+        )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // BELUM (Zulu) harus di depan DISETUJUI/MENUNGGU_REVIEW (Alpha)
+        assertEquals(listOf(1L, 2L), viewModel.uiState.value.roomStatuses.map { it.roomId })
     }
 
     @Test

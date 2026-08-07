@@ -95,17 +95,20 @@ fun NavGraph(
         }
         composable(Routes.DASHBOARD) {
             val currentUser by authViewModel.currentUser.collectAsState()
-            val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
             DashboardScreen(
                 currentUser = currentUser,
                 onNavigateToDrafts = {
                     navController.navigate(Routes.DRAFT_LIST)
                 },
-                onNavigateToUninspectedRooms = {
-                    navController.navigate(Routes.inspectionList(uninspectedOnly = true, date = today))
+                // UX-02: klik baris status per-room → navigasi sesuai status
+                onOpenRoomForm = { roomId, roomName ->
+                    navController.navigate(Routes.inspectionForm(roomId.toString(), roomName))
                 },
-                onNavigateToHistoryWithDate = {
-                    navController.navigate(Routes.inspectionHistory(filterDate = today))
+                onResumeDraft = { draftId ->
+                    navController.navigate(Routes.inspectionForm("0", "Resume Draft", draftId))
+                },
+                onInspectionClick = { inspectionId ->
+                    navController.navigate(Routes.inspectionDetail(inspectionId))
                 },
                 onLogout = {
                     authViewModel.logout()
@@ -168,6 +171,10 @@ fun NavGraph(
                 onNavigateBack = { navController.popBackStack() },
                 onResumeDraft = { draftId ->
                     navController.navigate(Routes.inspectionForm("0", "Resume Draft", draftId))
+                },
+                // UX-06: CTA empty state → pilih ruangan
+                onStartInspection = {
+                    navController.navigate(Routes.inspectionList())
                 }
             )
         }

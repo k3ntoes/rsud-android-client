@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
@@ -21,6 +22,21 @@ import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 
+/** Status satu ruangan pada hari ini (businessDate = today) — daftar per-room di dashboard. */
+enum class RoomStatus {
+    BELUM, DRAF, MENUNGGU_KIRIM, MENUNGGU_REVIEW, DISETUJUI, DITOLAK
+}
+
+/** Satu baris daftar "Status Inspeksi Hari Ini": status + target navigasi (form/draf/detail). */
+data class RoomStatusItem(
+    val roomId: Long,
+    val roomName: String,
+    val itemCount: Int,
+    val status: RoomStatus,
+    val draftId: Long? = null,
+    val inspectionId: Long? = null
+)
+
 data class DashboardUiState(
     val isLoading: Boolean = true,
     val draftCount: Int = 0,
@@ -29,6 +45,7 @@ data class DashboardUiState(
     val recentDrafts: List<DrafInspeksi> = emptyList(),
     val inspectedRoomCount: Int = 0,
     val uninspectedRoomCount: Int = 0,
+    val roomStatuses: List<RoomStatusItem> = emptyList(),
     val isSyncing: Boolean = false,
     val lastSyncAt: String? = null,
     val syncError: String? = null
@@ -66,6 +83,7 @@ class DashboardViewModel @Inject constructor(
                 _uiState.value = state.copy(
                     inspectedRoomCount = _uiState.value.inspectedRoomCount,
                     uninspectedRoomCount = _uiState.value.uninspectedRoomCount,
+                    roomStatuses = _uiState.value.roomStatuses,
                     isSyncing = _uiState.value.isSyncing,
                     lastSyncAt = _uiState.value.lastSyncAt,
                     syncError = _uiState.value.syncError
@@ -129,11 +147,52 @@ class DashboardViewModel @Inject constructor(
             val allRooms = masterDataDao.getAllRoomsOnce()
             // Android = klien inspector-only (ADR-0017): scope SELALU room yang di-assign.
             val scopeRooms = allRooms.filter { it.isMyRoom }
+            // Count tetap via repository (definisi "sudah" = draf ATAU inspeksi hari ini).
             val inspectedIds = masterDataRepository.getInspectedRoomIdsForDate(date)
             val inspectedInScope = scopeRooms.count { it.id in inspectedIds }
+            // Daftar per-room (UX-01): status + id untuk navigasi. Semua data lokal/ter-sync
+            // dari BE — tanpa endpoint baru (keputusan Q5 grill 2026-08).
+            val draftsToday = drafDao.getAllDrafts().first().filter { it.businessDate == date }
+            val inspectionsToday = masterDataDao.getInspectionsByDate(date).first()
+            val itemCounts = masterDataDao.getAllRoomItems().groupingBy { it.roomId }.eachCount()
+            val statuses = scopeRooms.map { room ->
+                // Precedence: inspection (kebenaran server) > draf (lokal) > BELUM.
+                val inspection = inspectionsToday
+                    .filter { it.roomId == room.id }
+                    .maxByOrNull { it.createdAt ?: "" }
+                val draft = draftsToday
+                    .filter { it.roomId == room.id }
+                    .maxByOrNull { it.createdAt }
+                val (status, draftId, inspectionId) = when {
+                    inspection != null -> when (inspection.status) {
+                        "APPROVED" -> Triple(RoomStatus.DISETUJUI, null, inspection.id)
+                        "REJECTED" -> Triple(RoomStatus.DITOLAK, null, inspection.id)
+                        else -> Triple(RoomStatus.MENUNGGU_REVIEW, null, inspection.id)
+                    }
+                    draft != null -> when (draft.status) {
+                        "PENDING_SYNC" -> Triple(RoomStatus.MENUNGGU_KIRIM, draft.id, null)
+                        else -> Triple(RoomStatus.DRAF, draft.id, null)
+                    }
+                    else -> Triple(RoomStatus.BELUM, null, null)
+                }
+                RoomStatusItem(
+                    roomId = room.id,
+                    roomName = room.nama,
+                    itemCount = itemCounts[room.id] ?: 0,
+                    status = status,
+                    draftId = draftId,
+                    inspectionId = inspectionId
+                )
+            }.sortedWith(
+                compareBy(
+                    { it.status.ordinal },
+                    { it.roomName }
+                )
+            )
             _uiState.value = _uiState.value.copy(
                 inspectedRoomCount = inspectedInScope,
-                uninspectedRoomCount = (scopeRooms.size - inspectedInScope).coerceAtLeast(0)
+                uninspectedRoomCount = (scopeRooms.size - inspectedInScope).coerceAtLeast(0),
+                roomStatuses = statuses
             )
         }
     }

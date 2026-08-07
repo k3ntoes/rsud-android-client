@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.MeetingRoom
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.SyncProblem
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -59,6 +60,7 @@ import my.id.kentoes.rsudajibarangapp.inspection.DraftSummary
 fun DaftarDrafScreen(
     onNavigateBack: () -> Unit,
     onResumeDraft: (draftId: Long) -> Unit,
+    onStartInspection: () -> Unit = {},
     viewModel: DaftarDrafViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -163,6 +165,11 @@ fun DaftarDrafScreen(
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
+                        // UX-06: empty state dengan CTA — pandu aksi berikutnya
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = onStartInspection) {
+                            Text("Mulai Inspeksi")
+                        }
                     }
                 }
             } else {

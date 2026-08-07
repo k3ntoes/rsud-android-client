@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -23,8 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -171,8 +171,15 @@ fun InspectionFormScreen(
             )
         },
         bottomBar = {
-            // Bottom bar with progress + actions
-            Column(modifier = Modifier.padding(16.dp)) {
+            // Bottom bar with progress + actions. UX-03: navigationBarsPadding() mencegah
+            // tombol mepet frame handphone (edge-to-edge), imePadding() agar tidak tertutup
+            // keyboard saat mengisi catatan item.
+            Column(
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .imePadding()
+                    .padding(16.dp)
+            ) {
                 // Progress bar
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -187,7 +194,7 @@ fun InspectionFormScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "${uiState.validItems}/${uiState.totalItems}",
+                        text = "${uiState.validItems}/${uiState.totalItems} item valid",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -254,61 +261,50 @@ fun InspectionFormScreen(
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                // Header kategori items
-                uiState.groupedItems.forEach { (kategori, items) ->
-                    item(key = "header_$kategori") {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                            )
-                        ) {
-                            Text(
-                                text = "$kategori (${items.size})",
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(12.dp),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
+                // Legend skor — UX-03: bantu konsistensi penilaian tanpa membuka dokumentasi
+                item(key = "score_legend") {
+                    Text(
+                        "Skor: 0 = Berisiko (wajib foto) · 1 = Minor · 2 = Sesuai",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
-                    items(items, key = { "item_${it.itemId}" }) { item ->
-                        ItemCard(
-                            itemId = item.itemId,
-                            nama = item.nama,
-                            deskripsi = item.deskripsi,
-                            currentScore = item.skor,
-                            fotoPaths = item.fotoPaths,
-                            currentCatatan = item.catatan,
-                            onScoreSelected = { skor ->
-                                viewModel.updateScore(item.itemId, skor)
-                            },
-                            onAddPhoto = {
-                                currentPhotoItemId.longValue = item.itemId
-                                // Cek permission kamera
-                                if (ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.CAMERA
-                                    ) == PackageManager.PERMISSION_GRANTED
-                                ) {
-                                    val uri = createTempPhotoUri(context)
-                                    pendingPhotoUri = uri
-                                    cameraLauncher.launch(uri)
-                                } else {
-                                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                                }
-                            },
-                            onDeletePhoto = { path ->
-                                viewModel.deletePhoto(item.itemId, path)
-                            },
-                            onCatatanChanged = { catatan ->
-                                viewModel.updateCatatan(item.itemId, catatan)
+                // Urutan checklist mengikuti pivot room_items: (sort_order ASC, item_id ASC) —
+                // ADR-0019 Android (kontrak BE ADR-0013). Grouping kategori dihapus (vestigial).
+                items(uiState.items, key = { "item_${it.itemId}" }) { item ->
+                    ItemCard(
+                        itemId = item.itemId,
+                        nama = item.nama,
+                        deskripsi = item.deskripsi,
+                        currentScore = item.skor,
+                        fotoPaths = item.fotoPaths,
+                        currentCatatan = item.catatan,
+                        onScoreSelected = { skor ->
+                            viewModel.updateScore(item.itemId, skor)
+                        },
+                        onAddPhoto = {
+                            currentPhotoItemId.longValue = item.itemId
+                            // Cek permission kamera
+                            if (ContextCompat.checkSelfPermission(
+                                    context,
+                                    Manifest.permission.CAMERA
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                val uri = createTempPhotoUri(context)
+                                pendingPhotoUri = uri
+                                cameraLauncher.launch(uri)
+                            } else {
+                                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                             }
-                        )
-                    }
+                        },
+                        onDeletePhoto = { path ->
+                            viewModel.deletePhoto(item.itemId, path)
+                        },
+                        onCatatanChanged = { catatan ->
+                            viewModel.updateCatatan(item.itemId, catatan)
+                        }
+                    )
                 }
             }
         }
