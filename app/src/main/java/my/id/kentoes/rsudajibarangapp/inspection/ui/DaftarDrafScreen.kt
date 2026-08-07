@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import my.id.kentoes.rsudajibarangapp.core.model.draftStatusColor
 import my.id.kentoes.rsudajibarangapp.core.model.toStatusDisplay
 import my.id.kentoes.rsudajibarangapp.inspection.DaftarDrafViewModel
 import my.id.kentoes.rsudajibarangapp.inspection.DraftSummary
@@ -202,9 +203,13 @@ private fun DraftCard(
     onDelete: () -> Unit
 ) {
     val display = draft.status.toStatusDisplay()
+    val statusColor = draftStatusColor(draft.status)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -236,13 +241,13 @@ private fun DraftCard(
                         imageVector = display.icon,
                         contentDescription = null,
                         modifier = Modifier.size(14.dp),
-                        tint = display.color
+                        tint = statusColor
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = display.label,
                         style = MaterialTheme.typography.bodySmall,
-                        color = display.color
+                        color = statusColor
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(

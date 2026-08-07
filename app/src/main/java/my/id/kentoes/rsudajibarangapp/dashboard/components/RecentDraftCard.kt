@@ -19,11 +19,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
+import my.id.kentoes.rsudajibarangapp.core.model.draftStatusColor
 import my.id.kentoes.rsudajibarangapp.core.model.toStatusDisplay
 
 @Composable
 fun RecentDraftCard(draft: DrafInspeksi) {
     val display = draft.status.toStatusDisplay()
+    val statusColor = draftStatusColor(draft.status)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -39,7 +41,7 @@ fun RecentDraftCard(draft: DrafInspeksi) {
                 imageVector = display.icon,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
-                tint = display.color
+                tint = statusColor
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -59,7 +61,7 @@ fun RecentDraftCard(draft: DrafInspeksi) {
             Text(
                 text = display.label,
                 style = MaterialTheme.typography.labelSmall,
-                color = display.color
+                color = statusColor
             )
         }
     }

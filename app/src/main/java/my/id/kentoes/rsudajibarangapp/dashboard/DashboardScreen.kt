@@ -326,6 +326,9 @@ private fun RoomStatusRow(
                     else -> item.inspectionId?.let(onInspectionClick)
                 }
             },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(

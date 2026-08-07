@@ -19,20 +19,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-private val Skor0Color = Color(0xFFD32F2F)   // Merah — Berisiko
-private val Skor1Color = Color(0xFFF9A825)   // Kuning — Minor
-private val Skor2Color = Color(0xFF388E3C)   // Hijau — Sesuai
+/** Warna skor dari token M3 (bukan hex): 0=error, 1=tertiary (amber), 2=secondary (teal). */
+@Composable
+private fun skorColor(skor: Int): Color = when (skor) {
+    0 -> MaterialTheme.colorScheme.error
+    1 -> MaterialTheme.colorScheme.tertiary
+    else -> MaterialTheme.colorScheme.secondary
+}
 
 private data class ScoreOption(
     val value: Int,
-    val label: String,
-    val color: Color
+    val label: String
 )
 
 private val scoreOptions = listOf(
-    ScoreOption(0, "Berisiko", Skor0Color),
-    ScoreOption(1, "Minor", Skor1Color),
-    ScoreOption(2, "Sesuai", Skor2Color)
+    ScoreOption(0, "Berisiko"),
+    ScoreOption(1, "Minor"),
+    ScoreOption(2, "Sesuai")
 )
 
 @Composable
@@ -53,6 +56,7 @@ fun ScoreIndicator(
             modifier = Modifier.fillMaxWidth()
         ) {
             scoreOptions.forEach { option ->
+                val color = skorColor(option.value)
                 val isSelected = currentScore == option.value
                 FilterChip(
                     selected = isSelected,
@@ -72,17 +76,17 @@ fun ScoreIndicator(
                                 imageVector = Icons.Filled.Check,
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp),
-                                tint = option.color
+                                tint = color
                             )
                         }
                     } else null,
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = option.color.copy(alpha = 0.15f),
-                        selectedLabelColor = option.color
+                        selectedContainerColor = color.copy(alpha = 0.15f),
+                        selectedLabelColor = color
                     ),
                     border = FilterChipDefaults.filterChipBorder(
-                        borderColor = option.color.copy(alpha = 0.5f),
-                        selectedBorderColor = option.color,
+                        borderColor = color.copy(alpha = 0.5f),
+                        selectedBorderColor = color,
                         enabled = true,
                         selected = isSelected
                     ),

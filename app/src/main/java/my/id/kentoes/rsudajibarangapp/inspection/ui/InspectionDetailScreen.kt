@@ -120,24 +120,35 @@ fun InspectionDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize().padding(padding)
                 ) {
-                    // Header card — status, room, inspector, date
+                    // Header card — status, room, inspector, date. Depth via surfaceContainerHigh
+                    // + chip status berwarna (bukan tint alpha 8% yang wash-out).
                     item {
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = statusColor.copy(alpha = 0.08f))
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                            )
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = when (detail.status) {
-                                            "APPROVED" -> Icons.Default.CheckCircle
-                                            "REJECTED" -> Icons.Default.Warning
-                                            else -> Icons.Default.HourglassEmpty
-                                        },
-                                        contentDescription = null,
-                                        tint = statusColor,
-                                        modifier = Modifier.size(32.dp)
-                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(statusColor.copy(alpha = 0.12f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = when (detail.status) {
+                                                "APPROVED" -> Icons.Default.CheckCircle
+                                                "REJECTED" -> Icons.Default.Warning
+                                                else -> Icons.Default.HourglassEmpty
+                                            },
+                                            contentDescription = null,
+                                            tint = statusColor,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(detail.status.inspectionStatusLabel(), fontWeight = FontWeight.Bold,
@@ -214,7 +225,12 @@ fun InspectionDetailScreen(
                     }
 
                     items(detail.details) { itemDetail ->
-                        Card(modifier = Modifier.fillMaxWidth()) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                            )
+                        ) {
                             Column(modifier = Modifier.padding(12.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -233,8 +249,8 @@ fun InspectionDetailScreen(
                                         fontWeight = FontWeight.Bold,
                                         color = when (itemDetail.score) {
                                             0 -> MaterialTheme.colorScheme.error
-                                            1 -> Color(0xFFF9A825)
-                                            else -> Color(0xFF388E3C)
+                                            1 -> MaterialTheme.colorScheme.tertiary
+                                            else -> MaterialTheme.colorScheme.secondary
                                         }
                                     )
                                 }

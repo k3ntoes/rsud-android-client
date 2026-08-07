@@ -18,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
@@ -39,7 +38,8 @@ fun OfflineBanner(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFFB71C1C)) // deep red
+                // Token error + onError: kontras aman di light & dark mode
+                .background(MaterialTheme.colorScheme.error)
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -47,12 +47,12 @@ fun OfflineBanner(
                 imageVector = Icons.Default.WifiOff,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = Color.White
+                tint = MaterialTheme.colorScheme.onError
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Tidak ada koneksi internet",
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onError,
                 style = MaterialTheme.typography.bodySmall
             )
         }

@@ -5,14 +5,16 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.SyncProblem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
- * Display properties untuk status draf inspeksi.
+ * Display properties untuk status draf inspeksi. Warna TIDAK di sini — ambil
+ * [draftStatusColor] (token M3) di call-site agar benar di light & dark mode.
  */
 data class StatusDisplay(
-    val color: Color,
     val icon: ImageVector,
     val label: String
 )
@@ -21,26 +23,31 @@ data class StatusDisplay(
 fun String.toStatusDisplay(): StatusDisplay {
     return when (this) {
         "DRAFT" -> StatusDisplay(
-            color = Color(0xFF1565C0),
             icon = Icons.Default.HourglassEmpty,
             label = "Draf"
         )
         "PENDING_SYNC" -> StatusDisplay(
-            color = Color(0xFFF9A825),
             icon = Icons.Default.SyncProblem,
             label = "Menunggu Kirim"
         )
         "SYNCED" -> StatusDisplay(
-            color = Color(0xFF388E3C),
             icon = Icons.Default.CheckCircle,
             label = "Terkirim"
         )
         else -> StatusDisplay(
-            color = Color.Gray,
             icon = Icons.Default.Description,
             label = this
         )
     }
+}
+
+/** Warna status draf dari token M3 — composable agar ikut dynamic color & dark mode. */
+@Composable
+fun draftStatusColor(status: String): Color = when (status) {
+    "DRAFT" -> MaterialTheme.colorScheme.primary
+    "PENDING_SYNC" -> MaterialTheme.colorScheme.tertiary
+    "SYNCED" -> MaterialTheme.colorScheme.secondary
+    else -> MaterialTheme.colorScheme.onSurfaceVariant
 }
 
 /**
