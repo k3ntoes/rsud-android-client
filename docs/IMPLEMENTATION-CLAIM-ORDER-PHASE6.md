@@ -250,6 +250,7 @@ flowchart LR
 ### 📝 Catatan Implementasi
 
 1. **UX-01:** count `inspectedRoomCount`/`uninspectedRoomCount` tetap dari `repository.getInspectedRoomIdsForDate` (definisi sama: draft OR inspection) agar tes existing tidak berubah; `roomStatuses` dihitung dari query detail (status + id untuk navigasi).
+1. **Reviewer-fix (commit `88f1b8a`):** `roomStatuses` awalnya basi — hanya dihitung saat init/refresh, sehingga user yang menyimpan draf lalu kembali ke dashboard masih melihat room "Belum". Diperbaiki dengan menghitung ulang di akhir `combine` collector (one-shot read, tanpa loop) + 1 test regresi re-emisi flow draf.
 2. **UX-03:** progress bar + counter sudah ada di bottom bar (temuan saat grill) — hanya perlu label + legend + insets.
 3. **UX-05:** typography default M3 tidak di-override (menambah nilai identik = slop) — hanya shapes + konsistensi warna token.
 4. **Tanpa perubahan backend** — semua data sudah tersedia untuk inspector (kontrak API §2–§4).
