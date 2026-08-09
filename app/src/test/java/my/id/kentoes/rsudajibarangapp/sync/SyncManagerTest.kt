@@ -17,13 +17,17 @@ import my.id.kentoes.rsudajibarangapp.sync.api.InspectionOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.PhotoOutDto
 import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
 import my.id.kentoes.rsudajibarangapp.sync.api.UploadPhotoResponse
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import retrofit2.HttpException
+import retrofit2.Response
 
 class SyncManagerTest {
 
@@ -278,6 +282,126 @@ class SyncManagerTest {
         assertFalse(result.success)
         assertEquals("HTTP 422 Unprocessable Entity", result.message)
         coVerify(exactly = 0) { inspectionRepository.deleteSyncedDraft(any()) }
+    }
+
+    // ── Kode error API (SYNC_REQUIRED / ROOM_NOT_ASSIGNED / VALIDATION_ERROR) ──
+
+    @Test
+    fun `syncSingleDraft includes API error code and detail in failure message`() = runTest {
+        val errorBody =
+            """{"detail":"Missing items for room: [2]","code":"SYNC_REQUIRED"}"""
+                .toResponseBody("application/json".toMediaType())
+        coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
+        coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server.jpg")
+        coEvery { syncApi.submitInspection(any()) } throws HttpException(Response.error<Any>(422, errorBody))
+
+        val result = syncManager.syncSingleDraft(1L)
+
+        assertFalse(result.success)
+        assertTrue(result.message, result.message.contains("SYNC_REQUIRED"))
+        assertTrue(result.message, result.message.contains("Missing items for room: [2]"))
+        coVerify(exactly = 0) { inspectionRepository.deleteSyncedDraft(any()) }
+    }
+
+    // ── Auto-retry: SYNC_REQUIRED / ROOM_NOT_ASSIGNED → syncMasterData → retry sekali ──
+
+    @Test
+    fun `syncSingleDraft retries submit after syncMasterData on SYNC_REQUIRED`() = runTest {
+        val syncRequired = HttpException(
+            Response.error<Any>(
+                422,
+                """{"detail":"Missing items for room: [2]","code":"SYNC_REQUIRED"}"""
+                    .toResponseBody("application/json".toMediaType())
+            )
+        )
+        coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
+        coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server.jpg")
+        var submitCall = 0
+        coEvery { syncApi.submitInspection(any()) } coAnswers {
+            submitCall++
+            if (submitCall == 1) throw syncRequired else sampleInspectionOut
+        }
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
+
+        val result = syncManager.syncSingleDraft(1L)
+
+        assertTrue(result.success)
+        assertEquals("Inspeksi berhasil dikirim (ID: 1)", result.message)
+        assertEquals(2, submitCall)
+        // syncMasterData dijalankan sebelum retry — verifikasi lewat langkah pertamanya
+        coVerify(exactly = 1) { masterDataRepository.syncItems() }
+        coVerify(exactly = 1) { inspectionRepository.deleteSyncedDraft(1L) }
+    }
+
+    @Test
+    fun `syncSingleDraft retries submit after syncMasterData on ROOM_NOT_ASSIGNED`() = runTest {
+        val roomNotAssigned = HttpException(
+            Response.error<Any>(
+                422,
+                """{"detail":"Room 1 is not assigned to you","code":"ROOM_NOT_ASSIGNED"}"""
+                    .toResponseBody("application/json".toMediaType())
+            )
+        )
+        coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
+        coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server.jpg")
+        var submitCall = 0
+        coEvery { syncApi.submitInspection(any()) } coAnswers {
+            submitCall++
+            if (submitCall == 1) throw roomNotAssigned else sampleInspectionOut
+        }
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
+
+        val result = syncManager.syncSingleDraft(1L)
+
+        assertTrue(result.success)
+        assertEquals(2, submitCall)
+        coVerify(exactly = 1) { masterDataRepository.syncItems() }
+        coVerify(exactly = 1) { inspectionRepository.deleteSyncedDraft(1L) }
+    }
+
+    @Test
+    fun `syncSingleDraft retry still failing shows code in message`() = runTest {
+        val syncRequired = HttpException(
+            Response.error<Any>(
+                422,
+                """{"detail":"Missing items for room: [2]","code":"SYNC_REQUIRED"}"""
+                    .toResponseBody("application/json".toMediaType())
+            )
+        )
+        coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
+        coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server.jpg")
+        // Selalu gagal — retry pun gagal → tetap dilaporkan dengan kode errornya
+        coEvery { syncApi.submitInspection(any()) } throws syncRequired
+
+        val result = syncManager.syncSingleDraft(1L)
+
+        assertFalse(result.success)
+        assertTrue(result.message, result.message.contains("SYNC_REQUIRED"))
+        coVerify(exactly = 1) { masterDataRepository.syncItems() }
+        coVerify(exactly = 0) { inspectionRepository.deleteSyncedDraft(any()) }
+    }
+
+    @Test
+    fun `syncSingleDraft duplicate detected via API code still succeeds`() = runTest {
+        val errorBody =
+            """{"detail":"Duplicate inspection","code":"DUPLICATE_INSPECTION"}"""
+                .toResponseBody("application/json".toMediaType())
+        coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
+        coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server.jpg")
+        coEvery { syncApi.submitInspection(any()) } throws HttpException(Response.error<Any>(409, errorBody))
+        coEvery { inspectionHistoryRepository.cacheDuplicateInspection(any(), any()) } returns Unit
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
+
+        val result = syncManager.syncSingleDraft(1L)
+
+        assertTrue(result.success)
+        assertEquals("Inspeksi sudah terkirim (duplicate)", result.message)
+        coVerify(exactly = 1) { inspectionRepository.deleteSyncedDraft(1L) }
     }
 
     @Test
@@ -741,6 +865,48 @@ class SyncManagerTest {
                     request.details[1].photos.size == 1 &&
                     request.details[1].photos[0].fileName == "server_foto3.jpg" &&
                     request.details[2].photos.isEmpty()
+            })
+        }
+    }
+
+    // ── Multi-foto per item (ADR-0002): DetailSubmit.photos + sort_order berurutan ──
+
+    @Test
+    fun `syncSingleDraft multi-photo in one item sends 2 photos with sequential sortOrder`() = runTest {
+        val multiPhotoPayload = InspectionPayload(
+            roomId = 10,
+            localTimestamp = "2026-01-01T00:00:00Z",
+            businessDate = "2026-01-01",
+            items = listOf(
+                PayloadItem(
+                    itemId = 1,
+                    skor = 0,
+                    catatan = null,
+                    fotoPaths = listOf("/photo/first.jpg", "/photo/second.jpg")
+                )
+            )
+        )
+        coEvery { inspectionRepository.preparePayload(1L) } returns multiPhotoPayload
+        coEvery { imageCompressor.compress("/photo/first.jpg") } returns "/compressed/first.jpg"
+        coEvery { imageCompressor.compress("/photo/second.jpg") } returns "/compressed/second.jpg"
+        // Nama server harus UNIK per upload — kalau sama, detail.photos akan collapse
+        coEvery { syncApi.uploadPhoto(any()) } returnsMany listOf(
+            UploadPhotoResponse("server_first.jpg"),
+            UploadPhotoResponse("server_second.jpg")
+        )
+        coEvery { syncApi.submitInspection(any()) } returns sampleInspectionOut
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
+
+        val result = syncManager.syncSingleDraft(1L)
+
+        assertTrue(result.success)
+        coVerify {
+            syncApi.submitInspection(match { request ->
+                request.details.size == 1 &&
+                    request.details[0].itemId == 1L &&
+                    request.details[0].photos.size == 2 &&
+                    request.details[0].photos.map { it.fileName } == listOf("server_first.jpg", "server_second.jpg") &&
+                    request.details[0].photos.map { it.sortOrder } == listOf(0, 1)
             })
         }
     }

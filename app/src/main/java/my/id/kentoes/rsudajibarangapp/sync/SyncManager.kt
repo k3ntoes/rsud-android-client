@@ -2,7 +2,9 @@ package my.id.kentoes.rsudajibarangapp.sync
 
 import kotlinx.coroutines.flow.first
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
+import my.id.kentoes.rsudajibarangapp.core.network.ApiErrorUtil
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionHistoryRepository
+import my.id.kentoes.rsudajibarangapp.inspection.InspectionPayload
 import my.id.kentoes.rsudajibarangapp.inspection.InspectionRepository
 import my.id.kentoes.rsudajibarangapp.master.MasterDataRepository
 import my.id.kentoes.rsudajibarangapp.sync.api.DetailSubmit
@@ -11,6 +13,7 @@ import my.id.kentoes.rsudajibarangapp.sync.api.InspectionSubmit
 import my.id.kentoes.rsudajibarangapp.sync.api.PhotoSubmit
 import my.id.kentoes.rsudajibarangapp.sync.api.SyncApi
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import retrofit2.HttpException
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
@@ -124,7 +127,10 @@ class SyncManager @Inject constructor(
                 }
             }
 
-            // 3. Kirim inspection JSON
+            // 3. Kirim inspection JSON — auto-retry sekali: jika server menolak karena data
+            // master perangkat basi (SYNC_REQUIRED / ROOM_NOT_ASSIGNED), jalankan
+            // syncMasterData() lalu ulangi submit. Foto sudah ter-upload — retry hanya
+            // mengirim ulang JSON dengan nama file yang sama.
             val details = payload.items.map { item ->
                 val serverFileNames = item.fotoPaths.mapNotNull { uploadedNames[it] }
                 DetailSubmit(
@@ -138,15 +144,7 @@ class SyncManager @Inject constructor(
                 )
             }
 
-            val submitRequest = InspectionSubmit(
-                roomId = payload.roomId,
-                localTimestamp = payload.localTimestamp,
-                businessDate = payload.businessDate,
-                details = details
-            )
-
-            // Submit returns InspectionOutDto now
-            val response = syncApi.submitInspection(submitRequest)
+            val response = submitInspectionWithSyncRetry(payload, details)
 
             // ADR-0016: pindahkan file terkompresi (byte-identik server) ke photos_sent,
             // nama = nama file server. Linking key: server photo id ↔ localPath dikirim ke
@@ -160,9 +158,19 @@ class SyncManager @Inject constructor(
             inspectionRepository.deleteSyncedDraft(draftId)
             SyncResult(draftId, true, "Inspeksi berhasil dikirim (ID: ${response.id})")
         } catch (e: Exception) {
-            val msg = e.message ?: "Error sinkronisasi"
-            // ponytail: simple error handling; expand if 409/413 handling needed
-            if (msg.contains("DUPLICATE_INSPECTION") || msg.contains("409")) {
+            // Ekstrak kode error API dari response body (mis. SYNC_REQUIRED,
+            // ROOM_NOT_ASSIGNED, VALIDATION_ERROR, TOKEN_EXPIRED) — e.message Retrofit
+            // hanya berisi "HTTP 4xx ..." tanpa field `code` yang dipakai untuk diagnosis.
+            val errorDto = (e as? HttpException)?.let { ApiErrorUtil.extractErrorDto(it.response()?.errorBody()) }
+            val msg = buildString {
+                append(e.message ?: "Error sinkronisasi")
+                if (errorDto != null) {
+                    append(" [${errorDto.code}]")
+                    if (errorDto.detail.isNotBlank()) append(": ${errorDto.detail}")
+                }
+            }
+            // Duplicate: deteksi via code API (robust) + fallback legacy string (409)
+            if (errorDto?.code == "DUPLICATE_INSPECTION" || msg.contains("DUPLICATE_INSPECTION") || msg.contains("409")) {
                 // Q1 (grill-with-docs 2026-08): server sudah punya inspeksi ini (submit
                 // sebelumnya sukses tapi response hilang). Cache ke riwayat lokal agar
                 // dashboard "Terkirim" & riwayat konsisten tanpa menunggu fetch ulang.
@@ -184,6 +192,37 @@ class SyncManager @Inject constructor(
                 SyncResult(draftId, false, msg)
             }
         }
+
+    /**
+     * Submit inspeksi dengan auto-retry SEKALI: jika server menolak karena data master
+     * perangkat basi (code SYNC_REQUIRED = checklist room-item berubah, ROOM_NOT_ASSIGNED =
+     * assignment user↔room berubah), jalankan syncMasterData() lalu ulangi submit.
+     * Exception lain (network, schema VALIDATION_ERROR, dll.) langsung dilempar ulang.
+     */
+    private suspend fun submitInspectionWithSyncRetry(
+        payload: InspectionPayload,
+        details: List<DetailSubmit>
+    ): InspectionOutDto {
+        val request = InspectionSubmit(
+            roomId = payload.roomId,
+            localTimestamp = payload.localTimestamp,
+            businessDate = payload.businessDate,
+            details = details
+        )
+        return try {
+            syncApi.submitInspection(request)
+        } catch (e: Exception) {
+            val code = (e as? HttpException)?.let {
+                ApiErrorUtil.extractErrorDto(it.response()?.errorBody())
+            }?.code
+            if (code == "SYNC_REQUIRED" || code == "ROOM_NOT_ASSIGNED") {
+                syncMasterData()
+                syncApi.submitInspection(request)
+            } else {
+                throw e
+            }
+        }
+    }
 
     /**
      * Pindahkan file terkompresi ke `photos_sent` dan bangun peta server photo id → localPath.
