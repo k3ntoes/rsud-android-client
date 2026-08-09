@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import my.id.kentoes.rsudajibarangapp.core.network.NetworkConnectivityObserver
+import my.id.kentoes.rsudajibarangapp.sync.SyncManager
 import my.id.kentoes.rsudajibarangapp.sync.SyncWorker
 import javax.inject.Inject
 
@@ -28,7 +29,8 @@ data class DaftarDrafUiState(
 class DaftarDrafViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val repository: InspectionRepository,
-    private val networkObserver: NetworkConnectivityObserver
+    private val networkObserver: NetworkConnectivityObserver,
+    private val syncManager: SyncManager
 ) : ViewModel() {
 
     val isOnline: StateFlow<Boolean> = networkObserver.isOnline
@@ -44,6 +46,14 @@ class DaftarDrafViewModel @Inject constructor(
                     drafts = drafts,
                     isLoading = false
                 )
+            }
+        }
+        // Auto-retry submit (SYNC_REQUIRED / ROOM_NOT_ASSIGNED): beri tahu user lewat
+        // snackbar bahwa jeda singkat terjadi karena data master sedang disinkronkan,
+        // bukan karena error. Pesan tampil via uiState.syncMessage di DaftarDrafScreen.
+        viewModelScope.launch {
+            syncManager.retryEvents.collect { message ->
+                _uiState.value = _uiState.value.copy(syncMessage = message)
             }
         }
     }

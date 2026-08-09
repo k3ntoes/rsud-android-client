@@ -4,6 +4,8 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.database.entity.DrafInspeksi
@@ -383,6 +385,39 @@ class SyncManagerTest {
         assertTrue(result.message, result.message.contains("SYNC_REQUIRED"))
         coVerify(exactly = 1) { masterDataRepository.syncItems() }
         coVerify(exactly = 0) { inspectionRepository.deleteSyncedDraft(any()) }
+    }
+
+    @Test
+    fun `syncSingleDraft emits friendly retry event before resubmitting`() = runTest {
+        val syncRequired = HttpException(
+            Response.error<Any>(
+                422,
+                """{"detail":"Missing items for room: [2]","code":"SYNC_REQUIRED"}"""
+                    .toResponseBody("application/json".toMediaType())
+            )
+        )
+        coEvery { inspectionRepository.preparePayload(1L) } returns samplePayload
+        coEvery { imageCompressor.compress(any()) } returns "/compressed/a.jpg"
+        coEvery { syncApi.uploadPhoto(any()) } returns UploadPhotoResponse("server.jpg")
+        var submitCall = 0
+        coEvery { syncApi.submitInspection(any()) } coAnswers {
+            submitCall++
+            if (submitCall == 1) throw syncRequired else sampleInspectionOut
+        }
+        coEvery { inspectionRepository.deleteSyncedDraft(1L) } returns Unit
+
+        val events = mutableListOf<String>()
+        val collector = launch { syncManager.retryEvents.collect { events.add(it) } }
+        advanceUntilIdle() // pastikan collector sudah subscribe sebelum emit terjadi
+        val result = syncManager.syncSingleDraft(1L)
+        advanceUntilIdle()
+        collector.cancel()
+
+        assertTrue(result.success)
+        assertEquals(
+            listOf("Menyinkronkan data terbaru, mencoba kirim ulang..."),
+            events
+        )
     }
 
     @Test

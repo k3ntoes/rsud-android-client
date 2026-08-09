@@ -1,5 +1,8 @@
 package my.id.kentoes.rsudajibarangapp.sync
 
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
 import my.id.kentoes.rsudajibarangapp.core.database.dao.DrafDao
 import my.id.kentoes.rsudajibarangapp.core.network.ApiErrorUtil
@@ -54,6 +57,14 @@ class SyncManager @Inject constructor(
     private val imageCompressor: ImageCompressor,
     private val sentPhotoStorage: SentPhotoStorage
 ) {
+
+    private val _retryEvents = MutableSharedFlow<String>(extraBufferCapacity = 4)
+
+    /**
+     * Pesan ramah saat auto-retry submit terjadi (data master disinkronkan lalu kirim
+     * ulang) — dipakai UI (snackbar) supaya user tidak bingung dengan jeda singkat.
+     */
+    val retryEvents: SharedFlow<String> = _retryEvents.asSharedFlow()
 
     /** Sync master data — per-langkah; hasil parsial dilaporkan, bukan dilempar. */
     suspend fun syncMasterData(): MasterDataSyncResult {
@@ -216,6 +227,7 @@ class SyncManager @Inject constructor(
                 ApiErrorUtil.extractErrorDto(it.response()?.errorBody())
             }?.code
             if (code == "SYNC_REQUIRED" || code == "ROOM_NOT_ASSIGNED") {
+                _retryEvents.tryEmit("Menyinkronkan data terbaru, mencoba kirim ulang...")
                 syncMasterData()
                 syncApi.submitInspection(request)
             } else {

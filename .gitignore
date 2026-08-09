@@ -36,3 +36,5 @@ docs/.flow-diagrams-build/
 
 # Build artifacts — hasil task buildApk
 #/apk/
+
+.freebuff/
